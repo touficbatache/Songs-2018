@@ -45,20 +45,21 @@ public class PlayToPauseMorphingImageView extends AppCompatImageView {
   }
 
   public void play() {
-    if(mIsShowingPause) {
+    if(!mIsShowingPause) {
       AnimatedVectorDrawable drawable = mPlayToPause;
       setImageDrawable(drawable);
       drawable.start();
-      mIsShowingPause = false;
+      // play -> pause. It's now showing pause
+      mIsShowingPause = true;
     }
   }
 
   public void pause() {
-
     AnimatedVectorDrawable drawable = mPauseToPlay;
     setImageDrawable(drawable);
     drawable.start();
-    mIsShowingPause = true;
+    // pause -> play. It's now showing play
+    mIsShowingPause = false;
   }
 
 }
