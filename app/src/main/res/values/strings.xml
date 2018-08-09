@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Songs</string>
+    <string name="title_explore">Explore</string>
+    <string name="title_my_music">My Music</string>
+    <string name="title_search">Search</string>
+    <string name="hint_search">Search for a song or an artist&#8230;</string>
+    <string name="hint_search_downloaded">Search in your downloads&#8230;</string>
+    <string name="player_progress_text">%1$s:%2$s</string>
+    <string name="next_up">Next up</string>
+    <string name="new_this_week">New this week</string>
+    <string name="see_more">See More</string>
+    <string name="popular">Popular</string>
+</resources>

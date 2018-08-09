@@ -1,0 +1,525 @@
+package ml.toufic.songs.ui.activities;
+
+import android.content.Context;
+import android.graphics.drawable.Animatable;
+import android.graphics.drawable.AnimatedVectorDrawable;
+import android.graphics.drawable.Drawable;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.FloatRange;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PagerSnapHelper;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SnapHelper;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
+
+import com.airbnb.epoxy.EpoxyAdapter;
+import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.imagepipeline.core.ImagePipelineConfig;
+import com.facebook.imagepipeline.decoder.SimpleProgressiveJpegConfig;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+
+import ml.toufic.songs.R;
+import ml.toufic.songs.model.DownloadedSong;
+import ml.toufic.songs.model.PlayableSong;
+import ml.toufic.songs.model.PlayerCoverModel;
+import ml.toufic.songs.ui.fragments.ExploreFragment;
+import ml.toufic.songs.ui.fragments.MyMusicFragment;
+import ml.toufic.songs.util.SongUtils;
+import ml.toufic.songs.views.PlayToPauseMorphingImageView;
+
+public class MainActivity extends AppCompatActivity implements SlidingUpPanelLayout.PanelSlideListener {
+
+  private static final String TAG = "MainActivity: ";
+
+  private Context mContext;
+
+  private BottomNavigationView mBottomNavigationView;
+
+  private List<PlayableSong> mPlayingQueue = new ArrayList<PlayableSong>();
+  private PlayableSong mPlayerSong;
+
+  private ImageButton mPlayerArrowDown;
+  private LinearLayout mPlayerNextUp;
+  private TextView mPlayerNextUpSongTitle;
+  private PlayerCoversAdapter mPlayerAdapter;
+  private RecyclerView mPlayerRecyclerView;
+  private RecyclerView.OnScrollListener mPlayerRecyclerViewListener;
+  private TextView mPlayerSongTitle;
+  private TextView mPlayerSongArtist;
+  private SeekBar mPlayerSongProgress;
+  private TextView mPlayerSongProgressCurrent;
+  private TextView mPlayerSongProgressTotal;
+  private ImageButton mPlayerRepeatBtn;
+  private ImageButton mPlayerPrevBtn;
+  private PlayToPauseMorphingImageView mPlayerPlayToPauseBtn;
+  private ImageButton mPlayerNextBtn;
+
+  private LinearLayout mMiniPlayer;
+  private ImageView mMiniPlayerArrowUp;
+  private TextView mMiniPlayerSongTitle;
+  private PlayToPauseMorphingImageView mMiniPlayerPlayToPauseBtn;
+
+  private SlidingUpPanelLayout mSlidingPanelLayout;
+  private MediaPlayer mPlayerMediaPlayer;
+  private Handler mPlayerSongProgressHandler;
+  private Runnable mPlayerSongProgressHandlerRunnable;
+
+  private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+    = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+
+      Fragment fragment = new ExploreFragment();
+
+      switch (item.getItemId()) {
+        case R.id.navigation_explore:
+          fragment = new ExploreFragment();
+          break;
+
+        case R.id.navigation_my_music:
+          fragment = new MyMusicFragment();
+          break;
+      }
+
+      return loadFragment(fragment);
+    }
+  };
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    ImagePipelineConfig config = ImagePipelineConfig.newBuilder(this)
+      .setProgressiveJpegConfig(new SimpleProgressiveJpegConfig())
+      .setResizeAndRotateEnabledForNetwork(true)
+      .setDownsampleEnabled(true)
+      .build();
+    Fresco.initialize(this, config);
+
+    setContentView(R.layout.activity_main);
+
+    Toolbar toolbar = findViewById(R.id.toolbar);
+    setSupportActionBar(toolbar);
+
+    mContext = MainActivity.this;
+
+    mBottomNavigationView = (BottomNavigationView) findViewById(R.id.navigation);
+    mBottomNavigationView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+
+    getSupportFragmentManager()
+      .beginTransaction()
+      .replace(R.id.fragment_container, new ExploreFragment())
+      .commitAllowingStateLoss();
+
+    /* Initialize player & mini player */
+
+    initializePlayer();
+    initializeRecyclerView();
+    if(getLastPlayedSong()) {
+      prepareForPlaying();
+    }
+  }
+
+  private boolean loadFragment(Fragment fragment) {
+    if (fragment != null) {
+      getSupportFragmentManager()
+        .beginTransaction()
+        .replace(R.id.fragment_container, fragment)
+        .commitAllowingStateLoss();
+      return true;
+    }
+    return false;
+  }
+
+  public boolean pushFragment(Fragment fragment) {
+    if (fragment != null) {
+      getSupportFragmentManager()
+        .beginTransaction()
+        .replace(R.id.fragment_container, fragment)
+        .addToBackStack(null)
+        .commitAllowingStateLoss();
+      return true;
+    }
+    return false;
+  }
+
+  private void initializePlayer() {
+    mPlayerArrowDown = findViewById(R.id.player_arrow_down);
+    mPlayerNextUp = findViewById(R.id.player_next_up);
+    mPlayerNextUpSongTitle = findViewById(R.id.player_next_up_song_title);
+    mPlayerAdapter = new PlayerCoversAdapter();
+    mPlayerRecyclerView = findViewById(R.id.player_cover_arts_recyclerview);
+    mPlayerSongTitle = findViewById(R.id.player_song_title);
+    mPlayerSongArtist = findViewById(R.id.player_song_artist);
+    mPlayerSongProgress = findViewById(R.id.player_song_progress);
+    mPlayerSongProgressCurrent = findViewById(R.id.player_progress_current);
+    mPlayerSongProgressTotal = findViewById(R.id.player_progress_total);
+    mPlayerRepeatBtn = findViewById(R.id.player_repeat_btn);
+    mPlayerPrevBtn = findViewById(R.id.player_prev_btn);
+    mPlayerPlayToPauseBtn = findViewById(R.id.player_play_to_pause_btn);
+    mPlayerNextBtn = findViewById(R.id.player_next_btn);
+
+    mMiniPlayer = findViewById(R.id.mini_player_layout);
+    mMiniPlayerArrowUp = findViewById(R.id.mini_player_arrow_up);
+    mMiniPlayerSongTitle = findViewById(R.id.mini_player_song_title);
+    mMiniPlayerPlayToPauseBtn = findViewById(R.id.mini_player_play_to_pause_btn);
+
+    mSlidingPanelLayout = findViewById(R.id.sliding_layout);
+    mSlidingPanelLayout.addPanelSlideListener(this);
+    mPlayerSongProgressHandler = new Handler();
+
+    if(SongUtils.getCachedLastSong(mContext) == null || mPlayingQueue.isEmpty()) {
+      mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+    }
+  }
+
+  private void initializeRecyclerView() {
+    mPlayerRecyclerView.setAdapter(mPlayerAdapter);
+    mPlayerRecyclerView.setLayoutManager(new LinearLayoutManager(mContext, LinearLayoutManager.HORIZONTAL, false));
+
+    SnapHelper snapHelper = new PagerSnapHelper();
+    snapHelper.attachToRecyclerView(mPlayerRecyclerView);
+  }
+
+  private boolean getLastPlayedSong() {
+    mPlayerSong = SongUtils.getCachedLastSong(mContext);
+
+    boolean isSongOK = false;
+    if(mPlayerSong != null && mPlayerSong.getPath().exists()) {
+      isSongOK = true;
+    }
+    return isSongOK;
+  }
+
+  private void prepareForPlaying() {
+    updatePlayingQueue();
+    updateLastPlayedSong();
+    updateCoversInRecyclerView();
+    mPlayerRecyclerView.scrollToPosition(mPlayerSong.getIndex());
+    updateMediaPlayer();
+  }
+
+  private void updatePlayingQueue() {
+    mPlayingQueue = new ArrayList<PlayableSong>();
+    List<DownloadedSong> downloadedSongsList = SongUtils.getCachedDownloadedSongs(mContext);
+    for(int i=0; i<downloadedSongsList.size(); i++) {
+      mPlayingQueue.add(new PlayableSong(downloadedSongsList.get(i), i));
+    }
+  }
+
+  private void updateLastPlayedSong() {
+    mMiniPlayerArrowUp.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+      }
+    });
+
+    mPlayerArrowDown.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+      }
+    });
+
+    mPlayerSongTitle.setText(mPlayerSong.getTitle());
+    mMiniPlayerSongTitle.setText(mPlayerSong.getTitle());
+    mPlayerSongArtist.setText(mPlayerSong.getArtist());
+
+    if (mPlayingQueue != null) {
+      if (mPlayerSong.getIndex() == 0) {
+        mPlayerPrevBtn.setEnabled(false);
+        setColorEnabled(mPlayerPrevBtn, false);
+      } else {
+        mPlayerPrevBtn.setEnabled(true);
+        setColorEnabled(mPlayerPrevBtn, true);
+      }
+
+      if (mPlayerSong.getIndex() == mPlayingQueue.size() - 1) {
+        mPlayerNextBtn.setEnabled(false);
+        setColorEnabled(mPlayerNextBtn, false);
+      } else {
+        mPlayerNextBtn.setEnabled(true);
+        setColorEnabled(mPlayerNextBtn, true);
+        mPlayerNextUpSongTitle.setText(mPlayingQueue.get(mPlayerSong.getIndex()+1).getTitle());
+      }
+
+      setColorEnabled(mPlayerRepeatBtn, mPlayerSong.isLooping());
+    }
+
+    mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        if (!mPlayerSong.isLooping()) {
+          mPlayerSong.setLooping(true);
+          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_67));
+        } else {
+          mPlayerSong.setLooping(false);
+          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
+        }
+      }
+    });
+
+    mPlayerPrevBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        int previousSongIndex = mPlayerSong.getIndex() - 1;
+        mPlayerRecyclerView.smoothScrollToPosition(previousSongIndex);
+      }
+    });
+    mPlayerNextBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        int nextSongIndex = mPlayerSong.getIndex() + 1;
+        mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
+      }
+    });
+
+    mPlayerPlayToPauseBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        onPlayPauseClick();
+      }
+    });
+
+    mMiniPlayerPlayToPauseBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        onPlayPauseClick();
+      }
+    });
+
+    if(mSlidingPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
+      mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+    }
+  }
+
+  private void updateCoversInRecyclerView() {
+    if(mPlayingQueue.size() != mPlayerAdapter.getItemCount()) {
+      mPlayerAdapter.clear();
+      for (PlayableSong playableSong : mPlayingQueue) {
+        mPlayerAdapter.addCoverArt(playableSong.getCoverArt());
+      }
+    }
+
+    mPlayerRecyclerViewListener = new RecyclerView.OnScrollListener() {
+      @Override
+      public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+        super.onScrollStateChanged(recyclerView, newState);
+        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+          int songIndex = ((LinearLayoutManager) mPlayerRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+          if(mPlayerSong.getIndex() != songIndex) {
+            loadSong(mPlayingQueue.get(songIndex));
+          }
+        }
+      }
+    };
+    mPlayerRecyclerView.addOnScrollListener(mPlayerRecyclerViewListener);
+  }
+
+  public class PlayerCoversAdapter extends EpoxyAdapter {
+    void addCoverArt(String coverArtUrl) {
+      addModel(new PlayerCoverModel(coverArtUrl));
+    }
+
+    void clear() {
+      removeAllModels();
+    }
+  }
+
+  private void updateMediaPlayer() {
+    mPlayerMediaPlayer = MediaPlayer.create(mContext, Uri.fromFile(mPlayerSong.getPath()));
+    mPlayerMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+    mPlayerMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+      @Override
+      public void onPrepared(MediaPlayer mediaPlayer) {
+        DecimalFormat progressFormat = new DecimalFormat("00");
+        String minutes = progressFormat.format(mPlayerMediaPlayer.getDuration() / 1000 / 60);
+        String seconds = progressFormat.format(mPlayerMediaPlayer.getDuration() / 1000 % 60);
+        mPlayerSongProgressTotal.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
+        mPlayerSongProgress.setMax(mediaPlayer.getDuration());
+
+        mPlayerMediaPlayer.seekTo(mPlayerSong.getLastPosition());
+        mPlayerSongProgress.setProgress(mPlayerSong.getLastPosition());
+      }
+    });
+
+    mPlayerMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+      @Override
+      public void onCompletion(MediaPlayer mediaPlayer) {
+        if (!mPlayerSong.isLooping()) {
+          if (mPlayerSong.getIndex() == mPlayingQueue.size() - 1) {
+            mPlayerPlayToPauseBtn.pause();
+            mMiniPlayerPlayToPauseBtn.pause();
+            mPlayerMediaPlayer.seekTo(0);
+          } else {
+            int nextSongIndex = mPlayerSong.getIndex() + 1;
+            mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
+          }
+        } else {
+          mPlayerMediaPlayer.seekTo(0);
+          mPlayerMediaPlayer.start();
+        }
+      }
+    });
+
+    mPlayerSongProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(SeekBar seekBar, int progress, boolean input) {
+        if (input) {
+          mPlayerMediaPlayer.seekTo(progress);
+        }
+        if(progress / 1000 < (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerNextUp.getAlpha() == 1.0f) {
+          mPlayerNextUp.animate().alpha(0.0f);
+        } else if (progress / 1000 == (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndex() != mPlayingQueue.size() - 1) {
+          mPlayerNextUp.animate().alpha(1.0f);
+        }
+        DecimalFormat formatter = new DecimalFormat("00");
+        String minutes = formatter.format(progress / 1000 / 60);
+        String seconds = formatter.format(progress / 1000 % 60);
+        mPlayerSongProgressCurrent.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
+      }
+
+      @Override
+      public void onStartTrackingTouch(SeekBar seekBar) {
+
+      }
+
+      @Override
+      public void onStopTrackingTouch(SeekBar seekBar) {
+
+      }
+    });
+  }
+
+  public void loadSong(PlayableSong playableSong) {
+    destroy();
+
+    SongUtils.cacheLastSong(mContext, playableSong);
+    getLastPlayedSong();
+    prepareForPlaying();
+    playSong();
+  }
+
+  private void playSong() {
+    mPlayerMediaPlayer.start();
+    mPlayerPlayToPauseBtn.play();
+    mMiniPlayerPlayToPauseBtn.play();
+
+    startProgressTracking();
+  }
+
+  private void pauseSong() {
+    mPlayerMediaPlayer.pause();
+    mPlayerPlayToPauseBtn.pause();
+    mMiniPlayerPlayToPauseBtn.pause();
+  }
+
+  public void startProgressTracking() {
+    mPlayerSongProgress.setProgress(mPlayerMediaPlayer.getCurrentPosition());
+    mPlayerSong.setLastPosition(mPlayerMediaPlayer.getCurrentPosition());
+    SongUtils.cacheLastSong(mContext, mPlayerSong);
+
+    if(mPlayerMediaPlayer.isPlaying()) {
+      mPlayerSongProgressHandlerRunnable = new Runnable() {
+        @Override
+        public void run() {
+          startProgressTracking();
+        }
+      };
+      mPlayerSongProgressHandler.postDelayed(mPlayerSongProgressHandlerRunnable, 1000);
+    }
+  }
+
+  private void onPlayPauseClick() {
+    if (mPlayerMediaPlayer.isPlaying()) {
+      pauseSong();
+    } else {
+      playSong();
+    }
+  }
+
+  private void setColorEnabled(ImageButton imageButtonView, boolean enabled) {
+    if(enabled) {
+      imageButtonView.setColorFilter(getResources().getColor(R.color.grey_67));
+    } else {
+      imageButtonView.setColorFilter(getResources().getColor(R.color.grey_c0));
+    }
+  }
+
+  private void setMiniPlayerAlphaProgress(@FloatRange(from = 0, to = 1) float progress) {
+    if (mMiniPlayer == null || mBottomNavigationView == null) return;
+    float alpha = 1 - progress;
+    mMiniPlayer.setAlpha(alpha);
+    mBottomNavigationView.setTranslationY(mBottomNavigationView.getHeight() * (alpha * -1 + 1));
+
+    mMiniPlayer.setVisibility(alpha == 0 ? View.GONE : View.VISIBLE);
+  }
+
+  @Override
+  public void onPanelSlide(View panel, @FloatRange(from = 0, to = 1) float slideOffset) {
+    setMiniPlayerAlphaProgress(slideOffset);
+  }
+
+  @Override
+  public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
+    if(newState == SlidingUpPanelLayout.PanelState.EXPANDED) {
+      findViewById(R.id.player_layout).setClickable(true);
+    } else {
+      findViewById(R.id.player_layout).setClickable(false);
+    }
+  }
+
+  private void destroy() {
+    if(mPlayerMediaPlayer != null) {
+      mPlayerMediaPlayer.release();
+    }
+    if(mPlayerSongProgressHandler != null) {
+      mPlayerSongProgressHandler.removeCallbacks(mPlayerSongProgressHandlerRunnable);
+    }
+  }
+
+  @Override
+  public void onBackPressed() {
+    if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+      getSupportFragmentManager().popBackStack();
+    } else {
+      super.onBackPressed();
+    }
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case android.R.id.home:
+        onBackPressed();
+    }
+    return super.onOptionsItemSelected(item);
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    destroy();
+  }
+}

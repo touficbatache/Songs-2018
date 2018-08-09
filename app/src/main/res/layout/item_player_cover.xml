@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.facebook.drawee.view.SimpleDraweeView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fresco="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/player_song_cover_art"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="32dp"
+    android:layout_marginEnd="32dp"
+    fresco:viewAspectRatio="1"
+    fresco:placeholderImage="@drawable/placeholder_disk_song_art"
+    fresco:placeholderImageScaleType="fitCenter"
+    fresco:roundedCornerRadius="4dp" />
