@@ -2,6 +2,7 @@ package ml.toufic.songs.ui.fragments;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -65,8 +66,8 @@ public class ExploreFragment extends Fragment {
   private RecyclerView mRecyclerView;
   private MaterialSearchView searchView;
 
-  private List<Song> newThisWeekSongs = new ArrayList<Song>();
-  private List<Song> popularSongs = new ArrayList<Song>();
+  private List<Song> newThisWeekSongs = new ArrayList<>();
+  private List<Song> popularSongs = new ArrayList<>();
   private boolean hasNewThisWeek = false;
   private boolean hasPopular = false;
 
@@ -141,25 +142,27 @@ public class ExploreFragment extends Fragment {
       new JSONObjectDataFetcher(newThisWeekURL, new JSONObjectDataFetcher.JSONDataFetcherCallback() {
         @Override
         public void onSuccess(JSONObject result) {
-          try {
-            JSONArray playlistItems = result.getJSONArray("items");
-            for (int i = 0; i < playlistItems.length(); i++) {
-              JSONObject snippet = playlistItems.getJSONObject(i).getJSONObject("snippet");
-              JSONObject resourceId = snippet.getJSONObject("resourceId");
-              JSONObject thumbnailObj = snippet.getJSONObject("thumbnails");
+          if(getActivity() != null && isAdded()) {
+            try {
+              JSONArray playlistItems = result.getJSONArray("items");
+              for (int i = 0; i < playlistItems.length(); i++) {
+                JSONObject snippet = playlistItems.getJSONObject(i).getJSONObject("snippet");
+                JSONObject resourceId = snippet.getJSONObject("resourceId");
+                JSONObject thumbnailObj = snippet.getJSONObject("thumbnails");
 
-              String id = resourceId.getString("videoId");
-              String title = snippet.getString("title");
-              String author = snippet.getString("channelTitle");
-              String thumbnail = thumbnailObj.getJSONObject("high").getString("url"); // TODO: Add thumbnail size in settings
+                String id = resourceId.getString("videoId");
+                String title = snippet.getString("title");
+                String author = snippet.getString("channelTitle");
+                String thumbnail = thumbnailObj.getJSONObject("high").getString("url"); // TODO: Add thumbnail size in settings
 
-              newThisWeekSongs.add(new Song(id, title, author, thumbnail));
+                newThisWeekSongs.add(new Song(id, title, author, thumbnail));
+              }
+              hasNewThisWeek = true;
+
+              updateRecyclerViewSongs();
+            } catch (JSONException e) {
+              e.printStackTrace();
             }
-            hasNewThisWeek = true;
-
-            updateRecyclerViewSongs();
-          } catch (JSONException e) {
-            e.printStackTrace();
           }
         }
 
@@ -174,25 +177,27 @@ public class ExploreFragment extends Fragment {
       new JSONObjectDataFetcher(popularURL, new JSONObjectDataFetcher.JSONDataFetcherCallback() {
         @Override
         public void onSuccess(JSONObject result) {
-          try {
-            JSONArray playlistItems = result.getJSONArray("items");
-            for (int i = 0; i < playlistItems.length(); i++) {
-              JSONObject snippet = playlistItems.getJSONObject(i).getJSONObject("snippet");
-              JSONObject resourceId = snippet.getJSONObject("resourceId");
-              JSONObject thumbnailObj = snippet.getJSONObject("thumbnails");
+          if(getActivity() != null && isAdded()) {
+            try {
+              JSONArray playlistItems = result.getJSONArray("items");
+              for (int i = 0; i < playlistItems.length(); i++) {
+                JSONObject snippet = playlistItems.getJSONObject(i).getJSONObject("snippet");
+                JSONObject resourceId = snippet.getJSONObject("resourceId");
+                JSONObject thumbnailObj = snippet.getJSONObject("thumbnails");
 
-              String id = resourceId.getString("videoId");
-              String title = snippet.getString("title");
-              String author = snippet.getString("channelTitle");
-              String thumbnail = thumbnailObj.getJSONObject("high").getString("url");
+                String id = resourceId.getString("videoId");
+                String title = snippet.getString("title");
+                String author = snippet.getString("channelTitle");
+                String thumbnail = thumbnailObj.getJSONObject("high").getString("url");
 
-              popularSongs.add(new Song(id, title, author, thumbnail));
+                popularSongs.add(new Song(id, title, author, thumbnail));
+              }
+              hasPopular = true;
+
+              updateRecyclerViewSongs();
+            } catch (JSONException e) {
+              e.printStackTrace();
             }
-            hasPopular = true;
-
-            updateRecyclerViewSongs();
-          } catch (JSONException e) {
-            e.printStackTrace();
           }
         }
 
@@ -205,7 +210,7 @@ public class ExploreFragment extends Fragment {
   }
 
   private void initSearch() {
-    searchView = (MaterialSearchView) mActivity.findViewById(R.id.search_view);
+    searchView = mActivity.findViewById(R.id.search_view);
     searchView.setHint(getResources().getString(R.string.hint_search));
     searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
       @Override
