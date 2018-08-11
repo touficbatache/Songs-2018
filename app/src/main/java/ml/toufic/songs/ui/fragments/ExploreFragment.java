@@ -13,7 +13,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,7 +26,6 @@ import com.airbnb.epoxy.EpoxyAdapter;
 import com.airbnb.epoxy.EpoxyHolder;
 import com.airbnb.epoxy.EpoxyModel;
 import com.airbnb.epoxy.EpoxyModelWithHolder;
-import com.google.gson.Gson;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
 import org.json.JSONArray;
@@ -37,10 +35,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import at.huber.youtubeExtractor.VideoMeta;
-import at.huber.youtubeExtractor.YouTubeExtractor;
-import at.huber.youtubeExtractor.YtFile;
-import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.ui.activities.MainActivity;
 import ml.toufic.songs.R;
 import ml.toufic.songs.network.JSONObjectDataFetcher;
@@ -70,8 +64,8 @@ public class ExploreFragment extends Fragment {
   private boolean hasPopular = false;
 
   private String mSearchQuery;
-  final Handler handler = new Handler();
-  Runnable searchRunnable = new Runnable() {
+  private final Handler handler = new Handler();
+  private Runnable searchRunnable = new Runnable() {
     @Override
     public void run() {
       mAdapter.clear();
@@ -289,7 +283,7 @@ public class ExploreFragment extends Fragment {
     }
   }
 
-  public class ExploreAdapter extends EpoxyAdapter {
+  class ExploreAdapter extends EpoxyAdapter {
     void addSubheader(String title) {
       addModel(new SubheaderModel(title));
     }
@@ -440,7 +434,7 @@ public class ExploreFragment extends Fragment {
     }
   }
 
-  public class SongHolder extends EpoxyHolder {
+  protected class SongHolder extends EpoxyHolder {
 
     View itemView;
     TextView mSongTitle;
@@ -454,7 +448,7 @@ public class ExploreFragment extends Fragment {
     }
   }
 
-  public class SubheaderHolder extends EpoxyHolder {
+  protected class SubheaderHolder extends EpoxyHolder {
 
     TextView subheader;
 
@@ -464,7 +458,7 @@ public class ExploreFragment extends Fragment {
     }
   }
 
-  public class SeeMoreHolder extends EpoxyHolder {
+  protected class SeeMoreHolder extends EpoxyHolder {
 
     View itemView;
 

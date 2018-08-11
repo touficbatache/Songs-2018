@@ -27,7 +27,7 @@ public class PlayToPauseMorphingImageView extends AppCompatImageView {
     init();
   }
 
-  public void init(){
+  private void init(){
     mIsShowingPause = false;
     mPlayToPause =
       (AnimatedVectorDrawable)getContext().getDrawable(R.drawable.play_to_pause);

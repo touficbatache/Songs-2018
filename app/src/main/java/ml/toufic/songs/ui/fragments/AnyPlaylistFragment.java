@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -21,7 +20,6 @@ import android.widget.Toast;
 import com.airbnb.epoxy.EpoxyAdapter;
 import com.airbnb.epoxy.EpoxyHolder;
 import com.airbnb.epoxy.EpoxyModelWithHolder;
-import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ml.toufic.songs.R;
-import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.Song;
 import ml.toufic.songs.network.JSONObjectDataFetcher;
 import ml.toufic.songs.network.SongDownloader;
@@ -50,7 +47,7 @@ public class AnyPlaylistFragment extends Fragment {
 
   private Song songToDownload;
 
-  private ExploreAdapter mAdapter;
+  private AnyPlaylistAdapter mAdapter;
   private RecyclerView mRecyclerView;
 
   private String playlistTitle = "Playlist";
@@ -91,7 +88,7 @@ public class AnyPlaylistFragment extends Fragment {
     mActivity.getSupportActionBar().setDisplayShowHomeEnabled(true);
     mActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-    mAdapter = new ExploreAdapter();
+    mAdapter = new AnyPlaylistAdapter();
     mRecyclerView = mRootView.findViewById(R.id.recyclerview);
     mRecyclerView.setLayoutManager(new LinearLayoutManager(mContext));
     mRecyclerView.setAdapter(mAdapter);
@@ -156,7 +153,7 @@ public class AnyPlaylistFragment extends Fragment {
     }
   }
 
-  public class ExploreAdapter extends EpoxyAdapter {
+  class AnyPlaylistAdapter extends EpoxyAdapter {
     void addSongModel(Song song) {
       addModel(new SongModel(song));
     }
@@ -228,7 +225,7 @@ public class AnyPlaylistFragment extends Fragment {
     }
   }
 
-  public class SongHolder extends EpoxyHolder {
+  protected class SongHolder extends EpoxyHolder {
 
     View itemView;
     TextView mSongTitle;

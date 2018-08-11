@@ -52,8 +52,8 @@ import ml.toufic.songs.util.SongUtils;
 public class MyMusicFragment extends Fragment {
 
   private static final String TAG = "MyMusicFragment : ";
-  protected MainActivity mActivity;
-  protected View mRootView;
+  private MainActivity mActivity;
+  private View mRootView;
   private Context mContext;
   private ActionMode mActionMode;
 
@@ -212,14 +212,11 @@ public class MyMusicFragment extends Fragment {
       playableSong.setIndexInQueue(i);
       mAdapter.addDownloadedSongModel(playableSong);
     }
-//    for(PlayableSong playableSong : playableSongs) {
-//      mAdapter.addDownloadedSongModel(playableSong);
-//    }
 
     mSwipeRefreshLayout.setRefreshing(false);
   }
 
-  public class MyMusicAdapter extends EpoxyAdapter {
+  class MyMusicAdapter extends EpoxyAdapter {
     void addDownloadedSongModel(PlayableSong playableSong) {
       addModel(new DownloadedSongModel(playableSong));
     }
@@ -294,7 +291,7 @@ public class MyMusicFragment extends Fragment {
     }
 
     @Override
-    public void bind(final DownloadedSongHolder holder) {
+    public void bind(@NonNull final DownloadedSongHolder holder) {
       super.bind(holder);
 
       holder.itemView.setOnClickListener(onClickListener);
@@ -304,7 +301,7 @@ public class MyMusicFragment extends Fragment {
     }
 
     @Override
-    public void unbind(DownloadedSongHolder holder) {
+    public void unbind(@NonNull DownloadedSongHolder holder) {
       super.unbind(holder);
 
       holder.itemView.setOnClickListener(null);

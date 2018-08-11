@@ -1,6 +1,7 @@
 package ml.toufic.songs.model;
 
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.view.View;
 
 import com.airbnb.epoxy.EpoxyHolder;
@@ -28,7 +29,7 @@ public class PlayerCoverModel extends EpoxyModelWithHolder<PlayerCoverModel.Play
   }
 
   @Override
-  public void bind(PlayerCoverHolder holder) {
+  public void bind(@NonNull PlayerCoverHolder holder) {
     super.bind(holder);
     holder.coverArt.setImageURI(Uri.parse(coverArtUrl));
   }

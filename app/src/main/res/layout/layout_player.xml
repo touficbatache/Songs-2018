@@ -127,16 +127,16 @@
 
         <TextView
             android:id="@+id/player_progress_current"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="00:00"
+            tools:text="00:00"
             android:layout_weight="1" />
 
         <TextView
             android:id="@+id/player_progress_total"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="04:47" />
+            tools:text="04:47" />
 
     </LinearLayout>
 

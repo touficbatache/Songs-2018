@@ -336,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerRecyclerView.addOnScrollListener(mPlayerRecyclerViewListener);
   }
 
-  public class PlayerCoversAdapter extends EpoxyAdapter {
+  class PlayerCoversAdapter extends EpoxyAdapter {
     void addCoverArt(String coverArtUrl) {
       addModel(new PlayerCoverModel(coverArtUrl));
     }
@@ -434,7 +434,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mMiniPlayerPlayToPauseBtn.pause();
   }
 
-  public void startProgressTracking() {
+  private void startProgressTracking() {
     mPlayerSongProgress.setProgress(mPlayerMediaPlayer.getCurrentPosition());
     mPlayerSong.setLastPosition(mPlayerMediaPlayer.getCurrentPosition());
     SongUtils.cacheLastSong(mContext, mPlayerSong);

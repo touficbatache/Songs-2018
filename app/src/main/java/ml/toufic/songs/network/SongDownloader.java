@@ -10,8 +10,6 @@ import android.net.Uri;
 import android.util.SparseArray;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-
 import java.io.File;
 import java.util.List;
 
