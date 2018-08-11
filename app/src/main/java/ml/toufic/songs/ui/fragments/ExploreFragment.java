@@ -2,7 +2,6 @@ package ml.toufic.songs.ui.fragments;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -41,11 +40,11 @@ import java.util.List;
 import at.huber.youtubeExtractor.VideoMeta;
 import at.huber.youtubeExtractor.YouTubeExtractor;
 import at.huber.youtubeExtractor.YtFile;
+import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.ui.activities.MainActivity;
 import ml.toufic.songs.R;
 import ml.toufic.songs.network.JSONObjectDataFetcher;
 import ml.toufic.songs.network.SongDownloader;
-import ml.toufic.songs.model.DownloadedSong;
 import ml.toufic.songs.model.Song;
 import ml.toufic.songs.util.DeviceUtils;
 import ml.toufic.songs.util.SongUtils;
@@ -60,7 +59,6 @@ public class ExploreFragment extends Fragment {
   private Context mContext;
 
   private Song songToDownload;
-  private String toastText = "Oops, it looks like this song isn't currently available. Try again later";
 
   private ExploreAdapter mAdapter;
   private RecyclerView mRecyclerView;
@@ -93,7 +91,7 @@ public class ExploreFragment extends Fragment {
 
   @Nullable
   @Override
-  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+  public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
     mRootView = inflater.inflate(R.layout.layout_recyclerview, null);
 
     mActivity.getSupportActionBar().setTitle(R.string.title_explore);
@@ -277,7 +275,7 @@ public class ExploreFragment extends Fragment {
         mAdapter.addSongModel(song);
       }
 
-      mAdapter.addSeeMore(new NewThisWeekFragment());
+      mAdapter.addSeeMore(AnyPlaylistFragment.newInstance(getResources().getString(R.string.new_this_week), SongUtils.NEW_THIS_WEEK_PLAYLIST_ID));
     }
 
     if(hasPopular) {
@@ -287,46 +285,8 @@ public class ExploreFragment extends Fragment {
         mAdapter.addSongModel(song);
       }
 
-      mAdapter.addSeeMore(new PopularFragment());
+      mAdapter.addSeeMore(AnyPlaylistFragment.newInstance(getResources().getString(R.string.popular), SongUtils.POPULAR_PLAYLIST_ID));
     }
-  }
-
-  @SuppressLint("StaticFieldLeak")
-  private void downloadSong(final Song song) {
-    new YouTubeExtractor(mContext) {
-      @Override
-      public void onExtractionComplete(SparseArray<YtFile> ytFiles, final VideoMeta vMeta) {
-        if (ytFiles != null) {
-          for (int i = 0, itag; i < ytFiles.size(); i++) {
-            itag = ytFiles.keyAt(i);
-            final YtFile ytFile = ytFiles.get(itag);
-
-            // We only want audio, so: `height == -1` :)
-            if (ytFile.getFormat().getHeight() == -1) {
-              boolean isSongInDownloadsDir = SongUtils.isSongInDownloadsDir(song.getId());
-              boolean isSongInMyMusic = SongUtils.isSongInMyMusic(mContext, song.getId());
-
-              if (isSongInDownloadsDir && isSongInMyMusic) {
-                toastText = "Song already exists!";
-              } else {
-                toastText = "Download started";
-                SongDownloader.startDownload(mContext, song, ytFile, new SongDownloader.SongDownloaderCallback() {
-                  @Override
-                  public void onSuccess(DownloadedSong downloadedSong) {
-                    if (downloadedSong.getPath().exists()) {
-                      List<DownloadedSong> downloadedSongs = SongUtils.getCachedDownloadedSongs(mContext);
-                      downloadedSongs.add(downloadedSong);
-                      DeviceUtils.cacheData(mContext, SongUtils.CACHED_SONGS_KEY, new Gson().toJson(downloadedSongs));
-                    }
-                  }
-                });
-              }
-            }
-          }
-        }
-        Toast.makeText(mContext, toastText, Toast.LENGTH_LONG).show();
-      }
-    }.extract(song.getLink(), true, false);
   }
 
   public class ExploreAdapter extends EpoxyAdapter {
@@ -370,7 +330,7 @@ public class ExploreFragment extends Fragment {
     }
 
     @Override
-    public void bind(SubheaderHolder holder) {
+    public void bind(@NonNull SubheaderHolder holder) {
       super.bind(holder);
 
       holder.subheader.setText(title);
@@ -406,7 +366,7 @@ public class ExploreFragment extends Fragment {
               DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
           } else {
             songToDownload = song;
-            downloadSong(song);
+            SongDownloader.downloadSong(mContext, song);
           }
         }
       };
@@ -423,7 +383,7 @@ public class ExploreFragment extends Fragment {
     }
 
     @Override
-    public void bind(SongHolder holder) {
+    public void bind(@NonNull SongHolder holder) {
       super.bind(holder);
 
       holder.itemView.setOnClickListener(onClickListener);
@@ -432,7 +392,7 @@ public class ExploreFragment extends Fragment {
     }
 
     @Override
-    public void unbind(SongHolder holder) {
+    public void unbind(@NonNull SongHolder holder) {
       super.unbind(holder);
 
       holder.itemView.setOnClickListener(null);
@@ -473,7 +433,7 @@ public class ExploreFragment extends Fragment {
     }
 
     @Override
-    public void bind(SeeMoreHolder holder) {
+    public void bind(@NonNull SeeMoreHolder holder) {
       super.bind(holder);
 
       holder.itemView.setOnClickListener(onClickListener);
@@ -518,7 +478,7 @@ public class ExploreFragment extends Fragment {
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     if (requestCode == DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
       if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-        downloadSong(songToDownload);
+        SongDownloader.downloadSong(mContext, songToDownload);
       } else {
         Toast.makeText(mContext, "Please accept permission to download songs!", Toast.LENGTH_LONG).show();
       }

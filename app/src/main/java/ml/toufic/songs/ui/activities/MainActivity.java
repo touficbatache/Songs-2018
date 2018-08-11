@@ -1,9 +1,6 @@
 package ml.toufic.songs.ui.activities;
 
 import android.content.Context;
-import android.graphics.drawable.Animatable;
-import android.graphics.drawable.AnimatedVectorDrawable;
-import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -38,7 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ml.toufic.songs.R;
-import ml.toufic.songs.model.DownloadedSong;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.PlayerCoverModel;
 import ml.toufic.songs.ui.fragments.ExploreFragment;
@@ -54,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private BottomNavigationView mBottomNavigationView;
 
-  private List<PlayableSong> mPlayingQueue = new ArrayList<PlayableSong>();
+  private List<PlayableSong> mPlayingQueue = new ArrayList<>();
   private PlayableSong mPlayerSong;
 
   private ImageButton mPlayerArrowDown;
@@ -123,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
     mContext = MainActivity.this;
 
-    mBottomNavigationView = (BottomNavigationView) findViewById(R.id.navigation);
+    mBottomNavigationView = findViewById(R.id.navigation);
     mBottomNavigationView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
     getSupportFragmentManager()
@@ -142,6 +138,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private boolean loadFragment(Fragment fragment) {
     if (fragment != null) {
+      getSupportFragmentManager().popBackStack();
       getSupportFragmentManager()
         .beginTransaction()
         .replace(R.id.fragment_container, fragment)
@@ -215,15 +212,17 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     updatePlayingQueue();
     updateLastPlayedSong();
     updateCoversInRecyclerView();
-    mPlayerRecyclerView.scrollToPosition(mPlayerSong.getIndex());
+    mPlayerRecyclerView.scrollToPosition(mPlayerSong.getIndexInQueue());
     updateMediaPlayer();
   }
 
   private void updatePlayingQueue() {
-    mPlayingQueue = new ArrayList<PlayableSong>();
-    List<DownloadedSong> downloadedSongsList = SongUtils.getCachedDownloadedSongs(mContext);
-    for(int i=0; i<downloadedSongsList.size(); i++) {
-      mPlayingQueue.add(new PlayableSong(downloadedSongsList.get(i), i));
+    mPlayingQueue = new ArrayList<>();
+    List<PlayableSong> playableSongsList = SongUtils.getCachedSongs(mContext);
+    for(int i=0; i<playableSongsList.size(); i++) {
+      PlayableSong playableSong = playableSongsList.get(i);
+      playableSong.setIndexInQueue(i);
+      mPlayingQueue.add(playableSong);
     }
   }
 
@@ -247,7 +246,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerSongArtist.setText(mPlayerSong.getArtist());
 
     if (mPlayingQueue != null) {
-      if (mPlayerSong.getIndex() == 0) {
+      if (mPlayerSong.getIndexInQueue() == 0) {
         mPlayerPrevBtn.setEnabled(false);
         setColorEnabled(mPlayerPrevBtn, false);
       } else {
@@ -255,13 +254,13 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         setColorEnabled(mPlayerPrevBtn, true);
       }
 
-      if (mPlayerSong.getIndex() == mPlayingQueue.size() - 1) {
+      if (mPlayerSong.getIndexInQueue() == mPlayingQueue.size() - 1) {
         mPlayerNextBtn.setEnabled(false);
         setColorEnabled(mPlayerNextBtn, false);
       } else {
         mPlayerNextBtn.setEnabled(true);
         setColorEnabled(mPlayerNextBtn, true);
-        mPlayerNextUpSongTitle.setText(mPlayingQueue.get(mPlayerSong.getIndex()+1).getTitle());
+        mPlayerNextUpSongTitle.setText(mPlayingQueue.get(mPlayerSong.getIndexInQueue()+1).getTitle());
       }
 
       setColorEnabled(mPlayerRepeatBtn, mPlayerSong.isLooping());
@@ -283,14 +282,14 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerPrevBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        int previousSongIndex = mPlayerSong.getIndex() - 1;
+        int previousSongIndex = mPlayerSong.getIndexInQueue() - 1;
         mPlayerRecyclerView.smoothScrollToPosition(previousSongIndex);
       }
     });
     mPlayerNextBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        int nextSongIndex = mPlayerSong.getIndex() + 1;
+        int nextSongIndex = mPlayerSong.getIndexInQueue() + 1;
         mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
       }
     });
@@ -328,7 +327,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         super.onScrollStateChanged(recyclerView, newState);
         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
           int songIndex = ((LinearLayoutManager) mPlayerRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-          if(mPlayerSong.getIndex() != songIndex) {
+          if(mPlayerSong.getIndexInQueue() != songIndex) {
             loadSong(mPlayingQueue.get(songIndex));
           }
         }
@@ -368,12 +367,12 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onCompletion(MediaPlayer mediaPlayer) {
         if (!mPlayerSong.isLooping()) {
-          if (mPlayerSong.getIndex() == mPlayingQueue.size() - 1) {
+          if (mPlayerSong.getIndexInQueue() == mPlayingQueue.size() - 1) {
             mPlayerPlayToPauseBtn.pause();
             mMiniPlayerPlayToPauseBtn.pause();
             mPlayerMediaPlayer.seekTo(0);
           } else {
-            int nextSongIndex = mPlayerSong.getIndex() + 1;
+            int nextSongIndex = mPlayerSong.getIndexInQueue() + 1;
             mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
           }
         } else {
@@ -391,7 +390,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         }
         if(progress / 1000 < (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerNextUp.getAlpha() == 1.0f) {
           mPlayerNextUp.animate().alpha(0.0f);
-        } else if (progress / 1000 == (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndex() != mPlayingQueue.size() - 1) {
+        } else if (progress / 1000 == (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndexInQueue() != mPlayingQueue.size() - 1) {
           mPlayerNextUp.animate().alpha(1.0f);
         }
         DecimalFormat formatter = new DecimalFormat("00");

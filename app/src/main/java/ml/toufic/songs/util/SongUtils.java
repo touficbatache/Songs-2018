@@ -9,27 +9,26 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import ml.toufic.songs.model.DownloadedSong;
 import ml.toufic.songs.model.PlayableSong;
 
 public class SongUtils {
 
-  public static final String CACHED_SONGS_KEY = "downloadedSongs";
-  public static final String CACHED_LAST_SONG_KEY = "lastSong";
+  private static final String CACHED_SONGS_KEY = "downloadedSongs";
+  private static final String CACHED_LAST_SONG_KEY = "lastSong";
 
   public final static String NEW_THIS_WEEK_PLAYLIST_ID = "PLFgquLnL59alW3xmYiWRaoz0oM3H17Lth";
   public final static String POPULAR_PLAYLIST_ID = "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI";
   public final static String API_KEY = "YOUR_YOUTUBE_API_KEY";
 
-  public static void cacheDownloadedSongs(Context context, List<DownloadedSong> songs) {
+  public static void cacheSongs(Context context, List<PlayableSong> songs) {
     DeviceUtils.cacheData(context, CACHED_SONGS_KEY, new Gson().toJson(songs));
   }
 
-  public static ArrayList<DownloadedSong> getCachedDownloadedSongs(Context context) {
+  public static ArrayList<PlayableSong> getCachedSongs(Context context) {
     if(DeviceUtils.getCachedData(context, CACHED_SONGS_KEY) != null) {
-      return new Gson().fromJson(DeviceUtils.getCachedData(context, CACHED_SONGS_KEY), new TypeToken<List<DownloadedSong>>() {}.getType());
+      return new Gson().fromJson(DeviceUtils.getCachedData(context, CACHED_SONGS_KEY), new TypeToken<List<PlayableSong>>() {}.getType());
     } else {
-      return new ArrayList<DownloadedSong>();
+      return new ArrayList<>();
     }
   }
 
@@ -68,10 +67,10 @@ public class SongUtils {
   }
 
   public static boolean isSongInMyMusic(Context context, String songId) {
-    List<DownloadedSong> downloadedSongs = SongUtils.getCachedDownloadedSongs(context);
+    List<PlayableSong> playableSongs = SongUtils.getCachedSongs(context);
     boolean isInMyMusic = false;
-    for(DownloadedSong downloadedSong : downloadedSongs) {
-      if(downloadedSong.getPath().toString().contains(songId)) {
+    for(PlayableSong playableSong : playableSongs) {
+      if(playableSong.getPath().toString().contains(songId)) {
         isInMyMusic = true;
       }
     }

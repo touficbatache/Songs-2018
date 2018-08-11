@@ -5,13 +5,13 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +22,6 @@ import com.airbnb.epoxy.EpoxyAdapter;
 import com.airbnb.epoxy.EpoxyHolder;
 import com.airbnb.epoxy.EpoxyModelWithHolder;
 import com.google.gson.Gson;
-import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,11 +30,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import at.huber.youtubeExtractor.VideoMeta;
-import at.huber.youtubeExtractor.YouTubeExtractor;
-import at.huber.youtubeExtractor.YtFile;
 import ml.toufic.songs.R;
-import ml.toufic.songs.model.DownloadedSong;
+import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.Song;
 import ml.toufic.songs.network.JSONObjectDataFetcher;
 import ml.toufic.songs.network.SongDownloader;
@@ -43,23 +39,32 @@ import ml.toufic.songs.ui.activities.MainActivity;
 import ml.toufic.songs.util.DeviceUtils;
 import ml.toufic.songs.util.SongUtils;
 
-public class PopularFragment extends Fragment {
+public class AnyPlaylistFragment extends Fragment {
 
   private final static String MAX_RESULTS = "50";
 
-  private static final String TAG = "NewThisWeekFragment : ";
+  private static final String TAG = "AnyPlaylistFragment : ";
   private MainActivity mActivity;
   private View mRootView;
   private Context mContext;
 
   private Song songToDownload;
-  private String toastText = "Oops, it looks like this song isn't currently available. Try again later";
 
   private ExploreAdapter mAdapter;
   private RecyclerView mRecyclerView;
-  private MaterialSearchView searchView;
 
-  private List<Song> popularSongs = new ArrayList<Song>();
+  private String playlistTitle = "Playlist";
+  private String playlistId;
+  private List<Song> playlistSongs = new ArrayList<>();
+
+  public static AnyPlaylistFragment newInstance(String playlistName, String playlistId) {
+    AnyPlaylistFragment fragment = new AnyPlaylistFragment();
+    Bundle bundle = new Bundle();
+    bundle.putString("playlist-name", playlistName);
+    bundle.putString("playlist-id", playlistId);
+    fragment.setArguments(bundle);
+    return fragment;
+  }
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,10 +78,16 @@ public class PopularFragment extends Fragment {
 
   @Nullable
   @Override
-  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+  public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
     mRootView = inflater.inflate(R.layout.layout_recyclerview, null);
 
-    mActivity.getSupportActionBar().setTitle(R.string.popular);
+    Bundle args = getArguments();
+    if (args != null) {
+      playlistTitle = args.getString("playlist-name");
+      playlistId = args.getString("playlist-id");
+    }
+
+    mActivity.getSupportActionBar().setTitle(playlistTitle);
     mActivity.getSupportActionBar().setDisplayShowHomeEnabled(true);
     mActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -92,14 +103,16 @@ public class PopularFragment extends Fragment {
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
-    getExploreSongs();
+    if (getArguments() != null) {
+      getExploreSongs();
+    }
   }
 
   private void getExploreSongs() {
 
-    String popularURL = "https://www.googleapis.com/youtube/v3/playlistItems?part=id, snippet&playlistId=" + SongUtils.POPULAR_PLAYLIST_ID + "&key=" + SongUtils.API_KEY + "&maxResults=" + MAX_RESULTS;
+    String newThisWeekURL = "https://www.googleapis.com/youtube/v3/playlistItems?part=id, snippet&playlistId=" + playlistId + "&key=" + SongUtils.API_KEY + "&maxResults=" + MAX_RESULTS;
 
-    new JSONObjectDataFetcher(popularURL, new JSONObjectDataFetcher.JSONDataFetcherCallback() {
+    new JSONObjectDataFetcher(newThisWeekURL, new JSONObjectDataFetcher.JSONDataFetcherCallback() {
       @Override
       public void onSuccess(JSONObject result) {
         try {
@@ -107,14 +120,19 @@ public class PopularFragment extends Fragment {
           for (int i = 0; i < playlistItems.length(); i++) {
             JSONObject snippet = playlistItems.getJSONObject(i).getJSONObject("snippet");
             JSONObject resourceId = snippet.getJSONObject("resourceId");
-            JSONObject thumbnailObj = snippet.getJSONObject("thumbnails");
+            JSONObject thumbnailObj = null;
+            if(snippet.has("thumbnails")){
+              thumbnailObj = snippet.getJSONObject("thumbnails");
+            }
 
             String id = resourceId.getString("videoId");
             String title = snippet.getString("title");
             String author = snippet.getString("channelTitle");
-            String thumbnail = thumbnailObj.getJSONObject("high").getString("url"); // TODO: Add thumbnail size in settings
+            if(thumbnailObj != null) {
+              String thumbnail = thumbnailObj.getJSONObject("high").getString("url"); // TODO: Add thumbnail size in settings
 
-            popularSongs.add(new Song(id, title, author, thumbnail));
+              playlistSongs.add(new Song(id, title, author, thumbnail));
+            }
           }
 
           updateRecyclerViewSongs();
@@ -133,47 +151,9 @@ public class PopularFragment extends Fragment {
   private void updateRecyclerViewSongs() {
     mAdapter.clear();
 
-    for (Song song : popularSongs) {
+    for (Song song : playlistSongs) {
       mAdapter.addSongModel(song);
     }
-  }
-
-  @SuppressLint("StaticFieldLeak")
-  private void downloadSong(final Song song) {
-    new YouTubeExtractor(mContext) {
-      @Override
-      public void onExtractionComplete(SparseArray<YtFile> ytFiles, final VideoMeta vMeta) {
-        if (ytFiles != null) {
-          for (int i = 0, itag; i < ytFiles.size(); i++) {
-            itag = ytFiles.keyAt(i);
-            final YtFile ytFile = ytFiles.get(itag);
-
-            // We only want audio: height == -1 :)
-            if (ytFile.getFormat().getHeight() == -1) {
-              boolean isSongInDownloadsDir = SongUtils.isSongInDownloadsDir(song.getId());
-              boolean isSongInMyMusic = SongUtils.isSongInMyMusic(mContext, song.getId());
-
-              if (isSongInDownloadsDir && isSongInMyMusic) {
-                toastText = "Song already exists!";
-              } else {
-                toastText = "Download started";
-                SongDownloader.startDownload(mContext, song, ytFile, new SongDownloader.SongDownloaderCallback() {
-                  @Override
-                  public void onSuccess(DownloadedSong downloadedSong) {
-                    if (downloadedSong.getPath().exists()) {
-                      List<DownloadedSong> downloadedSongs = SongUtils.getCachedDownloadedSongs(mContext);
-                      downloadedSongs.add(downloadedSong);
-                      DeviceUtils.cacheData(mContext, SongUtils.CACHED_SONGS_KEY, new Gson().toJson(downloadedSongs));
-                    }
-                  }
-                });
-              }
-            }
-          }
-        }
-        Toast.makeText(mContext, toastText, Toast.LENGTH_LONG).show();
-      }
-    }.extract(song.getLink(), true, false);
   }
 
   public class ExploreAdapter extends EpoxyAdapter {
@@ -215,7 +195,7 @@ public class PopularFragment extends Fragment {
               DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
           } else {
             songToDownload = song;
-            downloadSong(song);
+            SongDownloader.downloadSong(mContext, song);
           }
         }
       };
@@ -232,7 +212,7 @@ public class PopularFragment extends Fragment {
     }
 
     @Override
-    public void bind(SongHolder holder) {
+    public void bind(@NonNull SongHolder holder) {
       super.bind(holder);
 
       holder.itemView.setOnClickListener(onClickListener);
@@ -241,7 +221,7 @@ public class PopularFragment extends Fragment {
     }
 
     @Override
-    public void unbind(SongHolder holder) {
+    public void unbind(@NonNull SongHolder holder) {
       super.unbind(holder);
 
       holder.itemView.setOnClickListener(null);
@@ -262,21 +242,11 @@ public class PopularFragment extends Fragment {
     }
   }
 
-  public class SeeMoreHolder extends EpoxyHolder {
-
-    View itemView;
-
-    @Override
-    protected void bindView(View itemView) {
-      this.itemView = itemView;
-    }
-  }
-
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     if (requestCode == DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
       if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-        downloadSong(songToDownload);
+        SongDownloader.downloadSong(mContext, songToDownload);
       } else {
         Toast.makeText(mContext, "Please accept permission to download songs!", Toast.LENGTH_LONG).show();
       }

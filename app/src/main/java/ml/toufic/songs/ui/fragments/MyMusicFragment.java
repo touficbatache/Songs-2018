@@ -45,7 +45,6 @@ import ml.toufic.songs.model.Song;
 import ml.toufic.songs.network.JSONObjectDataFetcher;
 import ml.toufic.songs.ui.activities.MainActivity;
 import ml.toufic.songs.R;
-import ml.toufic.songs.model.DownloadedSong;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.util.DeviceUtils;
 import ml.toufic.songs.util.SongUtils;
@@ -62,7 +61,7 @@ public class MyMusicFragment extends Fragment {
   private RecyclerView mRecyclerView;
   private SwipeRefreshLayout mSwipeRefreshLayout;
   private MaterialSearchView searchView;
-  private List<DownloadedSong> downloadedSongs = new ArrayList<DownloadedSong>();
+  private List<PlayableSong> playableSongs = new ArrayList<>();
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -76,10 +75,12 @@ public class MyMusicFragment extends Fragment {
 
   @Nullable
   @Override
-  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+  public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
     mRootView = inflater.inflate(R.layout.fragment_my_music, null);
 
     mActivity.getSupportActionBar().setTitle(R.string.title_my_music);
+    mActivity.getSupportActionBar().setDisplayShowHomeEnabled(false);
+    mActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(false);
 
     mAdapter = new MyMusicAdapter();
     mRecyclerView = mRootView.findViewById(R.id.recyclerview);
@@ -116,7 +117,7 @@ public class MyMusicFragment extends Fragment {
   }
 
   private void loadDownloadedSongs() {
-    downloadedSongs = SongUtils.getCachedDownloadedSongs(mContext);
+    playableSongs = SongUtils.getCachedSongs(mContext);
 
     if (ContextCompat.checkSelfPermission(mActivity,
       Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -130,10 +131,10 @@ public class MyMusicFragment extends Fragment {
   }
 
   private void loadMyMusic() {
-    for (Iterator<DownloadedSong> downloadedSongsIterator = downloadedSongs.iterator(); downloadedSongsIterator.hasNext(); ) {
-      DownloadedSong downloadedSong = downloadedSongsIterator.next();
-      if (!downloadedSong.getPath().exists()) {
-        downloadedSongsIterator.remove(); //TODO: Don't remove the song, just tell the user that the song can't be played and ask him if he wants to re-download it.
+    for (Iterator<PlayableSong> playableSongsIterator = playableSongs.iterator(); playableSongsIterator.hasNext(); ) {
+      PlayableSong playableSong = playableSongsIterator.next();
+      if (!playableSong.getPath().exists()) {
+        playableSongsIterator.remove(); //TODO: Don't remove the song, just tell the user that the song can't be played and ask him if he wants to re-download it.
       }
     }
 
@@ -156,8 +157,8 @@ public class MyMusicFragment extends Fragment {
                 String thumbnail = thumbnailObj.getJSONObject("high").getString("url");
 
                 Song song = new Song(id, title, author, thumbnail);
-                downloadedSongs.add(new DownloadedSong(SongUtils.getSongPath(SongUtils.getSongFileName(id)), song));
-                SongUtils.cacheDownloadedSongs(mContext, downloadedSongs);
+                playableSongs.add(new PlayableSong(song, SongUtils.getSongPath(SongUtils.getSongFileName(id))));
+                SongUtils.cacheSongs(mContext, playableSongs);
                 updateRecyclerViewDownloadedSongs();
               }
             } catch (JSONException e) {
@@ -173,12 +174,12 @@ public class MyMusicFragment extends Fragment {
       }
     }
 
-    SongUtils.cacheDownloadedSongs(mContext, downloadedSongs);
+    SongUtils.cacheSongs(mContext, playableSongs);
     updateRecyclerViewDownloadedSongs();
   }
 
   private void initSearch() {
-    searchView = (MaterialSearchView) mActivity.findViewById(R.id.search_view);
+    searchView = mActivity.findViewById(R.id.search_view);
     searchView.setHint(getResources().getString(R.string.hint_search_downloaded));
     searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
       @Override
@@ -190,9 +191,9 @@ public class MyMusicFragment extends Fragment {
       public boolean onQueryTextChange(String newText) {
         if(!TextUtils.isEmpty(newText.trim())) {
           mAdapter.clear();
-          for(DownloadedSong downloadedSong : downloadedSongs) {
-            if(downloadedSong.getTitle().toLowerCase().contains(newText.trim().toLowerCase()) || downloadedSong.getArtist().toLowerCase().contains(newText.trim().toLowerCase())) {
-              mAdapter.addDownloadedSongModel(downloadedSong);
+          for(PlayableSong playableSong : playableSongs) {
+            if(playableSong.getTitle().toLowerCase().contains(newText.trim().toLowerCase()) || playableSong.getArtist().toLowerCase().contains(newText.trim().toLowerCase())) {
+              mAdapter.addDownloadedSongModel(playableSong);
             }
           }
         } else {
@@ -206,16 +207,21 @@ public class MyMusicFragment extends Fragment {
   private void updateRecyclerViewDownloadedSongs() {
     mAdapter.clear();
 
-    for(DownloadedSong downloadedSong : downloadedSongs) {
-      mAdapter.addDownloadedSongModel(downloadedSong);
+    for(int i=0; i<playableSongs.size(); i++) {
+      PlayableSong playableSong = playableSongs.get(i);
+      playableSong.setIndexInQueue(i);
+      mAdapter.addDownloadedSongModel(playableSong);
     }
+//    for(PlayableSong playableSong : playableSongs) {
+//      mAdapter.addDownloadedSongModel(playableSong);
+//    }
 
     mSwipeRefreshLayout.setRefreshing(false);
   }
 
   public class MyMusicAdapter extends EpoxyAdapter {
-    void addDownloadedSongModel(DownloadedSong downloadedSong) {
-      addModel(new DownloadedSongModel(downloadedSong));
+    void addDownloadedSongModel(PlayableSong playableSong) {
+      addModel(new DownloadedSongModel(playableSong));
     }
 
     void clear() {
@@ -225,9 +231,7 @@ public class MyMusicFragment extends Fragment {
 
   private class DownloadedSongModel extends EpoxyModelWithHolder<DownloadedSongHolder> {
 
-    private DownloadedSongHolder holder;
-
-    private DownloadedSong song;
+    private PlayableSong song;
     private String songId;
     private File songPath;
     private String songTitle;
@@ -235,11 +239,10 @@ public class MyMusicFragment extends Fragment {
     private String songCoverArt;
 
     private View.OnClickListener onClickListener;
-    private View.OnLongClickListener mOnLongClickListener;
     private View.OnClickListener deleteOnClickListener;
 
-    DownloadedSongModel(final DownloadedSong downloadedSong) {
-      song = downloadedSong;
+    DownloadedSongModel(final PlayableSong playableSong) {
+      song = playableSong;
       songId = song.getId();
       songPath = song.getPath();
       songTitle = song.getTitle();
@@ -248,7 +251,7 @@ public class MyMusicFragment extends Fragment {
       onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-          mActivity.loadSong(new PlayableSong(song, downloadedSongs.indexOf(song)));
+          mActivity.loadSong(playableSong);
         }
       };
       deleteOnClickListener = new View.OnClickListener() {
@@ -265,10 +268,12 @@ public class MyMusicFragment extends Fragment {
             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
               public void onClick(DialogInterface dialog, int id) {
                 if(songPath.exists()) {
-                  songPath.delete();
+                  if(songPath.delete()) {
+                    Toast.makeText(mContext, "Deleted successfully!", Toast.LENGTH_LONG).show();
+                  }
                 }
-                downloadedSongs.remove(song);
-                SongUtils.cacheDownloadedSongs(mContext, downloadedSongs);
+                playableSongs.remove(song);
+                SongUtils.cacheSongs(mContext, playableSongs);
                 updateRecyclerViewDownloadedSongs();
               }
             });
@@ -291,7 +296,6 @@ public class MyMusicFragment extends Fragment {
     @Override
     public void bind(final DownloadedSongHolder holder) {
       super.bind(holder);
-      this.holder = holder;
 
       holder.itemView.setOnClickListener(onClickListener);
       holder.mSongTitle.setText(songTitle);
