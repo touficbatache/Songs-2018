@@ -24,6 +24,26 @@ import ml.toufic.songs.util.SongUtils;
 public class SongDownloader {
 
   @SuppressLint("StaticFieldLeak")
+  public static void fetchSongURL(final Context context, final Song song, final SongURLFetcherCallback callback) {
+    new YouTubeExtractor(context) {
+      @Override
+      public void onExtractionComplete(SparseArray<YtFile> ytFiles, final VideoMeta vMeta) {
+        if (ytFiles != null) {
+          for (int i = 0, itag; i < ytFiles.size(); i++) {
+            itag = ytFiles.keyAt(i);
+            final YtFile ytFile = ytFiles.get(itag);
+
+            // We only want audio: height == -1 :)
+            if (ytFile.getFormat().getHeight() == -1) {
+              callback.onSuccess(ytFile.getUrl());
+            }
+          }
+        }
+      }
+    }.extract(song.getLink(), true, false);
+  }
+
+  @SuppressLint("StaticFieldLeak")
   public static void downloadSong(final Context context, final Song song) {
     new YouTubeExtractor(context) {
       @Override
@@ -81,9 +101,9 @@ public class SongDownloader {
     }, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
   }
 
-//  public interface SongDownloaderCallback {
-//    // method called when server's data get fetched
-//    void onSuccess(PlayableSong playableSong);
-//  }
+  public interface SongURLFetcherCallback {
+    // method called when server's data get fetched
+    void onSuccess(String url);
+  }
 
 }

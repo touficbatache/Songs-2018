@@ -19,6 +19,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -339,7 +340,8 @@ public class ExploreFragment extends Fragment {
     private String songTitle;
     private String songArtist;
     private String songCoverArt;
-    private View.OnClickListener onClickListener;
+    private View.OnClickListener playListener;
+    private View.OnClickListener downloadListener;
 
     SongModel(final Song song) {
       mSong = song;
@@ -348,7 +350,13 @@ public class ExploreFragment extends Fragment {
       songTitle = song.getTitle();
       songArtist = song.getArtist();
       songCoverArt = song.getCoverArt();
-      onClickListener = new View.OnClickListener() {
+      playListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+          mActivity.loadSong(mSong);
+        }
+      };
+      downloadListener = new View.OnClickListener() {
         @SuppressLint("StaticFieldLeak")
         @Override
         public void onClick(View view) {
@@ -380,7 +388,8 @@ public class ExploreFragment extends Fragment {
     public void bind(@NonNull SongHolder holder) {
       super.bind(holder);
 
-      holder.itemView.setOnClickListener(onClickListener);
+      holder.mDownloadBtn.setOnClickListener(downloadListener);
+      holder.itemView.setOnClickListener(playListener);
       holder.mSongTitle.setText(songTitle);
       holder.mSongArtist.setText(songArtist);
     }
@@ -439,12 +448,14 @@ public class ExploreFragment extends Fragment {
     View itemView;
     TextView mSongTitle;
     TextView mSongArtist;
+    ImageButton mDownloadBtn;
 
     @Override
     protected void bindView(View itemView) {
       this.itemView = itemView;
       mSongTitle = itemView.findViewById(R.id.song_title);
       mSongArtist = itemView.findViewById(R.id.song_artist);
+      mDownloadBtn = itemView.findViewById(R.id.btn_download);
     }
   }
 

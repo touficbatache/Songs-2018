@@ -62,4 +62,13 @@ public class PlayToPauseMorphingImageView extends AppCompatImageView {
     mIsShowingPause = false;
   }
 
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    if(enabled) {
+      setColorFilter(getResources().getColor(R.color.grey_67));
+    } else {
+      setColorFilter(getResources().getColor(R.color.grey_c0));
+    }
+  }
 }
