@@ -264,6 +264,10 @@ public class ExploreFragment extends Fragment {
     mAdapter.clear();
 
     if(hasNewThisWeek) {
+      mAdapter.addDivider();
+      mAdapter.addDivider();
+      mAdapter.addDivider();
+
       mAdapter.addSubheader(getString(R.string.new_this_week));
 
       for (Song song : newThisWeekSongs) {
@@ -273,6 +277,8 @@ public class ExploreFragment extends Fragment {
       mAdapter.addSeeMore(AnyPlaylistFragment.newInstance(getResources().getString(R.string.new_this_week), SongUtils.NEW_THIS_WEEK_PLAYLIST_ID));
     }
 
+    mAdapter.addDivider();
+
     if(hasPopular) {
       mAdapter.addSubheader(getString(R.string.popular));
 
@@ -281,6 +287,10 @@ public class ExploreFragment extends Fragment {
       }
 
       mAdapter.addSeeMore(AnyPlaylistFragment.newInstance(getResources().getString(R.string.popular), SongUtils.POPULAR_PLAYLIST_ID));
+
+      mAdapter.addDivider();
+      mAdapter.addDivider();
+      mAdapter.addDivider();
     }
   }
 

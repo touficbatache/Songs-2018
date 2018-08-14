@@ -35,6 +35,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import at.huber.youtubeExtractor.YtFile;
 import ml.toufic.songs.R;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.PlayerCoverModel;
@@ -574,8 +575,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     updateRemoteSongRecyclerView();
     SongDownloader.fetchSongURL(mContext, remoteSong, new SongDownloader.SongURLFetcherCallback() {
       @Override
-      public void onSuccess(String url) {
-        updateMediaPlayer(url);
+      public void onSuccess(YtFile songFile) {
+        updateMediaPlayer(songFile.getUrl());
         playSong();
       }
     });

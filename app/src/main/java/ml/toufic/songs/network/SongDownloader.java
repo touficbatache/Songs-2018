@@ -35,7 +35,7 @@ public class SongDownloader {
 
             // We only want audio: height == -1 :)
             if (ytFile.getFormat().getHeight() == -1) {
-              callback.onSuccess(ytFile.getUrl());
+              callback.onSuccess(ytFile);
             }
           }
         }
@@ -45,32 +45,22 @@ public class SongDownloader {
 
   @SuppressLint("StaticFieldLeak")
   public static void downloadSong(final Context context, final Song song) {
-    new YouTubeExtractor(context) {
+    fetchSongURL(context, song, new SongURLFetcherCallback() {
       @Override
-      public void onExtractionComplete(SparseArray<YtFile> ytFiles, final VideoMeta vMeta) {
+      public void onSuccess(YtFile songFile) {
+        boolean isSongInDownloadsDir = SongUtils.isSongInDownloadsDir(song.getId());
+        boolean isSongInMyMusic = SongUtils.isSongInMyMusic(context, song.getId());
+
         String toastText = "Oops, it looks like this song isn't currently available. Try again later";
-        if (ytFiles != null) {
-          for (int i = 0, itag; i < ytFiles.size(); i++) {
-            itag = ytFiles.keyAt(i);
-            final YtFile ytFile = ytFiles.get(itag);
-
-            // We only want audio: height == -1 :)
-            if (ytFile.getFormat().getHeight() == -1) {
-              boolean isSongInDownloadsDir = SongUtils.isSongInDownloadsDir(song.getId());
-              boolean isSongInMyMusic = SongUtils.isSongInMyMusic(context, song.getId());
-
-              if (isSongInDownloadsDir && isSongInMyMusic) {
-                toastText = "Song already exists!";
-              } else {
-                toastText = "Download started";
-                startDownload(context, song, ytFile);
-              }
-            }
-          }
+        if (isSongInDownloadsDir && isSongInMyMusic) {
+          toastText = "Song already exists!";
+        } else {
+          toastText = "Download started";
+          startDownload(context, song, songFile);
         }
         Toast.makeText(context, toastText, Toast.LENGTH_LONG).show();
       }
-    }.extract(song.getLink(), true, false);
+    });
   }
 
   private static void startDownload(Context context, final Song song, final YtFile ytFile) {
@@ -103,7 +93,7 @@ public class SongDownloader {
 
   public interface SongURLFetcherCallback {
     // method called when server's data get fetched
-    void onSuccess(String url);
+    void onSuccess(YtFile songFile);
   }
 
 }
