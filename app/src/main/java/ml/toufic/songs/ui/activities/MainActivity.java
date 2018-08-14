@@ -449,6 +449,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     });
 
+    mPlayerNextUp.animate().alpha(0.0f);
+
     mPlayerSongTitle.setText(mPlayerRemoteSong.getTitle());
     mMiniPlayerSongTitle.setText(mPlayerRemoteSong.getTitle());
     mPlayerSongArtist.setText(mPlayerRemoteSong.getArtist());
@@ -542,12 +544,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress, boolean input) {
         if (input) {
-          mPlayerMediaPlayer.seekTo(progress);
-        }
-        if(progress / 1000 < (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerNextUp.getAlpha() == 1.0f) {
-          mPlayerNextUp.animate().alpha(0.0f);
-        } else if (progress / 1000 >= (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndexInQueue() != mPlayingQueue.size() - 1) {
-          mPlayerNextUp.animate().alpha(1.0f);
+          mPlayerMediaPlayer.seekTo(progress-1);
         }
         DecimalFormat formatter = new DecimalFormat("00");
         String minutes = formatter.format(progress / 1000 / 60);
