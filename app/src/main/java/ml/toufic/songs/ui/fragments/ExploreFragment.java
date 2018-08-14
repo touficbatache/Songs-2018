@@ -263,11 +263,12 @@ public class ExploreFragment extends Fragment {
   private void updateRecyclerViewSongs() {
     mAdapter.clear();
 
-    if(hasNewThisWeek) {
+    if(hasNewThisWeek || hasPopular) {
       mAdapter.addDivider();
       mAdapter.addDivider();
-      mAdapter.addDivider();
+    }
 
+    if(hasNewThisWeek) {
       mAdapter.addSubheader(getString(R.string.new_this_week));
 
       for (Song song : newThisWeekSongs) {
@@ -277,9 +278,9 @@ public class ExploreFragment extends Fragment {
       mAdapter.addSeeMore(AnyPlaylistFragment.newInstance(getResources().getString(R.string.new_this_week), SongUtils.NEW_THIS_WEEK_PLAYLIST_ID));
     }
 
-    mAdapter.addDivider();
-
     if(hasPopular) {
+      mAdapter.addDivider();
+
       mAdapter.addSubheader(getString(R.string.popular));
 
       for (Song song : popularSongs) {
@@ -287,8 +288,9 @@ public class ExploreFragment extends Fragment {
       }
 
       mAdapter.addSeeMore(AnyPlaylistFragment.newInstance(getResources().getString(R.string.popular), SongUtils.POPULAR_PLAYLIST_ID));
+    }
 
-      mAdapter.addDivider();
+    if(hasNewThisWeek || hasPopular) {
       mAdapter.addDivider();
       mAdapter.addDivider();
     }

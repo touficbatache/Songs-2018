@@ -275,6 +275,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
       mPlayerPlayToPauseBtn.setEnabled(true);
       mMiniPlayerPlayToPauseBtn.setEnabled(true);
+      mPlayerSongProgress.setEnabled(true);
     }
 
     mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
@@ -474,6 +475,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     // Temporarily while loading...
     mPlayerPlayToPauseBtn.setEnabled(false);
     mMiniPlayerPlayToPauseBtn.setEnabled(false);
+    mPlayerSongProgress.setEnabled(false);
 
     mPlayerNextBtn.setEnabled(false);
     setColorEnabled(mPlayerNextBtn, false);
@@ -523,6 +525,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
         mPlayerPlayToPauseBtn.setEnabled(true);
         mMiniPlayerPlayToPauseBtn.setEnabled(true);
+        mPlayerSongProgress.setEnabled(true);
       }
     });
 
@@ -567,6 +570,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   public void loadSong(Song remoteSong) {
     destroy();
     isRemoteSongPlaying = true;
+    isRemoteSongLooping = false;
 
     updateRemoteSong(remoteSong);
     updateRemoteSongRecyclerView();
