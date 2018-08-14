@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private PlayableSong mPlayerSong;
 
   private boolean isRemoteSongPlaying = false;
+  private boolean isRemoteSongLooping = false;
   private Song mPlayerRemoteSong;
 
   private ImageButton mPlayerArrowDown;
@@ -270,6 +271,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
 
       setColorEnabled(mPlayerRepeatBtn, mPlayerSong.isLooping());
+
+      mPlayerPlayToPauseBtn.setEnabled(true);
+      mMiniPlayerPlayToPauseBtn.setEnabled(true);
     }
 
     mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
@@ -326,9 +330,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         mPlayerAdapter.addCoverArt(playableSong.getCoverArt());
       }
     }
-    if(mPlayerRemoteSong != null) {
-      mPlayerAdapter.addCoverArt(mPlayerRemoteSong.getCoverArt());
-    }
 
     mPlayerRecyclerViewListener = new RecyclerView.OnScrollListener() {
       @Override
@@ -336,12 +337,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         super.onScrollStateChanged(recyclerView, newState);
         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
           int songIndex = ((LinearLayoutManager) mPlayerRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-          if(mPlayerSong.getIndexInQueue() != songIndex || mPlayerRemoteSong != null) {
+          if(mPlayerSong.getIndexInQueue() != songIndex) {
             loadSong(mPlayingQueue.get(songIndex));
-            if(mPlayerRemoteSong != null) {
-              mPlayerRemoteSong = null;
-              updateCoversInRecyclerView();
-            }
           }
         }
       }
@@ -403,7 +400,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         }
         if(progress / 1000 < (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerNextUp.getAlpha() == 1.0f) {
           mPlayerNextUp.animate().alpha(0.0f);
-        } else if (progress / 1000 == (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndexInQueue() != mPlayingQueue.size() - 1) {
+        } else if (progress / 1000 >= (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndexInQueue() != mPlayingQueue.size() - 1) {
           mPlayerNextUp.animate().alpha(1.0f);
         }
         DecimalFormat formatter = new DecimalFormat("00");
@@ -434,7 +431,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     playSong();
   }
 
-  private void updateRemoteSong() {
+  private void updateRemoteSong(Song remoteSong) {
+    mPlayerRemoteSong = remoteSong;
+
     mMiniPlayerArrowUp.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -453,24 +452,28 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mMiniPlayerSongTitle.setText(mPlayerRemoteSong.getTitle());
     mPlayerSongArtist.setText(mPlayerRemoteSong.getArtist());
 
-    if (mPlayingQueue != null) {
-      mPlayerNextBtn.setEnabled(false);
-      setColorEnabled(mPlayerNextBtn, false);
-
-      // Temporarily while loading..
-      mPlayerPrevBtn.setEnabled(false);
-      setColorEnabled(mPlayerPrevBtn, false);
-      mPlayerPlayToPauseBtn.setEnabled(false);
-      mMiniPlayerPlayToPauseBtn.setEnabled(false);
-    }
-
-    mPlayerPrevBtn.setOnClickListener(new View.OnClickListener() {
+    mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        int previousSongIndex = mPlayingQueue.size() - 1;
-        mPlayerRecyclerView.smoothScrollToPosition(previousSongIndex);
+        if (!isRemoteSongLooping) {
+          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_67));
+          isRemoteSongLooping = true;
+        } else {
+          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
+          isRemoteSongLooping = false;
+        }
       }
     });
+
+    mPlayerPrevBtn.setEnabled(false);
+    setColorEnabled(mPlayerPrevBtn, false);
+
+    // Temporarily while loading...
+    mPlayerPlayToPauseBtn.setEnabled(false);
+    mMiniPlayerPlayToPauseBtn.setEnabled(false);
+
+    mPlayerNextBtn.setEnabled(false);
+    setColorEnabled(mPlayerNextBtn, false);
 
     mPlayerPlayToPauseBtn.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -491,6 +494,12 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     }
   }
 
+  private void updateRemoteSongRecyclerView() {
+    mPlayerAdapter.clear();
+    mPlayerRecyclerView.removeOnScrollListener(mPlayerRecyclerViewListener);
+    mPlayerAdapter.addCoverArt(mPlayerRemoteSong.getCoverArt());
+  }
+
   private void updateMediaPlayer(String songUrl) {
     mPlayerMediaPlayer = new MediaPlayer();
     mPlayerMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -509,10 +518,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         mPlayerSongProgressTotal.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
         mPlayerSongProgress.setMax(mediaPlayer.getDuration());
 
-        if(mPlayingQueue.size() > 0) {
-          mPlayerPrevBtn.setEnabled(true);
-          setColorEnabled(mPlayerPrevBtn, true);
-        }
         mPlayerPlayToPauseBtn.setEnabled(true);
         mMiniPlayerPlayToPauseBtn.setEnabled(true);
       }
@@ -521,9 +526,14 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
       @Override
       public void onCompletion(MediaPlayer mediaPlayer) {
-        mPlayerPlayToPauseBtn.pause();
-        mMiniPlayerPlayToPauseBtn.pause();
-        mPlayerMediaPlayer.seekTo(0);
+        if (!isRemoteSongLooping) {
+          mPlayerPlayToPauseBtn.pause();
+          mMiniPlayerPlayToPauseBtn.pause();
+          mPlayerMediaPlayer.seekTo(0);
+        } else {
+          mPlayerMediaPlayer.seekTo(0);
+          mPlayerMediaPlayer.start();
+        }
       }
     });
 
@@ -535,7 +545,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         }
         if(progress / 1000 < (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerNextUp.getAlpha() == 1.0f) {
           mPlayerNextUp.animate().alpha(0.0f);
-        } else if (progress / 1000 == (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndexInQueue() != mPlayingQueue.size() - 1) {
+        } else if (progress / 1000 >= (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndexInQueue() != mPlayingQueue.size() - 1) {
           mPlayerNextUp.animate().alpha(1.0f);
         }
         DecimalFormat formatter = new DecimalFormat("00");
@@ -560,10 +570,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     destroy();
     isRemoteSongPlaying = true;
 
-    mPlayerRemoteSong = remoteSong;
-    updateRemoteSong();
-    updateCoversInRecyclerView();
-    mPlayerRecyclerView.scrollToPosition(mPlayingQueue.size());
+    updateRemoteSong(remoteSong);
+    updateRemoteSongRecyclerView();
     SongDownloader.fetchSongURL(mContext, remoteSong, new SongDownloader.SongURLFetcherCallback() {
       @Override
       public void onSuccess(String url) {
