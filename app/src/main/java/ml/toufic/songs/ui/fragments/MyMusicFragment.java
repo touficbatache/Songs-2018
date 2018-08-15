@@ -216,7 +216,7 @@ public class MyMusicFragment extends Fragment {
     });
   }
 
-  private void updateRecyclerViewDownloadedSongs() {
+  public void updateRecyclerViewDownloadedSongs() {
     mAdapter.clear();
 
     for(int i=0; i<playableSongs.size(); i++) {
@@ -276,14 +276,9 @@ public class MyMusicFragment extends Fragment {
             })
             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
               public void onClick(DialogInterface dialog, int id) {
-                if(songPath.exists()) {
-                  if(songPath.delete()) {
-                    Toast.makeText(mContext, "Deleted successfully!", Toast.LENGTH_LONG).show();
-                  }
+                if(SongUtils.deleteSong(mContext, song)) {
+                  updateRecyclerViewDownloadedSongs();
                 }
-                playableSongs.remove(song);
-                SongUtils.cacheSongs(mContext, playableSongs);
-                updateRecyclerViewDownloadedSongs();
               }
             });
           AlertDialog alert = builder.create();

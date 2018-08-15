@@ -37,7 +37,7 @@ public class PlayToPauseMorphingImageView extends AppCompatImageView {
     setColorFilter(getResources().getColor(R.color.grey_67));
   }
 
-  public void morph(){
+  public void switchState(){
     AnimatedVectorDrawable drawable = mIsShowingPause ? mPauseToPlay : mPlayToPause;
     setImageDrawable(drawable);
     drawable.start();

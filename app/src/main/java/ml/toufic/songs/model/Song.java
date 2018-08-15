@@ -1,11 +1,26 @@
 package ml.toufic.songs.model;
 
+import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.PrimaryKey;
+import android.support.annotation.NonNull;
+
+@Entity
 public class Song {
 
+  @ColumnInfo(name = "id")
   private String id;
+
+  @ColumnInfo(name = "link")
   private String link;
+
+  @ColumnInfo(name = "title")
   private String title;
+
+  @ColumnInfo(name = "artist")
   private String artist;
+
+  @ColumnInfo(name = "coverart")
   private String coverArt;
 
   public Song(String id, String title, String artist, String coverArt) {

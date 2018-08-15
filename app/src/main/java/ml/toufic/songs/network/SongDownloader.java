@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Toast;
 
@@ -79,13 +80,12 @@ public class SongDownloader {
     context.registerReceiver(new BroadcastReceiver() {
       public void onReceive(Context context, Intent intent) {
         // Add the song to cached list:
-        PlayableSong playableSong = new PlayableSong(song, new File(DeviceUtils.getDownloadStorageDirectoryPath(), SongUtils.getSongFileName(song.getId())));
+        final PlayableSong playableSong = new PlayableSong(song, new File(DeviceUtils.getDownloadStorageDirectoryPath(), SongUtils.getSongFileName(song.getId())));
         if (playableSong.getPath().exists()) {
           List<PlayableSong> playableSongs = SongUtils.getCachedSongs(context);
           playableSongs.add(playableSong);
           SongUtils.cacheSongs(context, playableSongs);
         }
-//        callback.onSuccess(new PlayableSong(song, new File(DeviceUtils.getDownloadStorageDirectoryPath(), SongUtils.getSongFileName(song.getId()))));
         context.unregisterReceiver(this);
       }
     }, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));

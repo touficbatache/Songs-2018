@@ -1,5 +1,7 @@
 package ml.toufic.songs.ui.activities;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -8,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.FloatRange;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -16,6 +19,7 @@ import android.support.v7.widget.PagerSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
@@ -37,6 +41,8 @@ import java.util.List;
 
 import at.huber.youtubeExtractor.YtFile;
 import ml.toufic.songs.R;
+import ml.toufic.songs.db.Converters;
+import ml.toufic.songs.db.DownloadedSongViewModel;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.PlayerCoverModel;
 import ml.toufic.songs.model.Song;
@@ -44,7 +50,10 @@ import ml.toufic.songs.network.SongDownloader;
 import ml.toufic.songs.ui.fragments.ExploreFragment;
 import ml.toufic.songs.ui.fragments.MyMusicFragment;
 import ml.toufic.songs.util.SongUtils;
+import ml.toufic.songs.views.CloudDownloadBorderToFillImageView;
+import ml.toufic.songs.views.FavoriteBorderToFillMorphingImageView;
 import ml.toufic.songs.views.PlayToPauseMorphingImageView;
+import ml.toufic.songs.views.PlaylistAddToCheckMorphingImageView;
 
 public class MainActivity extends AppCompatActivity implements SlidingUpPanelLayout.PanelSlideListener {
 
@@ -53,6 +62,11 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private Context mContext;
 
   private BottomNavigationView mBottomNavigationView;
+
+  private DownloadedSongViewModel mDownloadedSongViewModel;
+
+  private ExploreFragment mExploreFragment;
+  private MyMusicFragment mMyMusicFragment;
 
   private List<PlayableSong> mPlayingQueue = new ArrayList<>();
   private PlayableSong mPlayerSong;
@@ -69,6 +83,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private RecyclerView.OnScrollListener mPlayerRecyclerViewListener;
   private TextView mPlayerSongTitle;
   private TextView mPlayerSongArtist;
+  private FavoriteBorderToFillMorphingImageView mPlayerFavoriteBtn;
+  private CloudDownloadBorderToFillImageView mPlayerCloudDownloadBtn;
+  private PlaylistAddToCheckMorphingImageView mPlayerPlaylistAddToPlaylistBtn;
   private SeekBar mPlayerSongProgress;
   private TextView mPlayerSongProgressCurrent;
   private TextView mPlayerSongProgressTotal;
@@ -93,15 +110,15 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
-      Fragment fragment = new ExploreFragment();
+      Fragment fragment = mExploreFragment;
 
       switch (item.getItemId()) {
         case R.id.navigation_explore:
-          fragment = new ExploreFragment();
+          fragment = mExploreFragment;
           break;
 
         case R.id.navigation_my_music:
-          fragment = new MyMusicFragment();
+          fragment = mMyMusicFragment;
           break;
       }
 
@@ -127,6 +144,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
     mContext = MainActivity.this;
 
+    mExploreFragment = new ExploreFragment();
+    mMyMusicFragment = new MyMusicFragment();
+
     mBottomNavigationView = findViewById(R.id.navigation);
     mBottomNavigationView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
@@ -134,6 +154,21 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       .beginTransaction()
       .replace(R.id.fragment_container, new ExploreFragment())
       .commitAllowingStateLoss();
+
+    mDownloadedSongViewModel = ViewModelProviders.of(this).get(DownloadedSongViewModel.class);
+
+//    PlayableSong song = new PlayableSong(new Song("2", "Hello", "Adele", "https://toufic.ml/logo.png"), DeviceUtils.getDownloadStorageDirectory());
+//    mDownloadedSongViewModel.insert(song);
+
+    mDownloadedSongViewModel.getAllSongs().observe(this, new Observer<List<PlayableSong>>() {
+      @Override
+      public void onChanged(@Nullable final List<PlayableSong> songs) {
+        // Update the cached copy of the songs in the adapter.
+        for(Song song : songs) {
+          Log.d(TAG, "onChanged: tgblog: " + Converters.fromSong(song));
+        }
+      }
+    });
 
     /* Initialize player & mini player */
 
@@ -176,6 +211,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerRecyclerView = findViewById(R.id.player_cover_arts_recyclerview);
     mPlayerSongTitle = findViewById(R.id.player_song_title);
     mPlayerSongArtist = findViewById(R.id.player_song_artist);
+    mPlayerFavoriteBtn = findViewById(R.id.player_action_favorite);
+    mPlayerCloudDownloadBtn = findViewById(R.id.player_action_cloud_download);
+    mPlayerPlaylistAddToPlaylistBtn = findViewById(R.id.player_action_add_to_playlist);
     mPlayerSongProgress = findViewById(R.id.player_song_progress);
     mPlayerSongProgressCurrent = findViewById(R.id.player_progress_current);
     mPlayerSongProgressTotal = findViewById(R.id.player_progress_total);
@@ -253,6 +291,40 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mMiniPlayerSongTitle.setText(mPlayerSong.getTitle());
     mPlayerSongArtist.setText(mPlayerSong.getArtist());
 
+    mPlayerFavoriteBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        mPlayerFavoriteBtn.switchState();
+
+      }
+    });
+
+    mPlayerCloudDownloadBtn.showFill();
+    mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        if(SongUtils.deleteSong(mContext, mPlayerSong)) {
+          if(SongUtils.getCachedSongs(mContext).size() >= 1) {
+            if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
+              loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() - 1));
+            } else {
+              loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() + 1));
+            }
+          } else {
+            mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+          }
+          mMyMusicFragment.updateRecyclerViewDownloadedSongs();
+        }
+      }
+    });
+
+    mPlayerPlaylistAddToPlaylistBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        mPlayerPlaylistAddToPlaylistBtn.switchState();
+      }
+    });
+
     if (mPlayingQueue != null) {
       if (mPlayerSong.getIndexInQueue() == 0) {
         mPlayerPrevBtn.setEnabled(false);
@@ -281,13 +353,14 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        if (!mPlayerSong.isLooping()) {
-          mPlayerSong.setLooping(true);
-          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_67));
-        } else {
-          mPlayerSong.setLooping(false);
-          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
-        }
+//        if (!mPlayerSong.isLooping()) {
+//          mPlayerSong.setLooping(true);
+//          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_67));
+//        } else {
+//          mPlayerSong.setLooping(false);
+//          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
+//        }
+        mDownloadedSongViewModel.insert(mPlayerSong);
       }
     });
 

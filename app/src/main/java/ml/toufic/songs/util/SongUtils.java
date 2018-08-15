@@ -1,6 +1,7 @@
 package ml.toufic.songs.util;
 
 import android.content.Context;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -75,6 +76,20 @@ public class SongUtils {
       }
     }
     return isInMyMusic;
+  }
+
+  public static boolean deleteSong(Context context, PlayableSong song) {
+    File songPath = song.getPath();
+    List<PlayableSong> playableSongs = getCachedSongs(context);
+    if(songPath.exists()) {
+      if(songPath.delete()) {
+        Toast.makeText(context, "Deleted successfully!", Toast.LENGTH_LONG).show();
+      }
+    }
+    playableSongs.remove(song);
+    SongUtils.cacheSongs(context, playableSongs);
+
+    return !songPath.exists();
   }
 
 }
