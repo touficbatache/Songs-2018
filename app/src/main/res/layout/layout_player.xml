@@ -30,7 +30,7 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="16dp"
-                android:src="@drawable/ic_keyboard_arrow_down_black_24dp"
+                android:src="@drawable/ic_keyboard_arrow_down_24dp"
                 android:tint="@color/grey_67" />
 
         </LinearLayout>
@@ -102,36 +102,68 @@
         app:layout_constraintTop_toBottomOf="@+id/player_song_title"
         tools:text="Song artist" />
 
-    <LinearLayout
-        android:id="@+id/player_secondary_actions"
-        android:layout_width="match_parent"
+    <ImageButton
+        android:id="@+id/player_action_favorite"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="36dp"
-        android:gravity="center"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:padding="8dp"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/ic_favorite_border_24dp"
+        android:tint="@color/grey_67"
+        android:scaleType="fitXY"
+        android:background="?attr/selectableItemBackgroundBorderless"
         app:layout_constraintTop_toBottomOf="@id/player_song_artist"
-        android:layout_marginStart="56dp"
-        android:layout_marginEnd="56dp">
+        app:layout_constraintEnd_toStartOf="@id/player_action_download"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_chainStyle="packed" />
 
-        <ImageButton
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_cloud_download_outlined_24dp"
-            android:tint="@color/grey_67"
-            android:scaleType="fitXY"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+    <ImageButton
+        android:id="@+id/player_action_download"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="48dp"
+        android:src="@drawable/ic_cloud_download_border_24dp"
+        android:tint="@color/grey_67"
+        android:scaleType="fitXY"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintTop_toBottomOf="@id/player_song_artist"
+        app:layout_constraintEnd_toStartOf="@id/player_action_add_to_playlist"
+        app:layout_constraintStart_toEndOf="@id/player_action_favorite"
+        app:layout_constraintHorizontal_chainStyle="packed" />
 
-        <ImageButton
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="48dp"
-            android:src="@drawable/ic_share_black_24dp"
-            android:tint="@color/grey_67"
-            android:scaleType="fitXY"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+    <ImageButton
+        android:id="@+id/player_action_add_to_playlist"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="48dp"
+        android:src="@drawable/ic_playlist_add_24dp"
+        android:tint="@color/grey_67"
+        android:scaleType="fitXY"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintTop_toBottomOf="@id/player_song_artist"
+        app:layout_constraintEnd_toStartOf="@id/player_action_share"
+        app:layout_constraintStart_toEndOf="@id/player_action_download"
+        app:layout_constraintHorizontal_chainStyle="packed" />
 
-    </LinearLayout>
+    <ImageButton
+        android:id="@+id/player_action_share"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="48dp"
+        android:src="@drawable/ic_share_black_24dp"
+        android:tint="@color/grey_67"
+        android:scaleType="fitXY"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintTop_toBottomOf="@id/player_song_artist"
+        app:layout_constraintStart_toEndOf="@id/player_action_add_to_playlist"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_chainStyle="packed" />
 
     <SeekBar
         android:id="@+id/player_song_progress"
@@ -140,14 +172,11 @@
         android:layout_marginBottom="36dp"
         android:layout_marginEnd="16dp"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="16dp"
         android:clickable="true"
         android:theme="@style/ColorAccentWhite"
         app:layout_constraintBottom_toTopOf="@id/player_repeat_btn"
-        app:layout_constraintTop_toBottomOf="@+id/player_song_artist" />
-        android:clickable="true"
-        app:layout_constraintTop_toBottomOf="@+id/player_secondary_actions"
-        app:layout_constraintBottom_toTopOf="@id/player_controls_container" />
+        app:layout_constraintTop_toBottomOf="@+id/player_action_download" />
 
     <LinearLayout
         android:id="@+id/player_progress_text"
@@ -193,7 +222,7 @@
         android:id="@+id/player_prev_btn"
         android:layout_width="72dp"
         android:layout_height="72dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="-8dp"
         android:layout_marginTop="24dp"
         android:layout_toStartOf="@+id/player_play_to_pause_btn"
         android:background="?attr/selectableItemBackgroundBorderless"
@@ -202,7 +231,7 @@
         android:tint="@color/grey_67"
         app:layout_constraintEnd_toStartOf="@+id/player_play_to_pause_btn"
         app:layout_constraintTop_toBottomOf="@id/player_progress_text"
-        app:srcCompat="@drawable/ic_skip_previous_white_24dp"
+        app:srcCompat="@drawable/ic_skip_previous_24dp"
         tools:ignore="MissingPrefix" />
 
     <ml.toufic.songs.views.PlayToPauseMorphingImageView
@@ -227,7 +256,7 @@
         android:id="@+id/player_next_btn"
         android:layout_width="72dp"
         android:layout_height="72dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="-8dp"
         android:layout_marginTop="24dp"
         android:layout_toEndOf="@+id/player_play_to_pause_btn"
         android:background="?attr/selectableItemBackgroundBorderless"
@@ -236,7 +265,7 @@
         android:tint="@color/grey_67"
         app:layout_constraintStart_toEndOf="@+id/player_play_to_pause_btn"
         app:layout_constraintTop_toBottomOf="@id/player_progress_text"
-        app:srcCompat="@drawable/ic_skip_next_white_24dp"
+        app:srcCompat="@drawable/ic_skip_next_24dp"
         tools:ignore="MissingPrefix" />
 
     <ImageButton
@@ -252,7 +281,7 @@
         android:tint="@color/grey_67"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/player_progress_text"
-        app:srcCompat="@drawable/ic_shuffle_white_24dp"
+        app:srcCompat="@drawable/ic_shuffle_24dp"
         tools:ignore="MissingPrefix" />
 
 </android.support.constraint.ConstraintLayout>
