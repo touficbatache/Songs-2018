@@ -15,6 +15,7 @@ import android.support.v7.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -138,39 +139,50 @@ public class MyMusicFragment extends Fragment {
       }
     }
 
-    File[] downloadedSongsInDirectory = DeviceUtils.getDownloadStorageDirectory().listFiles();
-    for (File songInDirectory : downloadedSongsInDirectory) {
-      final String id = SongUtils.getSongId(songInDirectory.getName());
-      if (!SongUtils.isSongInMyMusic(mContext, id) && songInDirectory.lastModified() < new Date().getTime() - 300000) {
-        new JSONObjectDataFetcher("https://www.googleapis.com/youtube/v3/videos?part=id, snippet&id=" + id + "&key=" + SongUtils.API_KEY, new JSONObjectDataFetcher.JSONDataFetcherCallback() {
-          @Override
-          public void onSuccess(JSONObject result) {
-            try {
-              JSONArray playlistItems = result.getJSONArray("items");
-              for (int i = 0; i < playlistItems.length(); i++) {
-                JSONObject snippet = playlistItems.getJSONObject(i).getJSONObject("snippet");
-                JSONObject thumbnailObj = snippet.getJSONObject("thumbnails");
+    File downloadDirectory = DeviceUtils.getDownloadStorageDirectory();
+    if(!downloadDirectory.exists()){
+      try {
+        downloadDirectory.mkdirs();
+      }
+      catch (RuntimeException e){
+        Log.e(TAG, "downloadDirectory couldn't be created");
+      }
+    }
+    if(downloadDirectory.exists()) {
+      File[] downloadedSongsInDirectory = downloadDirectory.listFiles();
+      for (File songInDirectory : downloadedSongsInDirectory) {
+        final String id = SongUtils.getSongId(songInDirectory.getName());
+        if (!SongUtils.isSongInMyMusic(mContext, id) && songInDirectory.lastModified() < new Date().getTime() - 300000) {
+          new JSONObjectDataFetcher("https://www.googleapis.com/youtube/v3/videos?part=id, snippet&id=" + id + "&key=" + SongUtils.API_KEY, new JSONObjectDataFetcher.JSONDataFetcherCallback() {
+            @Override
+            public void onSuccess(JSONObject result) {
+              try {
+                JSONArray playlistItems = result.getJSONArray("items");
+                for (int i = 0; i < playlistItems.length(); i++) {
+                  JSONObject snippet = playlistItems.getJSONObject(i).getJSONObject("snippet");
+                  JSONObject thumbnailObj = snippet.getJSONObject("thumbnails");
 
 
-                String title = snippet.getString("title");
-                String author = snippet.getString("channelTitle");
-                String thumbnail = thumbnailObj.getJSONObject("high").getString("url");
+                  String title = snippet.getString("title");
+                  String author = snippet.getString("channelTitle");
+                  String thumbnail = thumbnailObj.getJSONObject("high").getString("url");
 
-                Song song = new Song(id, title, author, thumbnail);
-                playableSongs.add(new PlayableSong(song, SongUtils.getSongPath(SongUtils.getSongFileName(id))));
-                SongUtils.cacheSongs(mContext, playableSongs);
-                updateRecyclerViewDownloadedSongs();
+                  Song song = new Song(id, title, author, thumbnail);
+                  playableSongs.add(new PlayableSong(song, SongUtils.getSongPath(SongUtils.getSongFileName(id))));
+                  SongUtils.cacheSongs(mContext, playableSongs);
+                  updateRecyclerViewDownloadedSongs();
+                }
+              } catch (JSONException e) {
+                e.printStackTrace();
               }
-            } catch (JSONException e) {
-              e.printStackTrace();
             }
-          }
 
-          @Override
-          public void onError() {
+            @Override
+            public void onError() {
 
-          }
-        }).execute();
+            }
+          }).execute();
+        }
       }
     }
 
