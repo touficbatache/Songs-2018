@@ -578,8 +578,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
             }
 
             @Override
-            public void onDownloadComplete(String songId) {
-              onSongDownloadCompletion(songId);
+            public void onDownloadComplete(PlayableSong playableSong) {
+              onSongDownloadCompletion(playableSong);
             }
 
             @Override
@@ -773,12 +773,12 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerCloudDownloadBtn.startAnimation(myFadeInAnimation);
   }
 
-  public void onSongDownloadCompletion(String songId) {
-    if(songId.equals(mPlayerSong.getId())) {
+  public void onSongDownloadCompletion(PlayableSong playableSong) {
+    if(playableSong.getId().equals(mPlayerSong.getId())) {
       mPlayerCloudDownloadBtn.clearAnimation();
       mPlayerCloudDownloadBtn.showFill();
     }
-    Toast.makeText(mContext, "Download complete! Go to \"My Music\" to play your downloaded song", Toast.LENGTH_LONG).show();
+    Toast.makeText(mContext, playableSong.getTitle() + " has been downloaded! Go to \"My Music\" to play it", Toast.LENGTH_LONG).show();
   }
 
   private void setColorEnabled(ImageButton imageButtonView, boolean enabled) {
@@ -827,8 +827,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
           }
 
           @Override
-          public void onDownloadComplete(String songId) {
-            onSongDownloadCompletion(songId);
+          public void onDownloadComplete(PlayableSong playableSong) {
+            onSongDownloadCompletion(playableSong);
           }
 
           @Override

@@ -89,7 +89,7 @@ public class SongDownloader {
             playableSongs.add(playableSong);
             SongUtils.cacheSongs(context, playableSongs);
           }
-          callback.onDownloadComplete(playableSong.getId());
+          callback.onDownloadComplete(playableSong);
         }
 
         @Override
@@ -109,7 +109,7 @@ public class SongDownloader {
 
     void onProgress(Progress progress);
 
-    void onDownloadComplete(String songId);
+    void onDownloadComplete(PlayableSong playableSong);
 
     void onError(Error error);
   }
