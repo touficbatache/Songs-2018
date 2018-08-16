@@ -277,7 +277,7 @@ public class MyMusicFragment extends Fragment {
             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
               public void onClick(DialogInterface dialog, int id) {
                 if(SongUtils.deleteSong(mContext, song)) {
-                  updateRecyclerViewDownloadedSongs();
+                  loadDownloadedSongs();
                 }
               }
             });

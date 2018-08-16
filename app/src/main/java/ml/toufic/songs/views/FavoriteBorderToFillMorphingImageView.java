@@ -1,6 +1,7 @@
 package ml.toufic.songs.views;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
@@ -13,18 +14,27 @@ public class FavoriteBorderToFillMorphingImageView extends AppCompatImageView {
   private AnimatedVectorDrawable mFavoriteFillToBorder;
   private boolean mIsShowingFill;
   public FavoriteBorderToFillMorphingImageView(Context context) {
-    super(context);
-    init();
+    this(context, null);
   }
 
   public FavoriteBorderToFillMorphingImageView(Context context, AttributeSet attrs) {
-    super(context, attrs);
-    init();
+    this(context, attrs, 0);
   }
 
   public FavoriteBorderToFillMorphingImageView(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
     init();
+
+    if(attrs != null) {
+      int[] set = {
+        android.R.attr.tint, // index 0
+      };
+      TypedArray a = context.obtainStyledAttributes(attrs, set);
+      int fill = a.getColor(0,
+        getResources().getColor(R.color.grey_67));
+      setColorFilter(fill);
+      a.recycle();
+    }
   }
 
   private void init(){
@@ -34,7 +44,6 @@ public class FavoriteBorderToFillMorphingImageView extends AppCompatImageView {
     mFavoriteFillToBorder =
       (AnimatedVectorDrawable)getContext().getDrawable(R.drawable.favorite_fill_to_border);
     setImageDrawable(mFavoriteBorderToFill);
-    setColorFilter(getResources().getColor(R.color.grey_67));
   }
 
   public void switchState(){

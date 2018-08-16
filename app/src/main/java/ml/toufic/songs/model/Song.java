@@ -8,6 +8,9 @@ import android.support.annotation.NonNull;
 @Entity
 public class Song {
 
+  //REPLACEMENT WILL BE DONE BASED ON ID: IF IT'S THE SAME, REPLACE
+  @PrimaryKey
+  @NonNull
   @ColumnInfo(name = "id")
   private String id;
 
@@ -23,7 +26,7 @@ public class Song {
   @ColumnInfo(name = "coverart")
   private String coverArt;
 
-  public Song(String id, String title, String artist, String coverArt) {
+  public Song(@NonNull String id, String title, String artist, String coverArt) {
     this.id = id;
     this.link = "https://www.youtube.com/watch?v=" + id;
     this.title = title;
@@ -31,10 +34,11 @@ public class Song {
     this.coverArt = coverArt;
   }
 
-  public void setId(String id) {
+  public void setId(@NonNull String id) {
     this.id = id;
   }
 
+  @NonNull
   public String getId() {
     return id;
   }

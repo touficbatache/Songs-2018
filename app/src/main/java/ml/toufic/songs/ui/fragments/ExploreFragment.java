@@ -1,15 +1,11 @@
 package ml.toufic.songs.ui.fragments;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -19,9 +15,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.airbnb.epoxy.EpoxyAdapter;
 import com.airbnb.epoxy.EpoxyHolder;
@@ -39,9 +33,7 @@ import java.util.List;
 import ml.toufic.songs.ui.activities.MainActivity;
 import ml.toufic.songs.R;
 import ml.toufic.songs.network.JSONObjectDataFetcher;
-import ml.toufic.songs.network.SongDownloader;
 import ml.toufic.songs.model.Song;
-import ml.toufic.songs.util.DeviceUtils;
 import ml.toufic.songs.util.SongUtils;
 
 public class ExploreFragment extends Fragment {
@@ -123,6 +115,7 @@ public class ExploreFragment extends Fragment {
 
     MenuItem item = menu.findItem(R.id.action_search);
     searchView.setMenuItem(item);
+    searchView.setBackIcon(getResources().getDrawable(R.drawable.ic_arrow_back_grey_67_24dp));
     searchView.setVoiceSearch(true);
   }
 
@@ -346,6 +339,8 @@ public class ExploreFragment extends Fragment {
 
   private class SongModel extends EpoxyModelWithHolder<SongHolder> {
 
+    private SongHolder holder;
+
     private Song mSong;
     private String songId;
     private String songLink;
@@ -353,9 +348,8 @@ public class ExploreFragment extends Fragment {
     private String songArtist;
     private String songCoverArt;
     private View.OnClickListener playListener;
-    private View.OnClickListener downloadListener;
 
-    SongModel(final Song song) {
+    SongModel(Song song) {
       mSong = song;
       songId = song.getId();
       songLink = song.getLink();
@@ -365,23 +359,8 @@ public class ExploreFragment extends Fragment {
       playListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
+          songToDownload = mSong;
           mActivity.loadSong(mSong);
-        }
-      };
-      downloadListener = new View.OnClickListener() {
-        @SuppressLint("StaticFieldLeak")
-        @Override
-        public void onClick(View view) {
-          if (ContextCompat.checkSelfPermission(mActivity,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED) {
-
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-              DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-          } else {
-            songToDownload = song;
-            SongDownloader.downloadSong(mContext, song);
-          }
         }
       };
     }
@@ -400,7 +379,7 @@ public class ExploreFragment extends Fragment {
     public void bind(@NonNull SongHolder holder) {
       super.bind(holder);
 
-      holder.mDownloadBtn.setOnClickListener(downloadListener);
+      this.holder = holder;
       holder.itemView.setOnClickListener(playListener);
       holder.mSongTitle.setText(songTitle);
       holder.mSongArtist.setText(songArtist);
@@ -460,14 +439,12 @@ public class ExploreFragment extends Fragment {
     View itemView;
     TextView mSongTitle;
     TextView mSongArtist;
-    ImageButton mDownloadBtn;
 
     @Override
     protected void bindView(View itemView) {
       this.itemView = itemView;
       mSongTitle = itemView.findViewById(R.id.song_title);
       mSongArtist = itemView.findViewById(R.id.song_artist);
-      mDownloadBtn = itemView.findViewById(R.id.btn_download);
     }
   }
 
@@ -488,17 +465,6 @@ public class ExploreFragment extends Fragment {
     @Override
     protected void bindView(View itemView) {
       this.itemView = itemView;
-    }
-  }
-
-  @Override
-  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-    if (requestCode == DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
-      if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-        SongDownloader.downloadSong(mContext, songToDownload);
-      } else {
-        Toast.makeText(mContext, "Please accept permission to download songs!", Toast.LENGTH_LONG).show();
-      }
     }
   }
 }

@@ -37,6 +37,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
     implementation 'com.facebook.fresco:fresco:1.10.0'
+    implementation 'com.mindorks.android:prdownloader:0.4.0'
 
     // Room components
     implementation "android.arch.persistence.room:runtime:$roomVersion"

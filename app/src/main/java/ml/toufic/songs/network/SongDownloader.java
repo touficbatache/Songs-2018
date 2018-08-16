@@ -1,15 +1,16 @@
 package ml.toufic.songs.network;
 
 import android.annotation.SuppressLint;
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.Uri;
-import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Toast;
+
+import com.downloader.Error;
+import com.downloader.OnDownloadListener;
+import com.downloader.OnProgressListener;
+import com.downloader.OnStartOrResumeListener;
+import com.downloader.PRDownloader;
+import com.downloader.Progress;
 
 import java.io.File;
 import java.util.List;
@@ -23,6 +24,23 @@ import ml.toufic.songs.util.DeviceUtils;
 import ml.toufic.songs.util.SongUtils;
 
 public class SongDownloader {
+
+  @SuppressLint("StaticFieldLeak")
+  public static void downloadSong(final Context context, final Song song, final SongDownloaderCallback callback) {
+    fetchSongURL(context, song, new SongURLFetcherCallback() {
+      @Override
+      public void onSuccess(YtFile songFile) {
+        boolean isSongInDownloadsDir = SongUtils.isSongInDownloadsDir(song.getId());
+        boolean isSongInMyMusic = SongUtils.isSongInMyMusic(context, song.getId());
+
+        if (isSongInDownloadsDir && isSongInMyMusic) {
+          Toast.makeText(context, "Song already exists in \"My Music\"!", Toast.LENGTH_LONG).show();
+        } else {
+          startDownload(context, song, songFile.getUrl(), callback);
+        }
+      }
+    });
+  }
 
   @SuppressLint("StaticFieldLeak")
   public static void fetchSongURL(final Context context, final Song song, final SongURLFetcherCallback callback) {
@@ -44,56 +62,56 @@ public class SongDownloader {
     }.extract(song.getLink(), true, false);
   }
 
-  @SuppressLint("StaticFieldLeak")
-  public static void downloadSong(final Context context, final Song song) {
-    fetchSongURL(context, song, new SongURLFetcherCallback() {
-      @Override
-      public void onSuccess(YtFile songFile) {
-        boolean isSongInDownloadsDir = SongUtils.isSongInDownloadsDir(song.getId());
-        boolean isSongInMyMusic = SongUtils.isSongInMyMusic(context, song.getId());
+  private static void startDownload(final Context context, final Song song, final String url, final SongDownloaderCallback callback) {
 
-        String toastText = "Oops, it looks like this song isn't currently available. Try again later";
-        if (isSongInDownloadsDir && isSongInMyMusic) {
-          toastText = "Song already exists!";
-        } else {
-          toastText = "Download started";
-          startDownload(context, song, songFile);
+    String dirPath = DeviceUtils.getDownloadStorageDirectoryPath();
+    final String fileName = SongUtils.getSongFileName(song.getId());
+    PRDownloader.download(url, dirPath, fileName)
+      .build()
+      .setOnStartOrResumeListener(new OnStartOrResumeListener() {
+        @Override
+        public void onStartOrResume() {
+          callback.onStartOrResume();
         }
-        Toast.makeText(context, toastText, Toast.LENGTH_LONG).show();
-      }
-    });
-  }
-
-  private static void startDownload(Context context, final Song song, final YtFile ytFile) {
-
-    Uri uri = Uri.parse(ytFile.getUrl());
-    DownloadManager.Request request = new DownloadManager.Request(uri);
-    request.setTitle(song.getTitle());
-    request.setVisibleInDownloadsUi(false);
-    request.allowScanningByMediaScanner();
-    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-    request.setDestinationInExternalPublicDir(DeviceUtils.getDownloadStorageDirectorySmallPath(), SongUtils.getSongFileName(song.getId()));
-
-    DownloadManager manager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-    manager.enqueue(request);
-
-    context.registerReceiver(new BroadcastReceiver() {
-      public void onReceive(Context context, Intent intent) {
-        // Add the song to cached list:
-        final PlayableSong playableSong = new PlayableSong(song, new File(DeviceUtils.getDownloadStorageDirectoryPath(), SongUtils.getSongFileName(song.getId())));
-        if (playableSong.getPath().exists()) {
-          List<PlayableSong> playableSongs = SongUtils.getCachedSongs(context);
-          playableSongs.add(playableSong);
-          SongUtils.cacheSongs(context, playableSongs);
+      })
+      .setOnProgressListener(new OnProgressListener() {
+        @Override
+        public void onProgress(Progress progress) {
+          callback.onProgress(progress);
         }
-        context.unregisterReceiver(this);
-      }
-    }, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+      })
+      .start(new OnDownloadListener() {
+        @Override
+        public void onDownloadComplete() {
+          final PlayableSong playableSong = new PlayableSong(song, SongUtils.getSongPath(fileName));
+          if(playableSong.getPath().exists()) {
+            List<PlayableSong> playableSongs = SongUtils.getCachedSongs(context);
+            playableSongs.add(playableSong);
+            SongUtils.cacheSongs(context, playableSongs);
+          }
+          callback.onDownloadComplete(playableSong.getId());
+        }
+
+        @Override
+        public void onError(Error error) {
+          callback.onError(error);
+        }
+      });
   }
 
   public interface SongURLFetcherCallback {
     // method called when server's data get fetched
     void onSuccess(YtFile songFile);
+  }
+
+  public interface SongDownloaderCallback {
+    void onStartOrResume();
+
+    void onProgress(Progress progress);
+
+    void onDownloadComplete(String songId);
+
+    void onError(Error error);
   }
 
 }

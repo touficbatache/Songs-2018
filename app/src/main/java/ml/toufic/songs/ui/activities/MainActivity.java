@@ -1,8 +1,11 @@
 package ml.toufic.songs.ui.activities;
 
+import android.Manifest;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -13,6 +16,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PagerSnapHelper;
@@ -22,13 +26,20 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.airbnb.epoxy.EpoxyAdapter;
+import com.downloader.Error;
+import com.downloader.PRDownloader;
+import com.downloader.PRDownloaderConfig;
+import com.downloader.Progress;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.imagepipeline.core.ImagePipelineConfig;
 import com.facebook.imagepipeline.decoder.SimpleProgressiveJpegConfig;
@@ -49,11 +60,14 @@ import ml.toufic.songs.model.Song;
 import ml.toufic.songs.network.SongDownloader;
 import ml.toufic.songs.ui.fragments.ExploreFragment;
 import ml.toufic.songs.ui.fragments.MyMusicFragment;
+import ml.toufic.songs.util.DeviceUtils;
 import ml.toufic.songs.util.SongUtils;
 import ml.toufic.songs.views.CloudDownloadBorderToFillImageView;
 import ml.toufic.songs.views.FavoriteBorderToFillMorphingImageView;
 import ml.toufic.songs.views.PlayToPauseMorphingImageView;
 import ml.toufic.songs.views.PlaylistAddToCheckMorphingImageView;
+
+import static ml.toufic.songs.util.SongUtils.DOWNLOAD_COMPLETE_SONG_ACTIVITY_REQUEST_CODE;
 
 public class MainActivity extends AppCompatActivity implements SlidingUpPanelLayout.PanelSlideListener {
 
@@ -130,12 +144,19 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    ImagePipelineConfig config = ImagePipelineConfig.newBuilder(this)
+    ImagePipelineConfig imagePipelineConfig = ImagePipelineConfig.newBuilder(this)
       .setProgressiveJpegConfig(new SimpleProgressiveJpegConfig())
       .setResizeAndRotateEnabledForNetwork(true)
       .setDownsampleEnabled(true)
       .build();
-    Fresco.initialize(this, config);
+    Fresco.initialize(this, imagePipelineConfig);
+
+    PRDownloaderConfig prDownloaderConfig = PRDownloaderConfig.newBuilder()
+//      .setDatabaseEnabled(true)
+//      .setReadTimeout(30_000)
+//      .setConnectTimeout(30_000)
+      .build();
+    PRDownloader.initialize(getApplicationContext(), prDownloaderConfig);
 
     setContentView(R.layout.activity_main);
 
@@ -156,9 +177,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       .commitAllowingStateLoss();
 
     mDownloadedSongViewModel = ViewModelProviders.of(this).get(DownloadedSongViewModel.class);
-
-//    PlayableSong song = new PlayableSong(new Song("2", "Hello", "Adele", "https://toufic.ml/logo.png"), DeviceUtils.getDownloadStorageDirectory());
-//    mDownloadedSongViewModel.insert(song);
 
     mDownloadedSongViewModel.getAllSongs().observe(this, new Observer<List<PlayableSong>>() {
       @Override
@@ -353,14 +371,14 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-//        if (!mPlayerSong.isLooping()) {
-//          mPlayerSong.setLooping(true);
-//          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_67));
-//        } else {
-//          mPlayerSong.setLooping(false);
-//          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
-//        }
-        mDownloadedSongViewModel.insert(mPlayerSong);
+        if (!mPlayerSong.isLooping()) {
+          mPlayerSong.setLooping(true);
+          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_67));
+        } else {
+          mPlayerSong.setLooping(false);
+          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
+        }
+//        mDownloadedSongViewModel.insert(mPlayerSong);
       }
     });
 
@@ -506,7 +524,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     playSong();
   }
 
-  private void updateRemoteSong(Song remoteSong) {
+  private void updateRemoteSong(final Song remoteSong) {
     mPlayerRemoteSong = remoteSong;
 
     mMiniPlayerArrowUp.setOnClickListener(new View.OnClickListener() {
@@ -528,6 +546,57 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerSongTitle.setText(mPlayerRemoteSong.getTitle());
     mMiniPlayerSongTitle.setText(mPlayerRemoteSong.getTitle());
     mPlayerSongArtist.setText(mPlayerRemoteSong.getArtist());
+
+    mPlayerFavoriteBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        mPlayerFavoriteBtn.switchState();
+
+      }
+    });
+
+    mPlayerCloudDownloadBtn.clearAnimation();
+    mPlayerCloudDownloadBtn.showBorder();
+    mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        if (ContextCompat.checkSelfPermission(mContext,
+          Manifest.permission.WRITE_EXTERNAL_STORAGE)
+          != PackageManager.PERMISSION_GRANTED && DeviceUtils.isMarshmallow()) {
+
+          requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+            DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+        } else {
+          SongDownloader.downloadSong(mContext, mPlayerRemoteSong, new SongDownloader.SongDownloaderCallback() {
+            @Override
+            public void onStartOrResume() {
+              onSongDownloadStartOrResume();
+            }
+
+            @Override
+            public void onProgress(Progress progress) {
+            }
+
+            @Override
+            public void onDownloadComplete(String songId) {
+              onSongDownloadCompletion(songId);
+            }
+
+            @Override
+            public void onError(Error error) {
+              Toast.makeText(mContext, "Oops, we couldn't download your song. Please try again later", Toast.LENGTH_LONG).show();
+            }
+          });
+        }
+      }
+    });
+
+    mPlayerPlaylistAddToPlaylistBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        mPlayerPlaylistAddToPlaylistBtn.switchState();
+      }
+    });
 
     mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -699,6 +768,19 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     }
   }
 
+  public void onSongDownloadStartOrResume() {
+    Animation myFadeInAnimation = AnimationUtils.loadAnimation(this, R.anim.loading_fade_animation);
+    mPlayerCloudDownloadBtn.startAnimation(myFadeInAnimation);
+  }
+
+  public void onSongDownloadCompletion(String songId) {
+    if(songId.equals(mPlayerSong.getId())) {
+      mPlayerCloudDownloadBtn.clearAnimation();
+      mPlayerCloudDownloadBtn.showFill();
+    }
+    Toast.makeText(mContext, "Download complete! Go to \"My Music\" to play your downloaded song", Toast.LENGTH_LONG).show();
+  }
+
   private void setColorEnabled(ImageButton imageButtonView, boolean enabled) {
     if(enabled) {
       imageButtonView.setColorFilter(getResources().getColor(R.color.grey_67));
@@ -727,6 +809,36 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       findViewById(R.id.player_layout).setClickable(true);
     } else {
       findViewById(R.id.player_layout).setClickable(false);
+    }
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    if (requestCode == DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
+      if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        SongDownloader.downloadSong(mContext, mPlayerRemoteSong, new SongDownloader.SongDownloaderCallback() {
+          @Override
+          public void onStartOrResume() {
+            onSongDownloadStartOrResume();
+          }
+
+          @Override
+          public void onProgress(Progress progress) {
+          }
+
+          @Override
+          public void onDownloadComplete(String songId) {
+            onSongDownloadCompletion(songId);
+          }
+
+          @Override
+          public void onError(Error error) {
+            Toast.makeText(mContext, "Oops, we couldn't download your song. Please try again later", Toast.LENGTH_LONG).show();
+          }
+        });
+      } else {
+        Toast.makeText(mContext, "Please accept permission to download songs!", Toast.LENGTH_LONG).show();
+      }
     }
   }
 

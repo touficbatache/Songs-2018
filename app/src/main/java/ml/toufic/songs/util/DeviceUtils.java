@@ -32,7 +32,7 @@ public class DeviceUtils {
     return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1;
   }
 
-  public static boolean isMarshmello() {
+  public static boolean isMarshmallow() {
     return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
   }
 

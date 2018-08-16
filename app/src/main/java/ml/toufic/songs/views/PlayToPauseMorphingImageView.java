@@ -1,6 +1,7 @@
 package ml.toufic.songs.views;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.util.AttributeSet;
 import android.support.v7.widget.AppCompatImageView;
@@ -13,18 +14,27 @@ public class PlayToPauseMorphingImageView extends AppCompatImageView {
   private AnimatedVectorDrawable mPauseToPlay;
   private boolean mIsShowingPause;
   public PlayToPauseMorphingImageView(Context context) {
-    super(context);
-    init();
+    this(context, null);
   }
 
   public PlayToPauseMorphingImageView(Context context, AttributeSet attrs) {
-    super(context, attrs);
-    init();
+    this(context, attrs, 0);
   }
 
   public PlayToPauseMorphingImageView(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
     init();
+
+    if(attrs != null) {
+      int[] set = {
+        android.R.attr.tint, // index 0
+      };
+      TypedArray a = context.obtainStyledAttributes(attrs, set);
+      int fill = a.getColor(0,
+        getResources().getColor(R.color.grey_67));
+      setColorFilter(fill);
+      a.recycle();
+    }
   }
 
   private void init(){
@@ -34,7 +44,6 @@ public class PlayToPauseMorphingImageView extends AppCompatImageView {
     mPauseToPlay =
       (AnimatedVectorDrawable)getContext().getDrawable(R.drawable.pause_to_play);
     setImageDrawable(mPlayToPause);
-    setColorFilter(getResources().getColor(R.color.grey_67));
   }
 
   public void switchState(){

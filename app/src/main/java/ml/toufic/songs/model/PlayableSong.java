@@ -16,9 +16,6 @@ public class PlayableSong extends Song {
   @ColumnInfo(name = "path")
   private File path;
 
-  //REPLACEMENT WILL BE DONE BASED ON ID: IF IT'S THE SAME, REPLACE
-  @PrimaryKey
-  @NonNull
   @ColumnInfo(name = "index")
   private int indexInQueue = 0;
 
