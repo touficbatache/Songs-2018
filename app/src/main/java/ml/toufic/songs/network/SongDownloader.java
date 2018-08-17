@@ -71,7 +71,7 @@ public class SongDownloader {
       .setOnStartOrResumeListener(new OnStartOrResumeListener() {
         @Override
         public void onStartOrResume() {
-          callback.onStartOrResume();
+          callback.onStartOrResume(song.getTitle());
         }
       })
       .setOnProgressListener(new OnProgressListener() {
@@ -105,7 +105,7 @@ public class SongDownloader {
   }
 
   public interface SongDownloaderCallback {
-    void onStartOrResume();
+    void onStartOrResume(String songTitle);
 
     void onProgress(Progress progress);
 

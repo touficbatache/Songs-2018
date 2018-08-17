@@ -2,8 +2,6 @@ package ml.toufic.songs.model;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.PrimaryKey;
-import android.support.annotation.NonNull;
 
 import java.io.File;
 
@@ -25,6 +23,9 @@ public class PlayableSong extends Song {
   @ColumnInfo(name = "looping")
   private boolean looping = false;
 
+  @ColumnInfo(name = "lastplayed")
+  private boolean lastPlayed = false;
+
   public PlayableSong(Song song, File path) {
     super(song.getId(), song.getTitle(), song.getArtist(), song.getCoverArt());
 
@@ -44,6 +45,14 @@ public class PlayableSong extends Song {
     return path;
   }
 
+  public void setIndexInQueue(int index) {
+    indexInQueue = index;
+  }
+
+  public int getIndexInQueue() {
+    return indexInQueue;
+  }
+
   public void setLastPosition(int lastPosition) {
     this.lastPosition = lastPosition;
   }
@@ -60,16 +69,11 @@ public class PlayableSong extends Song {
     return looping;
   }
 
-  public void setIndexInQueue(int index) {
-    indexInQueue = index;
+  public void setLastPlayed(boolean lastPlayed) {
+    this.lastPlayed = lastPlayed;
   }
 
-  public int getIndexInQueue() {
-    return indexInQueue;
-  }
-
-  @Override
-  public String toString() {
-    return "{\"id\":" + getId() + ", \"title\":" + getTitle() + ", \"artist\":" + getArtist() + ", \"coverArt\":" + getCoverArt() + ", \"path\":" + path.toString() + "}";
+  public boolean getLastPlayed() {
+    return lastPlayed;
   }
 }

@@ -4,7 +4,6 @@ import android.Manifest;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -67,8 +66,6 @@ import ml.toufic.songs.views.FavoriteBorderToFillMorphingImageView;
 import ml.toufic.songs.views.PlayToPauseMorphingImageView;
 import ml.toufic.songs.views.PlaylistAddToCheckMorphingImageView;
 
-import static ml.toufic.songs.util.SongUtils.DOWNLOAD_COMPLETE_SONG_ACTIVITY_REQUEST_CODE;
-
 public class MainActivity extends AppCompatActivity implements SlidingUpPanelLayout.PanelSlideListener {
 
   private static final String TAG = "MainActivity: ";
@@ -99,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private TextView mPlayerSongArtist;
   private FavoriteBorderToFillMorphingImageView mPlayerFavoriteBtn;
   private CloudDownloadBorderToFillImageView mPlayerCloudDownloadBtn;
-  private PlaylistAddToCheckMorphingImageView mPlayerPlaylistAddToPlaylistBtn;
+  private PlaylistAddToCheckMorphingImageView mPlayerAddToPlaylistBtn;
   private SeekBar mPlayerSongProgress;
   private TextView mPlayerSongProgressCurrent;
   private TextView mPlayerSongProgressTotal;
@@ -151,11 +148,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       .build();
     Fresco.initialize(this, imagePipelineConfig);
 
-    PRDownloaderConfig prDownloaderConfig = PRDownloaderConfig.newBuilder()
-//      .setDatabaseEnabled(true)
-//      .setReadTimeout(30_000)
-//      .setConnectTimeout(30_000)
-      .build();
+    PRDownloaderConfig prDownloaderConfig = PRDownloaderConfig.newBuilder().build();
     PRDownloader.initialize(getApplicationContext(), prDownloaderConfig);
 
     setContentView(R.layout.activity_main);
@@ -231,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerSongArtist = findViewById(R.id.player_song_artist);
     mPlayerFavoriteBtn = findViewById(R.id.player_action_favorite);
     mPlayerCloudDownloadBtn = findViewById(R.id.player_action_cloud_download);
-    mPlayerPlaylistAddToPlaylistBtn = findViewById(R.id.player_action_add_to_playlist);
+    mPlayerAddToPlaylistBtn = findViewById(R.id.player_action_add_to_playlist);
     mPlayerSongProgress = findViewById(R.id.player_song_progress);
     mPlayerSongProgressCurrent = findViewById(R.id.player_progress_current);
     mPlayerSongProgressTotal = findViewById(R.id.player_progress_total);
@@ -263,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   private boolean getLastPlayedSong() {
-    mPlayerSong = SongUtils.getCachedLastSong(mContext);
+    mPlayerSong = mDownloadedSongViewModel.getLastPlayedSong();
 
     boolean isSongOK = false;
     if(mPlayerSong != null && mPlayerSong.getPath().exists()) {
@@ -317,6 +310,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     });
 
+    mPlayerCloudDownloadBtn.clearAnimation();
     mPlayerCloudDownloadBtn.showFill();
     mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -336,10 +330,10 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     });
 
-    mPlayerPlaylistAddToPlaylistBtn.setOnClickListener(new View.OnClickListener() {
+    mPlayerAddToPlaylistBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        mPlayerPlaylistAddToPlaylistBtn.switchState();
+        mPlayerAddToPlaylistBtn.switchState();
       }
     });
 
@@ -517,11 +511,12 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   public void loadSong(PlayableSong playableSong) {
     destroy();
     isRemoteSongPlaying = false;
+    setLastPlayedSong(playableSong.getId());
 
-    SongUtils.cacheLastSong(mContext, playableSong);
-    getLastPlayedSong();
-    prepareForPlaying();
-    playSong();
+    if(getLastPlayedSong()) {
+      prepareForPlaying();
+      playSong();
+    }
   }
 
   private void updateRemoteSong(final Song remoteSong) {
@@ -569,8 +564,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         } else {
           SongDownloader.downloadSong(mContext, mPlayerRemoteSong, new SongDownloader.SongDownloaderCallback() {
             @Override
-            public void onStartOrResume() {
-              onSongDownloadStartOrResume();
+            public void onStartOrResume(String songTitle) {
+              onSongDownloadStartOrResume(songTitle);
             }
 
             @Override
@@ -591,10 +586,10 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     });
 
-    mPlayerPlaylistAddToPlaylistBtn.setOnClickListener(new View.OnClickListener() {
+    mPlayerAddToPlaylistBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        mPlayerPlaylistAddToPlaylistBtn.switchState();
+        mPlayerAddToPlaylistBtn.switchState();
       }
     });
 
@@ -618,6 +613,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerPlayToPauseBtn.setEnabled(false);
     mMiniPlayerPlayToPauseBtn.setEnabled(false);
     mPlayerSongProgress.setEnabled(false);
+    mPlayerFavoriteBtn.setEnabled(false);
+    mPlayerCloudDownloadBtn.setEnabled(false);
+    mPlayerAddToPlaylistBtn.setEnabled(false);
 
     mPlayerNextBtn.setEnabled(false);
     setColorEnabled(mPlayerNextBtn, false);
@@ -668,6 +666,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         mPlayerPlayToPauseBtn.setEnabled(true);
         mMiniPlayerPlayToPauseBtn.setEnabled(true);
         mPlayerSongProgress.setEnabled(true);
+        mPlayerFavoriteBtn.setEnabled(true);
+        mPlayerCloudDownloadBtn.setEnabled(true);
+        mPlayerAddToPlaylistBtn.setEnabled(true);
       }
     });
 
@@ -753,7 +754,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
     if(!isRemoteSongPlaying) {
       mPlayerSong.setLastPosition(mPlayerMediaPlayer.getCurrentPosition());
-      SongUtils.cacheLastSong(mContext, mPlayerSong);
+      setLastPlayedSong(mPlayerSong.getId());
 
     }
   }
@@ -768,17 +769,23 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     }
   }
 
-  public void onSongDownloadStartOrResume() {
+  private void setLastPlayedSong(String songId) {
+    mDownloadedSongViewModel.setLastPlayedSong(songId);
+  }
+
+  public void onSongDownloadStartOrResume(String songTitle) {
     Animation myFadeInAnimation = AnimationUtils.loadAnimation(this, R.anim.loading_fade_animation);
     mPlayerCloudDownloadBtn.startAnimation(myFadeInAnimation);
+    Toast.makeText(mContext, "Download started for " + songTitle, Toast.LENGTH_SHORT).show();
   }
 
   public void onSongDownloadCompletion(PlayableSong playableSong) {
-    if(playableSong.getId().equals(mPlayerSong.getId())) {
+    mDownloadedSongViewModel.insert(playableSong);
+    if(playableSong.getId().equals(mPlayerRemoteSong.getId())) {
       mPlayerCloudDownloadBtn.clearAnimation();
       mPlayerCloudDownloadBtn.showFill();
     }
-    Toast.makeText(mContext, playableSong.getTitle() + " has been downloaded! Go to \"My Music\" to play it", Toast.LENGTH_LONG).show();
+    Toast.makeText(mContext, playableSong.getTitle() + " has been downloaded! Go to \"My Music\" to play it", Toast.LENGTH_SHORT).show();
   }
 
   private void setColorEnabled(ImageButton imageButtonView, boolean enabled) {
@@ -818,8 +825,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
         SongDownloader.downloadSong(mContext, mPlayerRemoteSong, new SongDownloader.SongDownloaderCallback() {
           @Override
-          public void onStartOrResume() {
-            onSongDownloadStartOrResume();
+          public void onStartOrResume(String songTitle) {
+            onSongDownloadStartOrResume(songTitle);
           }
 
           @Override
