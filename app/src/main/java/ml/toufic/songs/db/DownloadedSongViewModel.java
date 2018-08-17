@@ -8,6 +8,7 @@ import android.util.Log;
 import java.util.List;
 
 import ml.toufic.songs.model.PlayableSong;
+import ml.toufic.songs.ui.activities.MainActivity;
 
 public class DownloadedSongViewModel extends AndroidViewModel {
 
@@ -22,15 +23,24 @@ public class DownloadedSongViewModel extends AndroidViewModel {
 
   public void insert(PlayableSong playableSong) {
     mRepository.insert(playableSong);
-    Log.d("DownloadedSongViewModel", "tgblog: insert: " + Converters.fromSong(playableSong));
   }
 
-  public void setLastPlayedSong(String songId) {
-    mRepository.setLastPlayedSong(songId);
-    Log.d("DownloadedSongViewModel", "tgblog: setLastPlayedSong: " + songId);
-    for(PlayableSong playableSong : getAllSongs().getValue()) {
-      Log.d("DownloadedSongViewModel", "tgblog: allsongs: " + Converters.fromSong(playableSong));
-    }
+  public PlayableSong getSong(String songId) {
+    return mRepository.getSong(songId);
+  }
+
+  public void setLastPlayedSong(PlayableSong playableSong) {
+    setLastPlayedSong(playableSong, new MainActivity.OnLastPlayedUpdateCompletionCallback() {
+      @Override
+      public void onCompletion() {
+
+      }
+    });
+  }
+
+  public void setLastPlayedSong(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
+    playableSong.setLastPlayed(true);
+    mRepository.setLastPlayedSong(playableSong, completionCallback);
   }
 
   public PlayableSong getLastPlayedSong() {

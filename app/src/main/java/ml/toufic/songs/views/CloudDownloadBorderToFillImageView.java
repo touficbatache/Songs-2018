@@ -7,6 +7,8 @@ import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
 import ml.toufic.songs.R;
 
@@ -55,19 +57,22 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
   }
 
   public void showFill() {
-    if(!mIsShowingFill) {
-      Drawable drawable = mCloudDownloadFill;
-      setImageDrawable(drawable);
-      // border -> fill. It's now showing fill
-      mIsShowingFill = true;
-    }
+    clearAnimation();
+    setImageDrawable(mCloudDownloadFill);
+    // border -> fill. It's now showing fill
+    mIsShowingFill = true;
   }
 
   public void showBorder() {
-    Drawable drawable = mCloudDownloadBorder;
-    setImageDrawable(drawable);
+    clearAnimation();
+    setImageDrawable(mCloudDownloadBorder);
     // fill -> border. It's now showing border
     mIsShowingFill = false;
+  }
+
+  public void showBlinkingAnimation() {
+    Animation myFadeInAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.loading_fade_animation);
+    startAnimation(myFadeInAnimation);
   }
 
   @Override

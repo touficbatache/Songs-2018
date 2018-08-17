@@ -23,6 +23,7 @@ public abstract class DownloadedSongsDatabase extends RoomDatabase {
         if (INSTANCE == null) {
           INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
             DownloadedSongsDatabase.class, "downloaded_songs_database")
+            .allowMainThreadQueries()
             .build();
         }
       }

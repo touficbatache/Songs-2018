@@ -4,16 +4,15 @@ import android.app.Application;
 import android.arch.lifecycle.LiveData;
 import android.os.AsyncTask;
 
-import org.json.JSONObject;
-
 import java.util.List;
 
 import ml.toufic.songs.model.PlayableSong;
+import ml.toufic.songs.ui.activities.MainActivity;
 
 public class DownloadedSongsRepository {
 
   private DownloadedSongsDao mDownloadedSongsDao;
-  private List<PlayableSong> mLastPlayedSong;
+  private PlayableSong mLastPlayedSong;
   private LiveData<List<PlayableSong>> mAllDownloadedSongs;
 
   DownloadedSongsRepository(Application application) {
@@ -27,13 +26,17 @@ public class DownloadedSongsRepository {
     new insertAsyncTask(mDownloadedSongsDao).execute(playableSong);
   }
 
-  public void setLastPlayedSong(String songId) {
-    new resetAllLastPlayedSongsAsyncTask(mDownloadedSongsDao);
-    new setLastPlayedAsyncTask(mDownloadedSongsDao).execute(songId);
+  public PlayableSong getSong(String songId) {
+    return mDownloadedSongsDao.getSong(songId);
+  }
+
+  public void setLastPlayedSong(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
+    new resetLastPlayedAsyncTask(mDownloadedSongsDao).execute();
+    new setLastPlayedAsyncTask(mDownloadedSongsDao, completionCallback).execute(playableSong);
   }
 
   PlayableSong getLastPlayedSong() {
-    return mDownloadedSongsDao.getLastPlayedSong().get(0);
+    return mDownloadedSongsDao.getLastPlayedSong();
   }
 
   public void update(PlayableSong playableSong) {
@@ -71,11 +74,11 @@ public class DownloadedSongsRepository {
     }
   }
 
-  private static class resetAllLastPlayedSongsAsyncTask extends AsyncTask<Void, Void, Void> {
+  private static class resetLastPlayedAsyncTask extends AsyncTask<Void, Void, Void> {
 
     private DownloadedSongsDao mAsyncTaskDao;
 
-    resetAllLastPlayedSongsAsyncTask(DownloadedSongsDao dao) {
+    resetLastPlayedAsyncTask(DownloadedSongsDao dao) {
       mAsyncTaskDao = dao;
     }
 
@@ -86,18 +89,26 @@ public class DownloadedSongsRepository {
     }
   }
 
-  private static class setLastPlayedAsyncTask extends AsyncTask<String, Void, Void> {
+  private static class setLastPlayedAsyncTask extends AsyncTask<PlayableSong, Void, Void> {
 
     private DownloadedSongsDao mAsyncTaskDao;
+    private MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback;
 
-    setLastPlayedAsyncTask(DownloadedSongsDao dao) {
+    setLastPlayedAsyncTask(DownloadedSongsDao dao, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
       mAsyncTaskDao = dao;
+      this.completionCallback = completionCallback;
     }
 
     @Override
-    protected Void doInBackground(final String... params) {
+    protected Void doInBackground(final PlayableSong... params) {
       mAsyncTaskDao.setLastPlayedSong(params[0]);
       return null;
+    }
+
+    @Override
+    protected void onPostExecute(Void aVoid) {
+      super.onPostExecute(aVoid);
+      completionCallback.onCompletion();
     }
   }
 

@@ -148,7 +148,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       .build();
     Fresco.initialize(this, imagePipelineConfig);
 
-    PRDownloaderConfig prDownloaderConfig = PRDownloaderConfig.newBuilder().build();
+    PRDownloaderConfig prDownloaderConfig = PRDownloaderConfig.newBuilder()
+      .build();
     PRDownloader.initialize(getApplicationContext(), prDownloaderConfig);
 
     setContentView(R.layout.activity_main);
@@ -310,7 +311,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     });
 
-    mPlayerCloudDownloadBtn.clearAnimation();
     mPlayerCloudDownloadBtn.showFill();
     mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -511,12 +511,19 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   public void loadSong(PlayableSong playableSong) {
     destroy();
     isRemoteSongPlaying = false;
-    setLastPlayedSong(playableSong.getId());
+    setLastPlayedSong(playableSong, new OnLastPlayedUpdateCompletionCallback() {
+      @Override
+      public void onCompletion() {
+        if(getLastPlayedSong()) {
+          prepareForPlaying();
+          playSong();
+        }
+      }
+    });
+  }
 
-    if(getLastPlayedSong()) {
-      prepareForPlaying();
-      playSong();
-    }
+  public interface OnLastPlayedUpdateCompletionCallback {
+    void onCompletion();
   }
 
   private void updateRemoteSong(final Song remoteSong) {
@@ -550,7 +557,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     });
 
-    mPlayerCloudDownloadBtn.clearAnimation();
     mPlayerCloudDownloadBtn.showBorder();
     mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -754,8 +760,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
     if(!isRemoteSongPlaying) {
       mPlayerSong.setLastPosition(mPlayerMediaPlayer.getCurrentPosition());
-      setLastPlayedSong(mPlayerSong.getId());
-
+      setLastPlayedSong(mPlayerSong);
     }
   }
 
@@ -769,20 +774,22 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     }
   }
 
-  private void setLastPlayedSong(String songId) {
-    mDownloadedSongViewModel.setLastPlayedSong(songId);
+  private void setLastPlayedSong(PlayableSong playableSong) {
+    mDownloadedSongViewModel.setLastPlayedSong(playableSong);
+  }
+
+  private void setLastPlayedSong(PlayableSong playableSong, OnLastPlayedUpdateCompletionCallback completionCallback) {
+    mDownloadedSongViewModel.setLastPlayedSong(playableSong, completionCallback);
   }
 
   public void onSongDownloadStartOrResume(String songTitle) {
-    Animation myFadeInAnimation = AnimationUtils.loadAnimation(this, R.anim.loading_fade_animation);
-    mPlayerCloudDownloadBtn.startAnimation(myFadeInAnimation);
+    mPlayerCloudDownloadBtn.showBlinkingAnimation();
     Toast.makeText(mContext, "Download started for " + songTitle, Toast.LENGTH_SHORT).show();
   }
 
   public void onSongDownloadCompletion(PlayableSong playableSong) {
     mDownloadedSongViewModel.insert(playableSong);
     if(playableSong.getId().equals(mPlayerRemoteSong.getId())) {
-      mPlayerCloudDownloadBtn.clearAnimation();
       mPlayerCloudDownloadBtn.showFill();
     }
     Toast.makeText(mContext, playableSong.getTitle() + " has been downloaded! Go to \"My Music\" to play it", Toast.LENGTH_SHORT).show();
