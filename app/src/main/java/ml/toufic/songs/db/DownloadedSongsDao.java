@@ -21,8 +21,8 @@ public interface DownloadedSongsDao {
   @Query("SELECT * FROM downloaded_songs_table WHERE id = :songId")
   PlayableSong getSong(String songId);
 
-  @Query("UPDATE downloaded_songs_table SET lastplayed = 0")
-  void resetAllLastPlayedSongs();
+  @Query("UPDATE downloaded_songs_table SET lastplayed = 0 WHERE id != :songId")
+  void resetAllLastPlayedSongs(String songId);
 
   @Update
   void setLastPlayedSong(PlayableSong playableSong);

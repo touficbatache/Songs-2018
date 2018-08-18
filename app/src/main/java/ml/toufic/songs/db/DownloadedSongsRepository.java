@@ -31,7 +31,7 @@ public class DownloadedSongsRepository {
   }
 
   public void setLastPlayedSong(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
-    new resetLastPlayedAsyncTask(mDownloadedSongsDao).execute();
+    new resetLastPlayedAsyncTask(mDownloadedSongsDao).execute(playableSong.getId());
     new setLastPlayedAsyncTask(mDownloadedSongsDao, completionCallback).execute(playableSong);
   }
 
@@ -74,7 +74,7 @@ public class DownloadedSongsRepository {
     }
   }
 
-  private static class resetLastPlayedAsyncTask extends AsyncTask<Void, Void, Void> {
+  private static class resetLastPlayedAsyncTask extends AsyncTask<String, Void, Void> {
 
     private DownloadedSongsDao mAsyncTaskDao;
 
@@ -83,8 +83,8 @@ public class DownloadedSongsRepository {
     }
 
     @Override
-    protected Void doInBackground(Void... voids) {
-      mAsyncTaskDao.resetAllLastPlayedSongs();
+    protected Void doInBackground(String... params) {
+      mAsyncTaskDao.resetAllLastPlayedSongs(params[0]);
       return null;
     }
   }
