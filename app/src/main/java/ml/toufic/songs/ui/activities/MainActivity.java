@@ -509,11 +509,11 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   public void loadSong(PlayableSong playableSong) {
-    destroy();
     isRemoteSongPlaying = false;
     setLastPlayedSong(playableSong, new OnLastPlayedUpdateCompletionCallback() {
       @Override
       public void onCompletion() {
+        destroy();
         if(getLastPlayedSong()) {
           prepareForPlaying();
           playSong();
