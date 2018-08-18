@@ -25,8 +25,6 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -243,7 +241,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mSlidingPanelLayout.addPanelSlideListener(this);
     mPlayerSongProgressHandler = new Handler();
 
-    if(SongUtils.getCachedLastSong(mContext) == null || mPlayingQueue.isEmpty()) {
+    if(mDownloadedSongViewModel.getLastPlayedSong() == null || mPlayingQueue.isEmpty()) {
       mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
     }
   }
@@ -276,7 +274,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private void updatePlayingQueue() {
     mPlayingQueue = new ArrayList<>();
-    List<PlayableSong> playableSongsList = SongUtils.getCachedSongs(mContext);
+//    List<PlayableSong> playableSongsList = SongUtils.getCachedSongs(mContext);
+    List<PlayableSong> playableSongsList = mDownloadedSongViewModel.getAllSongsAsync();
     for(int i=0; i<playableSongsList.size(); i++) {
       PlayableSong playableSong = playableSongsList.get(i);
       playableSong.setIndexInQueue(i);
@@ -307,7 +306,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onClick(View view) {
         mPlayerFavoriteBtn.switchState();
-
       }
     });
 
@@ -315,8 +313,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        if(SongUtils.deleteSong(mContext, mPlayerSong)) {
-          if(SongUtils.getCachedSongs(mContext).size() >= 1) {
+//        if(SongUtils.deleteSong(mContext, mPlayerSong)) {
+          deleteSong(mPlayerSong);
+          if(getAllSongsAsync().size() >= 1) {
             if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
               loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() - 1));
             } else {
@@ -326,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
             mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
           }
           mMyMusicFragment.updateRecyclerViewDownloadedSongs();
-        }
+//        }
       }
     });
 
@@ -372,7 +371,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
           mPlayerSong.setLooping(false);
           mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
         }
-//        mDownloadedSongViewModel.insert(mPlayerSong);
+//        mDownloadedSongViewModel.insertSong(mPlayerSong);
       }
     });
 
@@ -510,7 +509,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   public void loadSong(PlayableSong playableSong) {
     isRemoteSongPlaying = false;
-    setLastPlayedSong(playableSong, new OnLastPlayedUpdateCompletionCallback() {
+    updateSongWithResetAll(playableSong, new OnLastPlayedUpdateCompletionCallback() {
       @Override
       public void onCompletion() {
         destroy();
@@ -717,6 +716,10 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   public void loadSong(Song remoteSong) {
+    if(hasSong(remoteSong.getId())) {
+      loadSong(getSong(remoteSong.getId()));
+      return;
+    }
     destroy();
     isRemoteSongPlaying = true;
     isRemoteSongLooping = false;
@@ -760,7 +763,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
     if(!isRemoteSongPlaying) {
       mPlayerSong.setLastPosition(mPlayerMediaPlayer.getCurrentPosition());
-      setLastPlayedSong(mPlayerSong);
+      updateSongWithResetAll(mPlayerSong);
     }
   }
 
@@ -774,12 +777,36 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     }
   }
 
-  private void setLastPlayedSong(PlayableSong playableSong) {
-    mDownloadedSongViewModel.setLastPlayedSong(playableSong);
+  public void insertSong(PlayableSong playableSong) {
+    mDownloadedSongViewModel.insert(playableSong);
   }
 
-  private void setLastPlayedSong(PlayableSong playableSong, OnLastPlayedUpdateCompletionCallback completionCallback) {
-    mDownloadedSongViewModel.setLastPlayedSong(playableSong, completionCallback);
+  public void updateSong(PlayableSong playableSong) {
+    mDownloadedSongViewModel.update(playableSong);
+  }
+
+  public PlayableSong getSong(String songId) {
+    return mDownloadedSongViewModel.getSong(songId);
+  }
+
+  private void updateSongWithResetAll(PlayableSong playableSong) {
+    mDownloadedSongViewModel.updateSongWithResetAll(playableSong);
+  }
+
+  private void updateSongWithResetAll(PlayableSong playableSong, OnLastPlayedUpdateCompletionCallback completionCallback) {
+    mDownloadedSongViewModel.updateSongWithResetAll(playableSong, completionCallback);
+  }
+
+  public boolean hasSong(String songId) {
+    return mDownloadedSongViewModel.hasSong(songId);
+  }
+
+  public List<PlayableSong> getAllSongsAsync() {
+    return mDownloadedSongViewModel.getAllSongsAsync();
+  }
+
+  public void deleteSong(PlayableSong playableSong) {
+    mDownloadedSongViewModel.delete(playableSong);
   }
 
   public void onSongDownloadStartOrResume(String songTitle) {
@@ -788,11 +815,13 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   public void onSongDownloadCompletion(PlayableSong playableSong) {
-    mDownloadedSongViewModel.insert(playableSong);
-    if(playableSong.getId().equals(mPlayerRemoteSong.getId())) {
-      mPlayerCloudDownloadBtn.showFill();
+    if(playableSong.getPath().exists()) {
+      insertSong(playableSong);
+      if (playableSong.getId().equals(mPlayerRemoteSong.getId())) {
+        mPlayerCloudDownloadBtn.showFill();
+      }
+      Toast.makeText(mContext, playableSong.getTitle() + " has been downloaded! Go to \"My Music\" to play it", Toast.LENGTH_SHORT).show();
     }
-    Toast.makeText(mContext, playableSong.getTitle() + " has been downloaded! Go to \"My Music\" to play it", Toast.LENGTH_SHORT).show();
   }
 
   private void setColorEnabled(ImageButton imageButtonView, boolean enabled) {

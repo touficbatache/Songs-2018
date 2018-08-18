@@ -24,29 +24,6 @@ public class SongUtils {
   public final static String POPULAR_PLAYLIST_ID = "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI";
   public final static String API_KEY = "YOUR_YOUTUBE_API_KEY";
 
-  public static void cacheSongs(Context context, List<PlayableSong> songs) {
-    DeviceUtils.cacheData(context, CACHED_SONGS_KEY, new Gson().toJson(songs));
-  }
-
-  public static ArrayList<PlayableSong> getCachedSongs(Context context) {
-    if(DeviceUtils.getCachedData(context, CACHED_SONGS_KEY) != null) {
-      return new Gson().fromJson(DeviceUtils.getCachedData(context, CACHED_SONGS_KEY), new TypeToken<List<PlayableSong>>() {}.getType());
-    } else {
-      return new ArrayList<>();
-    }
-  }
-
-  public static void cacheLastSong(Context context, PlayableSong song) {
-    DeviceUtils.cacheData(context, CACHED_LAST_SONG_KEY, new Gson().toJson(song));
-  }
-
-  public static PlayableSong getCachedLastSong(Context context) {
-    if(DeviceUtils.getCachedData(context, CACHED_LAST_SONG_KEY) != null) {
-      return new Gson().fromJson(DeviceUtils.getCachedData(context, CACHED_LAST_SONG_KEY), new TypeToken<PlayableSong>() {}.getType());
-    }
-    return null;
-  }
-
   public static File getSongPath(String filename) {
     return new File(DeviceUtils.getDownloadStorageDirectory(), filename);
   }
@@ -68,31 +45,6 @@ public class SongUtils {
       }
     }
     return isDownloaded;
-  }
-
-  public static boolean isSongInMyMusic(Context context, String songId) {
-    List<PlayableSong> playableSongs = SongUtils.getCachedSongs(context);
-    boolean isInMyMusic = false;
-    for(PlayableSong playableSong : playableSongs) {
-      if(playableSong.getPath().toString().contains(songId)) {
-        isInMyMusic = true;
-      }
-    }
-    return isInMyMusic;
-  }
-
-  public static boolean deleteSong(Context context, PlayableSong song) {
-    File songPath = song.getPath();
-    List<PlayableSong> playableSongs = getCachedSongs(context);
-    if(songPath.exists()) {
-      if(songPath.delete()) {
-        Toast.makeText(context, "Deleted successfully!", Toast.LENGTH_LONG).show();
-      }
-    }
-    playableSongs.remove(song);
-    SongUtils.cacheSongs(context, playableSongs);
-
-    return !songPath.exists();
   }
 
 }

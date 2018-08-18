@@ -18,11 +18,20 @@ public interface DownloadedSongsDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   void insert(PlayableSong playableSong);
 
+  @Update
+  void update(PlayableSong playableSong);
+
   @Query("SELECT * FROM downloaded_songs_table WHERE id = :songId")
   PlayableSong getSong(String songId);
 
-  @Query("UPDATE downloaded_songs_table SET lastplayed = 0 WHERE id != :songId")
-  void resetAllLastPlayedSongs(String songId);
+  @Query("SELECT * FROM downloaded_songs_table")
+  List<PlayableSong> getAllSongsAsync();
+
+  @Query("SELECT * FROM downloaded_songs_table ORDER BY `index` ASC")
+  LiveData<List<PlayableSong>> getAllSongs();
+
+  @Query("UPDATE downloaded_songs_table SET lastplayed = 0 AND lastposition = 0 WHERE id != :songId")
+  void resetAllSongsExcept(String songId);
 
   @Update
   void setLastPlayedSong(PlayableSong playableSong);
@@ -30,17 +39,11 @@ public interface DownloadedSongsDao {
   @Query("SELECT * FROM downloaded_songs_table WHERE lastPlayed = 1")
   PlayableSong getLastPlayedSong();
 
-  @Update
-  void update(PlayableSong playableSong);
-
-  @Query("SELECT * FROM downloaded_songs_table ORDER BY `index` ASC")
-  LiveData<List<PlayableSong>> getAllSongs();
+  @Delete
+  void delete(PlayableSong playableSong);
 
   @Query("DELETE FROM downloaded_songs_table WHERE id = :songId")
   void delete(String songId);
-
-  @Delete
-  void delete(PlayableSong playableSong);
 
   @Query("DELETE FROM downloaded_songs_table")
   void deleteAll();

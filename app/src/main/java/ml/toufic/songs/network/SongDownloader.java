@@ -30,14 +30,7 @@ public class SongDownloader {
     fetchSongURL(context, song, new SongURLFetcherCallback() {
       @Override
       public void onSuccess(YtFile songFile) {
-        boolean isSongInDownloadsDir = SongUtils.isSongInDownloadsDir(song.getId());
-        boolean isSongInMyMusic = SongUtils.isSongInMyMusic(context, song.getId());
-
-        if (isSongInDownloadsDir && isSongInMyMusic) {
-          Toast.makeText(context, "Song already exists in \"My Music\"!", Toast.LENGTH_LONG).show();
-        } else {
-          startDownload(context, song, songFile.getUrl(), callback);
-        }
+        startDownload(context, song, songFile.getUrl(), callback);
       }
     });
   }
@@ -83,12 +76,7 @@ public class SongDownloader {
       .start(new OnDownloadListener() {
         @Override
         public void onDownloadComplete() {
-          final PlayableSong playableSong = new PlayableSong(song, SongUtils.getSongPath(fileName));
-          if(playableSong.getPath().exists()) {
-            List<PlayableSong> playableSongs = SongUtils.getCachedSongs(context);
-            playableSongs.add(playableSong);
-            SongUtils.cacheSongs(context, playableSongs);
-          }
+          PlayableSong playableSong = new PlayableSong(song, SongUtils.getSongPath(fileName));
           callback.onDownloadComplete(playableSong);
         }
 

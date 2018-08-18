@@ -1,6 +1,8 @@
 package ml.toufic.songs.ui.fragments;
 
 import android.Manifest;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -42,6 +44,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import ml.toufic.songs.db.Converters;
 import ml.toufic.songs.model.Song;
 import ml.toufic.songs.network.JSONObjectDataFetcher;
 import ml.toufic.songs.ui.activities.MainActivity;
@@ -118,7 +121,7 @@ public class MyMusicFragment extends Fragment {
   }
 
   private void loadDownloadedSongs() {
-    playableSongs = SongUtils.getCachedSongs(mContext);
+    playableSongs = mActivity.getAllSongsAsync();
 
     if (ContextCompat.checkSelfPermission(mActivity,
       Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -136,6 +139,8 @@ public class MyMusicFragment extends Fragment {
       PlayableSong playableSong = playableSongsIterator.next();
       if (!playableSong.getPath().exists()) {
         playableSongsIterator.remove(); //TODO: Don't remove the song, just tell the user that the song can't be played and ask him if he wants to re-download it.
+        mActivity.deleteSong(playableSong);
+        updateRecyclerViewDownloadedSongs();
       }
     }
 
@@ -152,7 +157,7 @@ public class MyMusicFragment extends Fragment {
       File[] downloadedSongsInDirectory = downloadDirectory.listFiles();
       for (File songInDirectory : downloadedSongsInDirectory) {
         final String id = SongUtils.getSongId(songInDirectory.getName());
-        if (!SongUtils.isSongInMyMusic(mContext, id) && songInDirectory.lastModified() < new Date().getTime() - 300000) {
+        if (!mActivity.hasSong(id) && songInDirectory.lastModified() < new Date().getTime() - 300000) {
           new JSONObjectDataFetcher("https://www.googleapis.com/youtube/v3/videos?part=id, snippet&id=" + id + "&key=" + SongUtils.API_KEY, new JSONObjectDataFetcher.JSONDataFetcherCallback() {
             @Override
             public void onSuccess(JSONObject result) {
@@ -168,8 +173,9 @@ public class MyMusicFragment extends Fragment {
                   String thumbnail = thumbnailObj.getJSONObject("high").getString("url");
 
                   Song song = new Song(id, title, author, thumbnail);
-                  playableSongs.add(new PlayableSong(song, SongUtils.getSongPath(SongUtils.getSongFileName(id))));
-                  SongUtils.cacheSongs(mContext, playableSongs);
+                  PlayableSong playableSong = new PlayableSong(song, SongUtils.getSongPath(SongUtils.getSongFileName(id)));
+
+                  mActivity.insertSong(playableSong);
                   updateRecyclerViewDownloadedSongs();
                 }
               } catch (JSONException e) {
@@ -186,7 +192,6 @@ public class MyMusicFragment extends Fragment {
       }
     }
 
-    SongUtils.cacheSongs(mContext, playableSongs);
     updateRecyclerViewDownloadedSongs();
   }
 
@@ -217,11 +222,14 @@ public class MyMusicFragment extends Fragment {
   }
 
   public void updateRecyclerViewDownloadedSongs() {
+    playableSongs = mActivity.getAllSongsAsync();
+
     mAdapter.clear();
 
     for(int i=0; i<playableSongs.size(); i++) {
       PlayableSong playableSong = playableSongs.get(i);
       playableSong.setIndexInQueue(i);
+      mActivity.updateSong(playableSong);
       mAdapter.addDownloadedSongModel(playableSong);
     }
 
@@ -276,9 +284,8 @@ public class MyMusicFragment extends Fragment {
             })
             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
               public void onClick(DialogInterface dialog, int id) {
-                if(SongUtils.deleteSong(mContext, song)) {
-                  loadDownloadedSongs();
-                }
+                mActivity.deleteSong(song);
+                loadDownloadedSongs();
               }
             });
           AlertDialog alert = builder.create();

@@ -3,7 +3,6 @@ package ml.toufic.songs.db;
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
-import android.util.Log;
 
 import java.util.List;
 
@@ -25,40 +24,45 @@ public class DownloadedSongViewModel extends AndroidViewModel {
     mRepository.insert(playableSong);
   }
 
+  public void update(PlayableSong playableSong) {
+    mRepository.update(playableSong);
+  }
+
   public PlayableSong getSong(String songId) {
     return mRepository.getSong(songId);
   }
 
-  public void setLastPlayedSong(PlayableSong playableSong) {
-    setLastPlayedSong(playableSong, new MainActivity.OnLastPlayedUpdateCompletionCallback() {
-      @Override
-      public void onCompletion() {
-
-      }
-    });
+  public boolean hasSong(String songId) {
+    return mRepository.hasSong(songId);
   }
 
-  public void setLastPlayedSong(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
+  public List<PlayableSong> getAllSongsAsync() {
+    return mRepository.getAllSongsAsync();
+  }
+
+  public LiveData<List<PlayableSong>> getAllSongs() { return mAllSongs; }
+
+  public void updateSongWithResetAll(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
     playableSong.setLastPlayed(true);
-    mRepository.setLastPlayedSong(playableSong, completionCallback);
+    mRepository.updateSongWithResetAll(playableSong, completionCallback);
+  }
+  public void updateSongWithResetAll(PlayableSong playableSong) {
+    updateSongWithResetAll(playableSong, new MainActivity.OnLastPlayedUpdateCompletionCallback() {
+      @Override
+      public void onCompletion() {}
+    });
   }
 
   public PlayableSong getLastPlayedSong() {
     return mRepository.getLastPlayedSong();
   }
 
-  public void update(PlayableSong playableSong) {
-    mRepository.update(playableSong);
+  public void delete(PlayableSong playableSong) {
+    mRepository.delete(playableSong);
   }
-
-  public LiveData<List<PlayableSong>> getAllSongs() { return mAllSongs; }
 
   public void delete(String songId) {
     mRepository.delete(songId);
-  }
-
-  public void delete(PlayableSong playableSong) {
-    mRepository.delete(playableSong);
   }
 
   public void deleteAll() {

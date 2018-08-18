@@ -26,12 +26,28 @@ public class DownloadedSongsRepository {
     new insertAsyncTask(mDownloadedSongsDao).execute(playableSong);
   }
 
+  public void update(PlayableSong playableSong) {
+    new updateAsyncTask(mDownloadedSongsDao).execute(playableSong);
+  }
+
   public PlayableSong getSong(String songId) {
     return mDownloadedSongsDao.getSong(songId);
   }
 
-  public void setLastPlayedSong(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
-    new resetLastPlayedAsyncTask(mDownloadedSongsDao).execute(playableSong.getId());
+  public boolean hasSong(String songId) {
+    return mDownloadedSongsDao.getSong(songId) != null;
+  }
+
+  List<PlayableSong> getAllSongsAsync() {
+    return mDownloadedSongsDao.getAllSongsAsync();
+  }
+
+  LiveData<List<PlayableSong>> getAllSongs() {
+    return mAllDownloadedSongs;
+  }
+
+  public void updateSongWithResetAll(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
+    new resetAllSongsExceptAsyncTask(mDownloadedSongsDao).execute(playableSong.getId());
     new setLastPlayedAsyncTask(mDownloadedSongsDao, completionCallback).execute(playableSong);
   }
 
@@ -39,20 +55,12 @@ public class DownloadedSongsRepository {
     return mDownloadedSongsDao.getLastPlayedSong();
   }
 
-  public void update(PlayableSong playableSong) {
-    new updateAsyncTask(mDownloadedSongsDao).execute(playableSong);
-  }
-
-  LiveData<List<PlayableSong>> getAllSongs() {
-    return mAllDownloadedSongs;
+  public void delete(PlayableSong playableSong) {
+    new deleteAsyncTask(mDownloadedSongsDao).execute(playableSong);
   }
 
   public void delete(String songId) {
-    new deleteAsyncTask(mDownloadedSongsDao).execute(songId);
-  }
-
-  public void delete(PlayableSong playableSong) {
-    new deleteSongAsyncTask(mDownloadedSongsDao).execute(playableSong);
+    new deleteByIdAsyncTask(mDownloadedSongsDao).execute(songId);
   }
 
   public void deleteAll() {
@@ -74,17 +82,32 @@ public class DownloadedSongsRepository {
     }
   }
 
-  private static class resetLastPlayedAsyncTask extends AsyncTask<String, Void, Void> {
+  private static class updateAsyncTask extends AsyncTask<PlayableSong, Void, Void> {
 
     private DownloadedSongsDao mAsyncTaskDao;
 
-    resetLastPlayedAsyncTask(DownloadedSongsDao dao) {
+    updateAsyncTask(DownloadedSongsDao dao) {
+      mAsyncTaskDao = dao;
+    }
+
+    @Override
+    protected Void doInBackground(final PlayableSong... params) {
+      mAsyncTaskDao.update(params[0]);
+      return null;
+    }
+  }
+
+  private static class resetAllSongsExceptAsyncTask extends AsyncTask<String, Void, Void> {
+
+    private DownloadedSongsDao mAsyncTaskDao;
+
+    resetAllSongsExceptAsyncTask(DownloadedSongsDao dao) {
       mAsyncTaskDao = dao;
     }
 
     @Override
     protected Void doInBackground(String... params) {
-      mAsyncTaskDao.resetAllLastPlayedSongs(params[0]);
+      mAsyncTaskDao.resetAllSongsExcept(params[0]);
       return null;
     }
   }
@@ -112,22 +135,7 @@ public class DownloadedSongsRepository {
     }
   }
 
-  private static class updateAsyncTask extends AsyncTask<PlayableSong, Void, Void> {
-
-    private DownloadedSongsDao mAsyncTaskDao;
-
-    updateAsyncTask(DownloadedSongsDao dao) {
-      mAsyncTaskDao = dao;
-    }
-
-    @Override
-    protected Void doInBackground(final PlayableSong... params) {
-      mAsyncTaskDao.update(params[0]);
-      return null;
-    }
-  }
-
-  private static class deleteAsyncTask extends AsyncTask<String, Void, Void> {
+  private static class deleteAsyncTask extends AsyncTask<PlayableSong, Void, Void> {
 
     private DownloadedSongsDao mAsyncTaskDao;
 
@@ -136,22 +144,22 @@ public class DownloadedSongsRepository {
     }
 
     @Override
-    protected Void doInBackground(final String... params) {
+    protected Void doInBackground(final PlayableSong... params) {
       mAsyncTaskDao.delete(params[0]);
       return null;
     }
   }
 
-  private static class deleteSongAsyncTask extends AsyncTask<PlayableSong, Void, Void> {
+  private static class deleteByIdAsyncTask extends AsyncTask<String, Void, Void> {
 
     private DownloadedSongsDao mAsyncTaskDao;
 
-    deleteSongAsyncTask(DownloadedSongsDao dao) {
+    deleteByIdAsyncTask(DownloadedSongsDao dao) {
       mAsyncTaskDao = dao;
     }
 
     @Override
-    protected Void doInBackground(final PlayableSong... params) {
+    protected Void doInBackground(final String... params) {
       mAsyncTaskDao.delete(params[0]);
       return null;
     }
