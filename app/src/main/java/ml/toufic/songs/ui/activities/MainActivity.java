@@ -58,11 +58,8 @@ import ml.toufic.songs.network.SongDownloader;
 import ml.toufic.songs.ui.fragments.ExploreFragment;
 import ml.toufic.songs.ui.fragments.MyMusicFragment;
 import ml.toufic.songs.util.DeviceUtils;
-import ml.toufic.songs.util.SongUtils;
 import ml.toufic.songs.views.CloudDownloadBorderToFillImageView;
-import ml.toufic.songs.views.FavoriteBorderToFillMorphingImageView;
-import ml.toufic.songs.views.PlayToPauseMorphingImageView;
-import ml.toufic.songs.views.PlaylistAddToCheckMorphingImageView;
+import ml.toufic.songs.views.MorphingImageView;
 
 public class MainActivity extends AppCompatActivity implements SlidingUpPanelLayout.PanelSlideListener {
 
@@ -92,21 +89,23 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private RecyclerView.OnScrollListener mPlayerRecyclerViewListener;
   private TextView mPlayerSongTitle;
   private TextView mPlayerSongArtist;
-  private FavoriteBorderToFillMorphingImageView mPlayerFavoriteBtn;
+  private MorphingImageView mPlayerFavoriteBtn;
   private CloudDownloadBorderToFillImageView mPlayerCloudDownloadBtn;
-  private PlaylistAddToCheckMorphingImageView mPlayerAddToPlaylistBtn;
+  private MorphingImageView mPlayerAddToPlaylistBtn;
+  private ImageView mPlayerShareBtn;
   private SeekBar mPlayerSongProgress;
   private TextView mPlayerSongProgressCurrent;
   private TextView mPlayerSongProgressTotal;
   private ImageButton mPlayerRepeatBtn;
   private ImageButton mPlayerPrevBtn;
-  private PlayToPauseMorphingImageView mPlayerPlayToPauseBtn;
+  private MorphingImageView mPlayerPlayToPauseBtn;
   private ImageButton mPlayerNextBtn;
+  private ImageButton mPlayerShuffleBtn;
 
   private LinearLayout mMiniPlayer;
   private ImageView mMiniPlayerArrowUp;
   private TextView mMiniPlayerSongTitle;
-  private PlayToPauseMorphingImageView mMiniPlayerPlayToPauseBtn;
+  private MorphingImageView mMiniPlayerPlayToPauseBtn;
 
   private SlidingUpPanelLayout mSlidingPanelLayout;
   private MediaPlayer mPlayerMediaPlayer;
@@ -224,6 +223,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerFavoriteBtn = findViewById(R.id.player_action_favorite);
     mPlayerCloudDownloadBtn = findViewById(R.id.player_action_cloud_download);
     mPlayerAddToPlaylistBtn = findViewById(R.id.player_action_add_to_playlist);
+    mPlayerShareBtn = findViewById(R.id.player_action_share);
     mPlayerSongProgress = findViewById(R.id.player_song_progress);
     mPlayerSongProgressCurrent = findViewById(R.id.player_progress_current);
     mPlayerSongProgressTotal = findViewById(R.id.player_progress_total);
@@ -231,6 +231,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerPrevBtn = findViewById(R.id.player_prev_btn);
     mPlayerPlayToPauseBtn = findViewById(R.id.player_play_to_pause_btn);
     mPlayerNextBtn = findViewById(R.id.player_next_btn);
+    mPlayerShuffleBtn = findViewById(R.id.player_shuffle_btn);
 
     mMiniPlayer = findViewById(R.id.mini_player_layout);
     mMiniPlayerArrowUp = findViewById(R.id.mini_player_arrow_up);
@@ -256,6 +257,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private boolean getLastPlayedSong() {
     mPlayerSong = mDownloadedSongViewModel.getLastPlayedSong();
+    mPlayerSong = mDownloadedSongViewModel.getLastPlayedSong();
 
     boolean isSongOK = false;
     if(mPlayerSong != null && mPlayerSong.getPath().exists()) {
@@ -274,7 +276,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private void updatePlayingQueue() {
     mPlayingQueue = new ArrayList<>();
-//    List<PlayableSong> playableSongsList = SongUtils.getCachedSongs(mContext);
     List<PlayableSong> playableSongsList = mDownloadedSongViewModel.getAllSongsAsync();
     for(int i=0; i<playableSongsList.size(); i++) {
       PlayableSong playableSong = playableSongsList.get(i);
@@ -313,19 +314,17 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-//        if(SongUtils.deleteSong(mContext, mPlayerSong)) {
-          deleteSong(mPlayerSong);
-          if(getAllSongsAsync().size() >= 1) {
-            if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
-              loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() - 1));
-            } else {
-              loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() + 1));
-            }
+        deleteSong(mPlayerSong);
+        mMyMusicFragment.updateRecyclerViewDownloadedSongs();
+        if(getAllSongsAsync().size() >= 1) {
+          if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
+            loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() - 1));
           } else {
-            mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+            loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() + 1));
           }
-          mMyMusicFragment.updateRecyclerViewDownloadedSongs();
-//        }
+        } else {
+          mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+        }
       }
     });
 
@@ -335,6 +334,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         mPlayerAddToPlaylistBtn.switchState();
       }
     });
+
+    setPlayerLoading(false);
 
     if (mPlayingQueue != null) {
       if (mPlayerSong.getIndexInQueue() == 0) {
@@ -355,10 +356,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
 
       setColorEnabled(mPlayerRepeatBtn, mPlayerSong.isLooping());
-
-      mPlayerPlayToPauseBtn.setEnabled(true);
-      mMiniPlayerPlayToPauseBtn.setEnabled(true);
-      mPlayerSongProgress.setEnabled(true);
     }
 
     mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
@@ -371,7 +368,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
           mPlayerSong.setLooping(false);
           mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
         }
-//        mDownloadedSongViewModel.insertSong(mPlayerSong);
       }
     });
 
@@ -464,8 +460,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       public void onCompletion(MediaPlayer mediaPlayer) {
         if (!mPlayerSong.isLooping()) {
           if (mPlayerSong.getIndexInQueue() == mPlayingQueue.size() - 1) {
-            mPlayerPlayToPauseBtn.pause();
-            mMiniPlayerPlayToPauseBtn.pause();
+            mPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
+            mMiniPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
             mPlayerMediaPlayer.seekTo(0);
           } else {
             int nextSongIndex = mPlayerSong.getIndexInQueue() + 1;
@@ -611,19 +607,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     });
 
-    mPlayerPrevBtn.setEnabled(false);
-    setColorEnabled(mPlayerPrevBtn, false);
-
-    // Temporarily while loading...
-    mPlayerPlayToPauseBtn.setEnabled(false);
-    mMiniPlayerPlayToPauseBtn.setEnabled(false);
-    mPlayerSongProgress.setEnabled(false);
-    mPlayerFavoriteBtn.setEnabled(false);
-    mPlayerCloudDownloadBtn.setEnabled(false);
-    mPlayerAddToPlaylistBtn.setEnabled(false);
-
-    mPlayerNextBtn.setEnabled(false);
-    setColorEnabled(mPlayerNextBtn, false);
+    setPlayerLoading(true);
 
     mPlayerPlayToPauseBtn.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -662,18 +646,13 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
       @Override
       public void onPrepared(MediaPlayer mediaPlayer) {
+        setPlayerLoading(false);
+
         DecimalFormat progressFormat = new DecimalFormat("00");
         String minutes = progressFormat.format(mPlayerMediaPlayer.getDuration() / 1000 / 60);
         String seconds = progressFormat.format(mPlayerMediaPlayer.getDuration() / 1000 % 60);
         mPlayerSongProgressTotal.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
         mPlayerSongProgress.setMax(mediaPlayer.getDuration());
-
-        mPlayerPlayToPauseBtn.setEnabled(true);
-        mMiniPlayerPlayToPauseBtn.setEnabled(true);
-        mPlayerSongProgress.setEnabled(true);
-        mPlayerFavoriteBtn.setEnabled(true);
-        mPlayerCloudDownloadBtn.setEnabled(true);
-        mPlayerAddToPlaylistBtn.setEnabled(true);
       }
     });
 
@@ -681,8 +660,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onCompletion(MediaPlayer mediaPlayer) {
         if (!isRemoteSongLooping) {
-          mPlayerPlayToPauseBtn.pause();
-          mMiniPlayerPlayToPauseBtn.pause();
+          mPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
+          mMiniPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
           mPlayerMediaPlayer.seekTo(0);
         } else {
           mPlayerMediaPlayer.seekTo(0);
@@ -737,16 +716,16 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private void playSong() {
     mPlayerMediaPlayer.start();
-    mPlayerPlayToPauseBtn.play();
-    mMiniPlayerPlayToPauseBtn.play();
+    mPlayerPlayToPauseBtn.showToIcon(); //pause icon: playing
+    mMiniPlayerPlayToPauseBtn.showToIcon(); //pause icon: playing
 
     startProgressTracking();
   }
 
   private void pauseSong() {
     mPlayerMediaPlayer.pause();
-    mPlayerPlayToPauseBtn.pause();
-    mMiniPlayerPlayToPauseBtn.pause();
+    mPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
+    mMiniPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
   }
 
   private void startProgressTracking() {
@@ -775,6 +754,25 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         playSong();
       }
     }
+  }
+
+  private void setPlayerLoading(boolean isPlayerLoading) {
+    mPlayerFavoriteBtn.setEnabled(!isPlayerLoading);
+    mPlayerCloudDownloadBtn.setEnabled(!isPlayerLoading);
+    mPlayerAddToPlaylistBtn.setEnabled(!isPlayerLoading);
+    mPlayerShareBtn.setEnabled(!isPlayerLoading);
+    setColorEnabled(mPlayerShareBtn, !isPlayerLoading);
+    mPlayerSongProgress.setEnabled(!isPlayerLoading);
+    mPlayerSongProgressCurrent.setText("00:00");
+    mPlayerSongProgressTotal.setText("00:00");
+    mPlayerRepeatBtn.setEnabled(!isPlayerLoading);
+    mPlayerPrevBtn.setEnabled(!isPlayerLoading);
+    setColorEnabled(mPlayerPrevBtn, !isPlayerLoading);
+    mPlayerPlayToPauseBtn.setEnabled(!isPlayerLoading);
+    mMiniPlayerPlayToPauseBtn.setEnabled(!isPlayerLoading);
+    mPlayerNextBtn.setEnabled(!isPlayerLoading);
+    setColorEnabled(mPlayerNextBtn, !isPlayerLoading);
+    mPlayerShuffleBtn.setEnabled(!isPlayerLoading);
   }
 
   public void insertSong(PlayableSong playableSong) {
@@ -823,6 +821,14 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         mPlayerCloudDownloadBtn.showFill();
       }
       Toast.makeText(mContext, playableSong.getTitle() + " has been downloaded! Go to \"My Music\" to play it", Toast.LENGTH_SHORT).show();
+    }
+  }
+
+  private void setColorEnabled(ImageView imageView, boolean enabled) {
+    if(enabled) {
+      imageView.setColorFilter(getResources().getColor(R.color.grey_67));
+    } else {
+      imageView.setColorFilter(getResources().getColor(R.color.grey_c0));
     }
   }
 

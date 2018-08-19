@@ -16,7 +16,10 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
 
   private Drawable mCloudDownloadBorder;
   private Drawable mCloudDownloadFill;
+  private int fillColor;
+  private int currentFillColor;
   private boolean mIsShowingFill;
+
   public CloudDownloadBorderToFillImageView(Context context) {
     this(context, null);
   }
@@ -34,9 +37,9 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
         android.R.attr.tint, // index 0
       };
       TypedArray a = context.obtainStyledAttributes(attrs, set);
-      int fill = a.getColor(0,
+      fillColor = a.getColor(0,
         getResources().getColor(R.color.grey_67));
-      setColorFilter(fill);
+      setColorFilter(fillColor);
       a.recycle();
     }
   }
@@ -51,9 +54,11 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
   }
 
   public void switchState(){
-    Drawable drawable = mIsShowingFill ? mCloudDownloadBorder : mCloudDownloadFill;
-    setImageDrawable(drawable);
-    mIsShowingFill = !mIsShowingFill;
+    if(mIsShowingFill) {
+      showBorder();
+    } else {
+      showFill();
+    }
   }
 
   public void showFill() {
@@ -61,6 +66,9 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
     setImageDrawable(mCloudDownloadFill);
     // border -> fill. It's now showing fill
     mIsShowingFill = true;
+    currentFillColor = getResources().getColor(R.color.colorAccent);
+
+    setColorFilter(currentFillColor);
   }
 
   public void showBorder() {
@@ -68,6 +76,9 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
     setImageDrawable(mCloudDownloadBorder);
     // fill -> border. It's now showing border
     mIsShowingFill = false;
+    currentFillColor = getResources().getColor(R.color.grey_67);
+
+    setColorFilter(currentFillColor);
   }
 
   public void showBlinkingAnimation() {
@@ -79,7 +90,7 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     if(enabled) {
-      setColorFilter(getResources().getColor(R.color.grey_67));
+      setColorFilter(currentFillColor);
     } else {
       setColorFilter(getResources().getColor(R.color.grey_c0));
     }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="MorphingImageView">
+        <attr name="fromIconAVD" format="integer"/>
+        <attr name="toIconAVD" format="integer"/>
+        <attr name="isColorChanging" format="boolean"/>
+        <attr name="fromColor" format="color"/>
+        <attr name="toColor" format="color"/>
+    </declare-styleable>
+</resources>

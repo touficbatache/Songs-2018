@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mini_player_layout"
     android:layout_width="match_parent"
@@ -33,10 +34,12 @@
 
     </LinearLayout>
 
-    <ml.toufic.songs.views.PlayToPauseMorphingImageView
+    <ml.toufic.songs.views.MorphingImageView
         android:id="@+id/mini_player_play_to_pause_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="16dp" />
+        android:padding="16dp"
+        app:fromIconAVD="@drawable/play_to_pause"
+        app:toIconAVD="@drawable/pause_to_play" />
 
 </LinearLayout>

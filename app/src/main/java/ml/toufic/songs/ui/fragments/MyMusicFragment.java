@@ -222,18 +222,20 @@ public class MyMusicFragment extends Fragment {
   }
 
   public void updateRecyclerViewDownloadedSongs() {
-    playableSongs = mActivity.getAllSongsAsync();
+    if(mActivity != null) {
+      playableSongs = mActivity.getAllSongsAsync();
 
-    mAdapter.clear();
+      mAdapter.clear();
 
-    for(int i=0; i<playableSongs.size(); i++) {
-      PlayableSong playableSong = playableSongs.get(i);
-      playableSong.setIndexInQueue(i);
-      mActivity.updateSong(playableSong);
-      mAdapter.addDownloadedSongModel(playableSong);
+      for (int i = 0; i < playableSongs.size(); i++) {
+        PlayableSong playableSong = playableSongs.get(i);
+        playableSong.setIndexInQueue(i);
+        mActivity.updateSong(playableSong);
+        mAdapter.addDownloadedSongModel(playableSong);
+      }
+
+      mSwipeRefreshLayout.setRefreshing(false);
     }
-
-    mSwipeRefreshLayout.setRefreshing(false);
   }
 
   class MyMusicAdapter extends EpoxyAdapter {
