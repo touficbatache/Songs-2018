@@ -806,7 +806,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   public void deleteSong(PlayableSong playableSong) {
-    mDownloadedSongViewModel.delete(playableSong);
+    if(playableSong.getPath().delete()) {
+      mDownloadedSongViewModel.delete(playableSong);
+    }
   }
 
   public void onSongDownloadStartOrResume(String songTitle) {
