@@ -15,4 +15,7 @@
 
     <color name="selectedSongBackgroundPrimary">#143F51B5</color>
     <color name="auto">?attr/colorControlNormal</color>
+
+    <color name="player_action_favorite">#E0245E</color>
+    <color name="player_action_other">#1DA1F2</color>
 </resources>

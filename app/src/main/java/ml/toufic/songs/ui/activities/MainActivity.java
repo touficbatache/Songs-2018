@@ -409,7 +409,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     if(mPlayingQueue.size() != mPlayerAdapter.getItemCount()) {
       mPlayerAdapter.clear();
       for (PlayableSong playableSong : mPlayingQueue) {
-        mPlayerAdapter.addCoverArt(playableSong.getCoverArt());
+        mPlayerAdapter.addCoverArt(playableSong);
       }
     }
 
@@ -429,6 +429,10 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   class PlayerCoversAdapter extends EpoxyAdapter {
+    void addCoverArt(PlayableSong playableSong) {
+      addModel(new PlayerCoverModel(playableSong));
+    }
+
     void addCoverArt(String coverArtUrl) {
       addModel(new PlayerCoverModel(coverArtUrl));
     }
@@ -647,6 +651,11 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onPrepared(MediaPlayer mediaPlayer) {
         setPlayerLoading(false);
+        mPlayerPrevBtn.setEnabled(false);
+        setColorEnabled(mPlayerPrevBtn, false);
+        mPlayerNextBtn.setEnabled(false);
+        setColorEnabled(mPlayerNextBtn, false);
+        mPlayerShuffleBtn.setEnabled(false);
 
         DecimalFormat progressFormat = new DecimalFormat("00");
         String minutes = progressFormat.format(mPlayerMediaPlayer.getDuration() / 1000 / 60);

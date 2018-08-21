@@ -66,7 +66,7 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
     setImageDrawable(mCloudDownloadFill);
     // border -> fill. It's now showing fill
     mIsShowingFill = true;
-    currentFillColor = getResources().getColor(R.color.colorAccent);
+    currentFillColor = getResources().getColor(R.color.player_action_other);
 
     setColorFilter(currentFillColor);
   }

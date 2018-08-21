@@ -30,7 +30,7 @@ public class SongDownloader {
     fetchSongURL(context, song, new SongURLFetcherCallback() {
       @Override
       public void onSuccess(YtFile songFile) {
-        startDownload(context, song, songFile.getUrl(), callback);
+        startDownload(song, songFile.getUrl(), callback);
       }
     });
   }
@@ -55,7 +55,7 @@ public class SongDownloader {
     }.extract(song.getLink(), true, false);
   }
 
-  private static void startDownload(final Context context, final Song song, final String url, final SongDownloaderCallback callback) {
+  private static void startDownload(final Song song, final String url, final SongDownloaderCallback callback) {
 
     String dirPath = DeviceUtils.getDownloadStorageDirectoryPath();
     final String fileName = SongUtils.getSongFileName(song.getId());

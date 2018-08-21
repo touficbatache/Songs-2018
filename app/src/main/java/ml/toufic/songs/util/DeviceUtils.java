@@ -52,6 +52,10 @@ public class DeviceUtils {
     return "/Songs/downloads/";
   }
 
+  public static File getImagesStorageDirectory() {
+    return new File(Environment.getExternalStorageDirectory() + "/Songs/images/");
+  }
+
   public static File getMediaCacheStorageDirectory() {
     return new File(Environment.getExternalStorageDirectory() + "/Songs/cache/");
   }

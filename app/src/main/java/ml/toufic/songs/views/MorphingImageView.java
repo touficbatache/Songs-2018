@@ -42,7 +42,7 @@ public class MorphingImageView extends AppCompatImageView {
     mToIconAVD = (AnimatedVectorDrawable) ta.getDrawable(R.styleable.MorphingImageView_toIconAVD);
 
     mFromColor = ta.getColor(R.styleable.MorphingImageView_fromColor, getResources().getColor(R.color.grey_67));
-    mToColor = ta.getColor(R.styleable.MorphingImageView_fromColor, getResources().getColor(R.color.colorAccent));
+    mToColor = ta.getColor(R.styleable.MorphingImageView_toColor, getResources().getColor(R.color.colorAccent));
 
     if(!ta.getBoolean(R.styleable.MorphingImageView_isColorChanging, false)) {
       int[] androidSet = {
