@@ -4,6 +4,7 @@ import android.Manifest;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -16,6 +17,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PagerSnapHelper;
@@ -314,17 +316,31 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        deleteSong(mPlayerSong);
-        mMyMusicFragment.updateRecyclerViewDownloadedSongs();
-        if(getAllSongsAsync().size() >= 1) {
-          if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
-            loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() - 1));
-          } else {
-            loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() + 1));
-          }
-        } else {
-          mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        builder.setMessage("Are you sure you want to delete this song? This action cannot be reverted!")
+          .setCancelable(true)
+          .setNegativeButton("No", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+              dialog.cancel();
+            }
+          })
+          .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+              deleteSong(mPlayerSong);
+              mMyMusicFragment.updateRecyclerViewDownloadedSongs();
+              if(getAllSongsAsync().size() >= 1) {
+                if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
+                  loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() - 1));
+                } else {
+                  loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() + 1));
+                }
+              } else {
+                mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+              }
+            }
+          });
+        AlertDialog alert = builder.create();
+        alert.show();
       }
     });
 
