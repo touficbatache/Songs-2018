@@ -390,8 +390,12 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerPrevBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        int previousSongIndex = mPlayerSong.getIndexInQueue() - 1;
-        mPlayerRecyclerView.smoothScrollToPosition(previousSongIndex);
+        if(mPlayerMediaPlayer.getCurrentPosition() / 1000 >= 2 && mPlayerMediaPlayer.getCurrentPosition() / 1000 <= 11) {
+          mPlayerMediaPlayer.seekTo(0);
+        } else {
+          int previousSongIndex = mPlayerSong.getIndexInQueue() - 1;
+          mPlayerRecyclerView.smoothScrollToPosition(previousSongIndex);
+        }
       }
     });
     mPlayerNextBtn.setOnClickListener(new View.OnClickListener() {
