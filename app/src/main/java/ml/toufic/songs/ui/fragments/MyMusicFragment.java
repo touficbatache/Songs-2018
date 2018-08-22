@@ -258,7 +258,6 @@ public class MyMusicFragment extends Fragment {
     private String songCoverArt;
 
     private View.OnClickListener onClickListener;
-    private View.OnClickListener deleteOnClickListener;
 
     DownloadedSongModel(final PlayableSong playableSong) {
       song = playableSong;
@@ -271,27 +270,6 @@ public class MyMusicFragment extends Fragment {
         @Override
         public void onClick(View view) {
           mActivity.loadSong(playableSong);
-        }
-      };
-      deleteOnClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-          AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-          builder.setMessage("Are you sure you want to delete this song? This action cannot be reverted!")
-            .setCancelable(true)
-            .setNegativeButton("No", new DialogInterface.OnClickListener() {
-              public void onClick(DialogInterface dialog, int id) {
-                dialog.cancel();
-              }
-            })
-            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-              public void onClick(DialogInterface dialog, int id) {
-                mActivity.deleteSong(song);
-                loadDownloadedSongs();
-              }
-            });
-          AlertDialog alert = builder.create();
-          alert.show();
         }
       };
     }
@@ -313,7 +291,6 @@ public class MyMusicFragment extends Fragment {
       holder.itemView.setOnClickListener(onClickListener);
       holder.mSongTitle.setText(songTitle);
       holder.mSongArtist.setText(songArtist);
-      holder.mDeleteBtn.setOnClickListener(deleteOnClickListener);
     }
 
     @Override
@@ -321,17 +298,15 @@ public class MyMusicFragment extends Fragment {
       super.unbind(holder);
 
       holder.itemView.setOnClickListener(null);
-      holder.mDeleteBtn.setOnClickListener(null);
     }
   }
 
   private class DownloadedSongHolder extends EpoxyHolder {
 
     View itemView;
-    ImageView mSongIcon;
+    ImageView mSongIcon; //for multiple selection #22
     TextView mSongTitle;
     TextView mSongArtist;
-    ImageButton mDeleteBtn;
 
     @Override
     protected void bindView(View itemView) {
@@ -339,7 +314,6 @@ public class MyMusicFragment extends Fragment {
       mSongIcon = itemView.findViewById(R.id.song_icon);
       mSongTitle = itemView.findViewById(R.id.song_title);
       mSongArtist = itemView.findViewById(R.id.song_artist);
-      mDeleteBtn = itemView.findViewById(R.id.btn_delete);
     }
   }
 
