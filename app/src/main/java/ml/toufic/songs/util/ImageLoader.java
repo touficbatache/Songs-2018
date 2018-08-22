@@ -18,13 +18,13 @@ public class ImageLoader {
   public static void loadImage(final SimpleDraweeView imageContainer, ImageConfigurations imageConfigurations) {
     new DownloadImageAsyncTask(new DownloadImageCallback() {
       @Override
-      public void onCompletion(File imageFile) {
-        imageContainer.setImageURI(Uri.fromFile(imageFile));
+      public void onCompletion(Uri imageFileUri) {
+        imageContainer.setImageURI(imageFileUri);
       }
     }).execute(imageConfigurations);
   }
 
-  private static class DownloadImageAsyncTask extends AsyncTask<ImageConfigurations, Void, File> {
+  private static class DownloadImageAsyncTask extends AsyncTask<ImageConfigurations, Void, Uri> {
 
     private DownloadImageCallback completionCallback;
 
@@ -33,7 +33,7 @@ public class ImageLoader {
     }
 
     @Override
-    protected File doInBackground(final ImageConfigurations... imageConfigurationsList) {
+    protected Uri doInBackground(final ImageConfigurations... imageConfigurationsList) {
       ImageConfigurations imageConfigurations = imageConfigurationsList[0];
 
       String imageUrl = imageConfigurations.getImageUrl();
@@ -59,18 +59,18 @@ public class ImageLoader {
           e.printStackTrace();
         }
       }
-      return imageFile;
+      return Uri.fromFile(imageFile);
     }
 
     @Override
-    protected void onPostExecute(File imageFile) {
-      super.onPostExecute(imageFile);
-      completionCallback.onCompletion(imageFile);
+    protected void onPostExecute(Uri imageFileUri) {
+      super.onPostExecute(imageFileUri);
+      completionCallback.onCompletion(imageFileUri);
     }
   }
 
   private interface DownloadImageCallback {
-    void onCompletion(File imageFile);
+    void onCompletion(Uri imageFileUri);
   }
 
   public static class ImageConfigurations {
