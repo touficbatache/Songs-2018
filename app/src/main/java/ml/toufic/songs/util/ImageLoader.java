@@ -16,20 +16,38 @@ import java.net.URL;
 public class ImageLoader {
 
   public static void loadImage(final SimpleDraweeView imageContainer, ImageConfigurations imageConfigurations) {
-    final String imageUrl = imageConfigurations.getImageUrl();
-    final File imagesStorageDir = DeviceUtils.getImagesStorageDirectory();
-    final File imageFile = new File(imagesStorageDir, imageConfigurations.getImageFileName());
-
-    AsyncTask.execute(new Runnable() {
+    new DownloadImageAsyncTask(new DownloadImageCallback() {
       @Override
-      public void run() {
+      public void onCompletion(File imageFile) {
+        imageContainer.setImageURI(Uri.fromFile(imageFile));
+      }
+    }).execute(imageConfigurations);
+  }
+
+  private static class DownloadImageAsyncTask extends AsyncTask<ImageConfigurations, Void, File> {
+
+    private DownloadImageCallback completionCallback;
+
+    DownloadImageAsyncTask(DownloadImageCallback completionCallback) {
+      this.completionCallback = completionCallback;
+    }
+
+    @Override
+    protected File doInBackground(final ImageConfigurations... imageConfigurationsList) {
+      ImageConfigurations imageConfigurations = imageConfigurationsList[0];
+
+      String imageUrl = imageConfigurations.getImageUrl();
+      File imagesStorageDir = DeviceUtils.getImagesStorageDirectory();
+      File imageFile = new File(imagesStorageDir, imageConfigurations.getImageFileName());
+
+      if(!imageFile.exists()) {
         try {
           // Get the image from the url
           InputStream inputStream = new URL(imageUrl).openStream();
           Bitmap image = BitmapFactory.decodeStream(inputStream);
 
           // Create the storage directory if it does not exist
-          if (!imagesStorageDir.exists()){
+          if (!imagesStorageDir.exists()) {
             imagesStorageDir.mkdirs();
           }
 
@@ -41,9 +59,18 @@ public class ImageLoader {
           e.printStackTrace();
         }
       }
-    });
+      return imageFile;
+    }
 
-    imageContainer.setImageURI(Uri.fromFile(imageFile));
+    @Override
+    protected void onPostExecute(File imageFile) {
+      super.onPostExecute(imageFile);
+      completionCallback.onCompletion(imageFile);
+    }
+  }
+
+  private interface DownloadImageCallback {
+    void onCompletion(File imageFile);
   }
 
   public static class ImageConfigurations {

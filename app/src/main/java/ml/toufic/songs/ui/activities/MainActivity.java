@@ -433,6 +433,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     }
 
+    mPlayerRecyclerView.clearOnScrollListeners();
     mPlayerRecyclerViewListener = new RecyclerView.OnScrollListener() {
       @Override
       public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
