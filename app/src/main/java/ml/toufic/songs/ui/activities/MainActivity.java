@@ -47,6 +47,7 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import at.huber.youtubeExtractor.YtFile;
@@ -77,8 +78,10 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private ExploreFragment mExploreFragment;
   private MyMusicFragment mMyMusicFragment;
 
+  private List<PlayableSong> originalPlayingQueue = new ArrayList<>();
   private List<PlayableSong> mPlayingQueue = new ArrayList<>();
   private PlayableSong mPlayerSong;
+  private boolean isPlayingQueueShuffled = false;
 
   private boolean isRemoteSongPlaying = false;
   private boolean isRemoteSongLooping = false;
@@ -287,6 +290,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       playableSong.setIndexInQueue(i);
       mPlayingQueue.add(playableSong);
     }
+    originalPlayingQueue = mPlayingQueue;
   }
 
   private void updateLastPlayedSong() {
@@ -412,13 +416,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         }
       }
     });
-    mPlayerNextBtn.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View view) {
-        int nextSongIndex = mPlayerSong.getIndexInQueue() + 1;
-        mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
-      }
-    });
 
     mPlayerPlayToPauseBtn.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -431,6 +428,30 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onClick(View view) {
         onPlayPauseClick();
+      }
+    });
+
+    mPlayerNextBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        int nextSongIndex = mPlayerSong.getIndexInQueue() + 1;
+        mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
+      }
+    });
+
+    mPlayerShuffleBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        if (!isPlayingQueueShuffled) {
+          Collections.shuffle(mPlayingQueue);
+          isPlayingQueueShuffled = true;
+          mPlayerShuffleBtn.setColorFilter(getResources().getColor(R.color.grey_67));
+        } else {
+          mPlayingQueue = originalPlayingQueue;
+          isPlayingQueueShuffled = false;
+          mPlayerShuffleBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
+        }
+
       }
     });
 
