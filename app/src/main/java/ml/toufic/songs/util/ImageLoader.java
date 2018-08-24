@@ -38,9 +38,10 @@ public class ImageLoader {
 
       String imageUrl = imageConfigurations.getImageUrl();
       File imagesStorageDir = DeviceUtils.getImagesStorageDirectory();
-      File imageFile = new File(imagesStorageDir, imageConfigurations.getImageFileName());
+      String imageFileName = imageConfigurations.getImageFileName();
+      File imageFile = new File(imagesStorageDir, imageFileName);
 
-      if(!imageFile.exists()) {
+      if(!imageFile.exists() || imageFileName.equals("temp.png")) {
         try {
           // Get the image from the url
           InputStream inputStream = new URL(imageUrl).openStream();
@@ -74,14 +75,14 @@ public class ImageLoader {
   }
 
   public static class ImageConfigurations {
-    public static String PNG = "png";
+    public static String PNG = ".png";
 
     private String imageUrl;
     private String imageFileName;
 
     public ImageConfigurations(String imageUrl, String imageName, String imageFileExtension) {
       this.imageUrl = imageUrl;
-      this.imageFileName = imageName + "." + imageFileExtension;
+      this.imageFileName = imageName + imageFileExtension;
     }
 
     public String getImageUrl() {
@@ -92,9 +93,4 @@ public class ImageLoader {
       return imageFileName;
     }
   }
-
-  private interface ImageDownloadComplete {
-    void onCompletion();
-  }
-
 }

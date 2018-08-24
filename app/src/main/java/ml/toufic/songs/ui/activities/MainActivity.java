@@ -59,6 +59,7 @@ import ml.toufic.songs.model.Song;
 import ml.toufic.songs.network.SongDownloader;
 import ml.toufic.songs.ui.fragments.ExploreFragment;
 import ml.toufic.songs.ui.fragments.MyMusicFragment;
+import ml.toufic.songs.ui.fragments.PlayingQueueFragment;
 import ml.toufic.songs.util.DeviceUtils;
 import ml.toufic.songs.views.CloudDownloadBorderToFillImageView;
 import ml.toufic.songs.views.MorphingImageView;
@@ -84,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private Song mPlayerRemoteSong;
 
   private ImageButton mPlayerArrowDown;
+  private ImageButton mPlayerSeePlayingQueue;
   private LinearLayout mPlayerNextUp;
   private TextView mPlayerNextUpSongTitle;
   private PlayerCoversAdapter mPlayerAdapter;
@@ -216,6 +218,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private void initializePlayer() {
     mPlayerArrowDown = findViewById(R.id.player_arrow_down);
+    mPlayerSeePlayingQueue = findViewById(R.id.player_see_playing_queue);
     mPlayerNextUp = findViewById(R.id.player_next_up);
     mPlayerNextUpSongTitle = findViewById(R.id.player_next_up_song_title);
     mPlayerAdapter = new PlayerCoversAdapter();
@@ -298,6 +301,17 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onClick(View view) {
         mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+      }
+    });
+
+    mPlayerSeePlayingQueue.setEnabled(true);
+    setColorEnabled(mPlayerSeePlayingQueue, true);
+    mPlayerSeePlayingQueue.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(mPlayingQueue, mPlayerSong.getIndexInQueue());
+        playingQueueFragment.show(getSupportFragmentManager(),
+          "playing_queue_fragment");
       }
     });
 
@@ -556,6 +570,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     });
 
+    mPlayerSeePlayingQueue.setEnabled(false);
+    setColorEnabled(mPlayerSeePlayingQueue, false);
+
     mPlayerArrowDown.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -573,7 +590,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onClick(View view) {
         mPlayerFavoriteBtn.switchState();
-
       }
     });
 
