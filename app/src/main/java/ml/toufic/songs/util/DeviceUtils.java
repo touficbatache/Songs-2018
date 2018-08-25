@@ -40,29 +40,28 @@ public class DeviceUtils {
     return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
   }
 
-  public static File getDownloadStorageDirectory() {
-    return new File(Environment.getExternalStorageDirectory() + "/Songs/downloads/");
+  public static File getInternalFilesDir(Context context) {
+    return context.getFilesDir();
   }
 
-  public static String getDownloadStorageDirectoryPath() {
-    return Environment.getExternalStorageDirectory() + "/Songs/downloads/";
+  public static File getInternalFilesSongsDir(Context context) {
+    return new File(getInternalFilesDir(context), "songs");
   }
 
-  public static String getDownloadStorageDirectorySmallPath() {
-    return "/Songs/downloads/";
+  public static File getInternalFilesSongsDirFilePath(Context context, String filename) {
+    return new File(getInternalFilesSongsDir(context), filename);
   }
 
-  public static File getImagesStorageDirectory() {
-    return new File(Environment.getExternalStorageDirectory() + "/Songs/images/");
+  public static File getInternalCacheDir(Context context) {
+    return context.getCacheDir();
   }
 
-  public static File getMediaCacheStorageDirectory() {
-    return new File(Environment.getExternalStorageDirectory() + "/Songs/cache/");
+  public static File getInternalCacheDirFilePath(Context context, String filename) {
+    return new File(getInternalCacheDir(context), filename);
   }
 
-  public static boolean areFilesSame(String file_url, String filename) throws IOException {
-    File the_file = new File(getMediaCacheStorageDirectory(), filename);
-    long lastModified = the_file.lastModified();
+  public static boolean areFilesSame(String file_url, File theFile) throws IOException {
+    long lastModified = theFile.lastModified();
     boolean are_the_same = false;
     try {
       URL url = new URL(file_url);

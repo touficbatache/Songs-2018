@@ -2,6 +2,7 @@ package ml.toufic.songs.network;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Toast;
 
@@ -13,6 +14,7 @@ import com.downloader.PRDownloader;
 import com.downloader.Progress;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 import at.huber.youtubeExtractor.VideoMeta;
@@ -30,7 +32,7 @@ public class SongDownloader {
     fetchSongURL(context, song, new SongURLFetcherCallback() {
       @Override
       public void onSuccess(YtFile songFile) {
-        startDownload(song, songFile.getUrl(), callback);
+        startDownload(context, song, songFile.getUrl(), callback);
       }
     });
   }
@@ -55,9 +57,9 @@ public class SongDownloader {
     }.extract(song.getLink(), true, false);
   }
 
-  private static void startDownload(final Song song, final String url, final SongDownloaderCallback callback) {
+  private static void startDownload(final Context context, final Song song, final String url, final SongDownloaderCallback callback) {
 
-    String dirPath = DeviceUtils.getDownloadStorageDirectoryPath();
+    String dirPath = DeviceUtils.getInternalFilesSongsDir(context).getPath();
     final String fileName = SongUtils.getSongFileName(song.getId());
     PRDownloader.download(url, dirPath, fileName)
       .build()
@@ -76,7 +78,7 @@ public class SongDownloader {
       .start(new OnDownloadListener() {
         @Override
         public void onDownloadComplete() {
-          PlayableSong playableSong = new PlayableSong(song, SongUtils.getSongPath(fileName));
+          PlayableSong playableSong = new PlayableSong(song, DeviceUtils.getInternalFilesSongsDirFilePath(context, fileName));
           callback.onDownloadComplete(playableSong);
         }
 

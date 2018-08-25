@@ -123,15 +123,7 @@ public class MyMusicFragment extends Fragment {
   private void loadDownloadedSongs() {
     playableSongs = mActivity.getAllSongsAsync();
 
-    if (ContextCompat.checkSelfPermission(mActivity,
-      Manifest.permission.WRITE_EXTERNAL_STORAGE)
-      != PackageManager.PERMISSION_GRANTED) {
-
-      requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-        DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-    } else {
-      loadMyMusic();
-    }
+    loadMyMusic();
   }
 
   private void loadMyMusic() {
@@ -144,7 +136,7 @@ public class MyMusicFragment extends Fragment {
       }
     }
 
-    File downloadDirectory = DeviceUtils.getDownloadStorageDirectory();
+    File downloadDirectory = DeviceUtils.getInternalFilesSongsDir(mContext);
     if(!downloadDirectory.exists()){
       try {
         downloadDirectory.mkdirs();
@@ -173,7 +165,7 @@ public class MyMusicFragment extends Fragment {
                   String thumbnail = thumbnailObj.getJSONObject("high").getString("url");
 
                   Song song = new Song(id, title, author, thumbnail);
-                  PlayableSong playableSong = new PlayableSong(song, SongUtils.getSongPath(SongUtils.getSongFileName(id)));
+                  PlayableSong playableSong = new PlayableSong(song, DeviceUtils.getInternalFilesSongsDirFilePath(mContext, SongUtils.getSongFileName(id)));
 
                   mActivity.insertSong(playableSong);
                   updateRecyclerViewDownloadedSongs();
@@ -314,17 +306,6 @@ public class MyMusicFragment extends Fragment {
       mSongIcon = itemView.findViewById(R.id.song_icon);
       mSongTitle = itemView.findViewById(R.id.song_title);
       mSongArtist = itemView.findViewById(R.id.song_artist);
-    }
-  }
-
-  @Override
-  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-    if (requestCode == DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
-      if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-        loadMyMusic();
-      } else {
-        Toast.makeText(mContext, "Please accept permission to see downloaded songs!", Toast.LENGTH_LONG).show();
-      }
     }
   }
 

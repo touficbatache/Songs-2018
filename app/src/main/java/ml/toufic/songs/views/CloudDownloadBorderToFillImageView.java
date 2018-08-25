@@ -19,6 +19,7 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
   private int fillColor;
   private int currentFillColor;
   private boolean mIsShowingFill;
+  private boolean mIsBlinking;
 
   public CloudDownloadBorderToFillImageView(Context context) {
     this(context, null);
@@ -63,6 +64,7 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
 
   public void showFill() {
     clearAnimation();
+    mIsBlinking = false;
     setImageDrawable(mCloudDownloadFill);
     // border -> fill. It's now showing fill
     mIsShowingFill = true;
@@ -73,6 +75,7 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
 
   public void showBorder() {
     clearAnimation();
+    mIsBlinking = false;
     setImageDrawable(mCloudDownloadBorder);
     // fill -> border. It's now showing border
     mIsShowingFill = false;
@@ -82,8 +85,21 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
   }
 
   public void showBlinkingAnimation() {
+    mIsBlinking = true;
     Animation myFadeInAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.loading_fade_animation);
     startAnimation(myFadeInAnimation);
+  }
+
+  public boolean isShowingFill() {
+    return mIsShowingFill;
+  }
+
+  public boolean isShowingBorder() {
+    return !mIsShowingFill;
+  }
+
+  public boolean isBlinking() {
+    return mIsBlinking;
   }
 
   @Override

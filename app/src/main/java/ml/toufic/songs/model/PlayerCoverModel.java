@@ -1,5 +1,6 @@
 package ml.toufic.songs.model;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.view.View;
 
@@ -12,15 +13,18 @@ import ml.toufic.songs.util.ImageLoader;
 
 public class PlayerCoverModel extends EpoxyModelWithHolder<PlayerCoverModel.PlayerCoverHolder> {
 
+  private Context mContext;
   private String id = "temp";
   private String coverArtUrl;
 
-  public PlayerCoverModel(PlayableSong playableSong) {
+  public PlayerCoverModel(Context context, PlayableSong playableSong) {
+    mContext = context;
     id = playableSong.getId();
     coverArtUrl = playableSong.getCoverArt();
   }
 
-  public PlayerCoverModel(String coverArtUrl) {
+  public PlayerCoverModel(Context context, String coverArtUrl) {
+    mContext = context;
     this.coverArtUrl = coverArtUrl;
   }
 
@@ -37,8 +41,7 @@ public class PlayerCoverModel extends EpoxyModelWithHolder<PlayerCoverModel.Play
   @Override
   public void bind(@NonNull PlayerCoverHolder holder) {
     super.bind(holder);
-    ImageLoader.loadImage(holder.coverArt, new ImageLoader.ImageConfigurations(coverArtUrl, id, ImageLoader.ImageConfigurations.PNG));
-//    holder.coverArt.setImageURI(Uri.parse(coverArtUrl));
+    ImageLoader.loadImage(mContext, holder.coverArt, new ImageLoader.ImageConfigurations(coverArtUrl, id, ImageLoader.ImageConfigurations.PNG));
   }
 
   class PlayerCoverHolder extends EpoxyHolder {

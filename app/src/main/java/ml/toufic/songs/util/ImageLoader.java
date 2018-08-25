@@ -1,5 +1,6 @@
 package ml.toufic.songs.util;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -11,12 +12,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.net.URL;
 
 public class ImageLoader {
 
-  public static void loadImage(final SimpleDraweeView imageContainer, ImageConfigurations imageConfigurations) {
-    new DownloadImageAsyncTask(new DownloadImageCallback() {
+  public static void loadImage(Context context, final SimpleDraweeView imageContainer, ImageConfigurations imageConfigurations) {
+    new DownloadImageAsyncTask(context, new DownloadImageCallback() {
       @Override
       public void onCompletion(Uri imageFileUri) {
         imageContainer.setImageURI(imageFileUri);
@@ -26,9 +28,11 @@ public class ImageLoader {
 
   private static class DownloadImageAsyncTask extends AsyncTask<ImageConfigurations, Void, Uri> {
 
+    private WeakReference<Context> mContext;
     private DownloadImageCallback completionCallback;
 
-    DownloadImageAsyncTask(DownloadImageCallback completionCallback) {
+    DownloadImageAsyncTask(Context context, DownloadImageCallback completionCallback) {
+      mContext = new WeakReference<>(context);
       this.completionCallback = completionCallback;
     }
 
@@ -37,9 +41,9 @@ public class ImageLoader {
       ImageConfigurations imageConfigurations = imageConfigurationsList[0];
 
       String imageUrl = imageConfigurations.getImageUrl();
-      File imagesStorageDir = DeviceUtils.getImagesStorageDirectory();
+      File imagesStorageDir = DeviceUtils.getInternalCacheDir(mContext.get());
       String imageFileName = imageConfigurations.getImageFileName();
-      File imageFile = new File(imagesStorageDir, imageFileName);
+      File imageFile = DeviceUtils.getInternalCacheDirFilePath(mContext.get(), imageFileName);
 
       if(!imageFile.exists() || imageFileName.equals("temp.png")) {
         try {
@@ -50,6 +54,10 @@ public class ImageLoader {
           // Create the storage directory if it does not exist
           if (!imagesStorageDir.exists()) {
             imagesStorageDir.mkdirs();
+          }
+
+          if(imageFile.exists() && imageFileName.equals("temp.png")) {
+            imageFile.delete();
           }
 
           // Save the image to media storage directory

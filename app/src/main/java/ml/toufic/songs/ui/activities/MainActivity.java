@@ -500,11 +500,11 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   class PlayerCoversAdapter extends EpoxyAdapter {
     void addCoverArt(PlayableSong playableSong) {
-      addModel(new PlayerCoverModel(playableSong));
+      addModel(new PlayerCoverModel(mContext, playableSong));
     }
 
     void addCoverArt(String coverArtUrl) {
-      addModel(new PlayerCoverModel(coverArtUrl));
+      addModel(new PlayerCoverModel(mContext, coverArtUrl));
     }
 
     void clear() {
@@ -651,13 +651,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        if (ContextCompat.checkSelfPermission(mContext,
-          Manifest.permission.WRITE_EXTERNAL_STORAGE)
-          != PackageManager.PERMISSION_GRANTED && DeviceUtils.isMarshmallow()) {
-
-          requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-            DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-        } else {
+        if(!mPlayerCloudDownloadBtn.isBlinking()) {
           SongDownloader.downloadSong(mContext, mPlayerRemoteSong, new SongDownloader.SongDownloaderCallback() {
             @Override
             public void onStartOrResume(String songTitle) {
@@ -959,36 +953,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       findViewById(R.id.player_layout).setClickable(true);
     } else {
       findViewById(R.id.player_layout).setClickable(false);
-    }
-  }
-
-  @Override
-  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-    if (requestCode == DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
-      if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-        SongDownloader.downloadSong(mContext, mPlayerRemoteSong, new SongDownloader.SongDownloaderCallback() {
-          @Override
-          public void onStartOrResume(String songTitle) {
-            onSongDownloadStartOrResume(songTitle);
-          }
-
-          @Override
-          public void onProgress(Progress progress) {
-          }
-
-          @Override
-          public void onDownloadComplete(PlayableSong playableSong) {
-            onSongDownloadCompletion(playableSong);
-          }
-
-          @Override
-          public void onError(Error error) {
-            Toast.makeText(mContext, "Oops, we couldn't download your song. Please try again later", Toast.LENGTH_LONG).show();
-          }
-        });
-      } else {
-        Toast.makeText(mContext, "Please accept permission to download songs!", Toast.LENGTH_LONG).show();
-      }
     }
   }
 
