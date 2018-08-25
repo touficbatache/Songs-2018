@@ -277,8 +277,12 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     updatePlayingQueue();
     updateLastPlayedSong();
     updateCoversInRecyclerView();
-    mPlayerRecyclerView.scrollToPosition(mPlayerSong.getIndexInQueue());
     updateMediaPlayer();
+  }
+
+  private void updateVisuals() {
+    updateLastPlayedSong();
+    updateCoversInRecyclerView();
   }
 
   private void updatePlayingQueue() {
@@ -443,17 +447,23 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         if (!isPlayingQueueShuffled) {
           List<PlayableSong> shuffledPlayingQueue = mOriginalPlayingQueue;
           Collections.shuffle(shuffledPlayingQueue);
-          for(PlayableSong currentSongIndexInShuffled : shuffledPlayingQueue) {
-            if(currentSongIndexInShuffled.getId().equals(mPlayerSong.getId())) {
-              Collections.swap(shuffledPlayingQueue, mPlayerSong.getIndexInQueue(), shuffledPlayingQueue.indexOf(currentSongIndexInShuffled));
+          for(PlayableSong currentSongInShuffled : shuffledPlayingQueue) {
+            if(currentSongInShuffled.getId().equals(mPlayerSong.getId())) {
+              Collections.swap(shuffledPlayingQueue, mPlayerSong.getIndexInQueue(), shuffledPlayingQueue.indexOf(currentSongInShuffled));
             }
           }
           updateShuffledPlayingQueue(shuffledPlayingQueue);
           isPlayingQueueShuffled = true;
           mPlayerShuffleBtn.setColorFilter(getResources().getColor(R.color.grey_67));
         } else {
+          for(PlayableSong currentSongInOriginal : mOriginalPlayingQueue) {
+            if(currentSongInOriginal.getId().equals(mPlayerSong.getId())) {
+              mPlayerSong.setIndexInQueue(mOriginalPlayingQueue.indexOf(currentSongInOriginal));
+            }
+          }
           isPlayingQueueShuffled = false;
           mPlayerShuffleBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
+          updateVisuals();
         }
 
       }
@@ -484,6 +494,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     };
     mPlayerRecyclerView.addOnScrollListener(mPlayerRecyclerViewListener);
+
+    mPlayerRecyclerView.scrollToPosition(mPlayerSong.getIndexInQueue());
   }
 
   class PlayerCoversAdapter extends EpoxyAdapter {
@@ -852,7 +864,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     setColorEnabled(mPlayerShareBtn, !isPlayerLoading);
     mPlayerSongProgress.setEnabled(!isPlayerLoading);
     mPlayerSongProgressCurrent.setText("00:00");
-    mPlayerSongProgressTotal.setText("00:00");
     mPlayerRepeatBtn.setEnabled(!isPlayerLoading);
     mPlayerPrevBtn.setEnabled(!isPlayerLoading);
     setColorEnabled(mPlayerPrevBtn, !isPlayerLoading);
