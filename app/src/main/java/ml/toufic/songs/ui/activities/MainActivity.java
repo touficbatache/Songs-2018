@@ -78,9 +78,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private ExploreFragment mExploreFragment;
   private MyMusicFragment mMyMusicFragment;
 
-  private List<PlayableSong> originalPlayingQueue = new ArrayList<>();
-  private List<PlayableSong> mPlayingQueue = new ArrayList<>();
+  private List<PlayableSong> mOriginalPlayingQueue = new ArrayList<>();
   private PlayableSong mPlayerSong;
+  private List<PlayableSong> mShuffledPlayingQueue = new ArrayList<>();
   private boolean isPlayingQueueShuffled = false;
 
   private boolean isRemoteSongPlaying = false;
@@ -250,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mSlidingPanelLayout.addPanelSlideListener(this);
     mPlayerSongProgressHandler = new Handler();
 
-    if(mDownloadedSongViewModel.getLastPlayedSong() == null || mPlayingQueue.isEmpty()) {
+    if(mDownloadedSongViewModel.getLastPlayedSong() == null || mOriginalPlayingQueue.isEmpty()) {
       mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
     }
   }
@@ -264,7 +264,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   private boolean getLastPlayedSong() {
-    mPlayerSong = mDownloadedSongViewModel.getLastPlayedSong();
     mPlayerSong = mDownloadedSongViewModel.getLastPlayedSong();
 
     boolean isSongOK = false;
@@ -283,14 +282,13 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   private void updatePlayingQueue() {
-    mPlayingQueue = new ArrayList<>();
+    mOriginalPlayingQueue = new ArrayList<>();
     List<PlayableSong> playableSongsList = mDownloadedSongViewModel.getAllSongsAsync();
     for(int i=0; i<playableSongsList.size(); i++) {
       PlayableSong playableSong = playableSongsList.get(i);
       playableSong.setIndexInQueue(i);
-      mPlayingQueue.add(playableSong);
+      mOriginalPlayingQueue.add(playableSong);
     }
-    originalPlayingQueue = mPlayingQueue;
   }
 
   private void updateLastPlayedSong() {
@@ -313,7 +311,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerSeePlayingQueue.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(mPlayingQueue, mPlayerSong.getIndexInQueue());
+        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(getCurrentPlayingQueue(), mPlayerSong.getIndexInQueue());
         playingQueueFragment.show(getSupportFragmentManager(),
           "playing_queue_fragment");
       }
@@ -348,9 +346,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
               mMyMusicFragment.updateRecyclerViewDownloadedSongs();
               if(getAllSongsAsync().size() >= 1) {
                 if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
-                  loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() - 1));
+                  loadSong(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue() - 1));
                 } else {
-                  loadSong(mPlayingQueue.get(mPlayerSong.getIndexInQueue() + 1));
+                  loadSong(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue() + 1));
                 }
               } else {
                 mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
@@ -371,7 +369,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
     setPlayerLoading(false);
 
-    if (mPlayingQueue != null) {
+    if (getCurrentPlayingQueue() != null) {
       if (mPlayerSong.getIndexInQueue() == 0) {
         mPlayerPrevBtn.setEnabled(false);
         setColorEnabled(mPlayerPrevBtn, false);
@@ -380,13 +378,13 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         setColorEnabled(mPlayerPrevBtn, true);
       }
 
-      if (mPlayerSong.getIndexInQueue() == mPlayingQueue.size() - 1) {
+      if (mPlayerSong.getIndexInQueue() == getCurrentPlayingQueue().size() - 1) {
         mPlayerNextBtn.setEnabled(false);
         setColorEnabled(mPlayerNextBtn, false);
       } else {
         mPlayerNextBtn.setEnabled(true);
         setColorEnabled(mPlayerNextBtn, true);
-        mPlayerNextUpSongTitle.setText(mPlayingQueue.get(mPlayerSong.getIndexInQueue()+1).getTitle());
+        mPlayerNextUpSongTitle.setText(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue()+1).getTitle());
       }
 
       setColorEnabled(mPlayerRepeatBtn, mPlayerSong.isLooping());
@@ -443,11 +441,17 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onClick(View view) {
         if (!isPlayingQueueShuffled) {
-          Collections.shuffle(mPlayingQueue);
+          List<PlayableSong> shuffledPlayingQueue = mOriginalPlayingQueue;
+          Collections.shuffle(shuffledPlayingQueue);
+          for(PlayableSong currentSongIndexInShuffled : shuffledPlayingQueue) {
+            if(currentSongIndexInShuffled.getId().equals(mPlayerSong.getId())) {
+              Collections.swap(shuffledPlayingQueue, mPlayerSong.getIndexInQueue(), shuffledPlayingQueue.indexOf(currentSongIndexInShuffled));
+            }
+          }
+          updateShuffledPlayingQueue(shuffledPlayingQueue);
           isPlayingQueueShuffled = true;
           mPlayerShuffleBtn.setColorFilter(getResources().getColor(R.color.grey_67));
         } else {
-          mPlayingQueue = originalPlayingQueue;
           isPlayingQueueShuffled = false;
           mPlayerShuffleBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
         }
@@ -461,11 +465,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   private void updateCoversInRecyclerView() {
-    if(mPlayingQueue.size() != mPlayerAdapter.getItemCount()) {
-      mPlayerAdapter.clear();
-      for (PlayableSong playableSong : mPlayingQueue) {
-        mPlayerAdapter.addCoverArt(playableSong);
-      }
+    mPlayerAdapter.clear();
+    for (PlayableSong playableSong : getCurrentPlayingQueue()) {
+      mPlayerAdapter.addCoverArt(playableSong);
     }
 
     mPlayerRecyclerView.clearOnScrollListeners();
@@ -476,7 +478,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
           int songIndex = ((LinearLayoutManager) mPlayerRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
           if(mPlayerSong.getIndexInQueue() != songIndex) {
-            loadSong(mPlayingQueue.get(songIndex));
+            loadSong(getCurrentPlayingQueue().get(songIndex));
           }
         }
       }
@@ -519,7 +521,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onCompletion(MediaPlayer mediaPlayer) {
         if (!mPlayerSong.isLooping()) {
-          if (mPlayerSong.getIndexInQueue() == mPlayingQueue.size() - 1) {
+          if (mPlayerSong.getIndexInQueue() == getCurrentPlayingQueue().size() - 1) {
             mPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
             mMiniPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
             mPlayerMediaPlayer.seekTo(0);
@@ -542,7 +544,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         }
         if(progress / 1000 < (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerNextUp.getAlpha() == 1.0f) {
           mPlayerNextUp.animate().alpha(0.0f);
-        } else if (progress / 1000 >= (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndexInQueue() != mPlayingQueue.size() - 1) {
+        } else if (progress / 1000 >= (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndexInQueue() != getCurrentPlayingQueue().size() - 1) {
           mPlayerNextUp.animate().alpha(1.0f);
         }
         DecimalFormat formatter = new DecimalFormat("00");
@@ -561,6 +563,25 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
       }
     });
+  }
+
+  private void updateShuffledPlayingQueue(List<PlayableSong> playableSongsList) {
+    mShuffledPlayingQueue = new ArrayList<>();
+    for(int i=0; i<playableSongsList.size(); i++) {
+      PlayableSong playableSong = playableSongsList.get(i);
+      playableSong.setIndexInQueue(i);
+      mShuffledPlayingQueue.add(playableSong);
+    }
+  }
+
+  private List<PlayableSong> getCurrentPlayingQueue() {
+    List<PlayableSong> mCurrentPlayingQueue;
+    if(!isPlayingQueueShuffled) {
+      mCurrentPlayingQueue = mOriginalPlayingQueue;
+    } else {
+      mCurrentPlayingQueue = mShuffledPlayingQueue;
+    }
+    return mCurrentPlayingQueue;
   }
 
   public void loadSong(PlayableSong playableSong) {
