@@ -86,7 +86,8 @@
         app:layout_constraintTop_toTopOf="@id/player_cover_arts_recyclerview"
         app:layout_constraintBottom_toBottomOf="@id/player_cover_arts_recyclerview"
         app:layout_constraintEnd_toEndOf="@id/player_cover_arts_recyclerview"
-        android:alpha=".3" />
+        android:alpha=".3"
+        android:visibility="gone"/>
 
     <TextView
         android:id="@+id/player_song_title"
