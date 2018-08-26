@@ -6,6 +6,9 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -27,6 +30,9 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -192,6 +198,51 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     initializeRecyclerView();
     if(getLastPlayedSong()) {
       prepareForPlaying();
+    }
+
+    ((LinearLayout)findViewById(R.id.circlee)).addView(new GraphicsView(this));
+  }
+
+  private static class GraphicsView extends View {
+    private static final String AnimatedTxt =
+      "NEXT UP - Make It Look Easy";
+
+    private Animation rotateAnim;
+
+    public GraphicsView(Context context) {
+      super(context);
+    }
+
+    private void createAnim(Canvas canvas) {
+      rotateAnim = new RotateAnimation(360, 0, canvas.getWidth() / 2, canvas.getWidth() / 2);
+      rotateAnim.setDuration(30000L);
+      rotateAnim.setInterpolator(new AccelerateDecelerateInterpolator());
+
+      startAnimation(rotateAnim);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+      super.onDraw(canvas);
+
+      // creates the animation the first time
+      if (rotateAnim == null) {
+        createAnim(canvas);
+      }
+
+      Path circle = new Path();
+
+      int centerX = canvas.getWidth() / 2;
+      int centerY = canvas.getWidth() / 2;
+      int r = Math.min(centerX, centerY);
+
+      circle.addCircle(centerX, centerY, r, Path.Direction.CW);
+      Paint paint = new Paint();
+      paint.setColor(getResources().getColor(R.color.grey_67));
+      paint.setTextSize(50);
+      paint.setAntiAlias(true);
+
+      canvas.drawTextOnPath(AnimatedTxt, circle, 0, 50, paint);
     }
   }
 
@@ -967,11 +1018,17 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   @Override
   public void onBackPressed() {
+    if(mSlidingPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
+      mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+      return;
+    }
+
     if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
       getSupportFragmentManager().popBackStack();
-    } else {
-      super.onBackPressed();
+      return;
     }
+
+    super.onBackPressed();
   }
 
   @Override

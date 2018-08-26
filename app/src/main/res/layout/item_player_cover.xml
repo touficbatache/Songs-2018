@@ -1,13 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.facebook.drawee.view.SimpleDraweeView
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:fresco="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/player_song_cover_art"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="46dp"
-    android:layout_marginEnd="46dp"
-    fresco:viewAspectRatio="1"
-    fresco:placeholderImage="@drawable/placeholder_disk_song_art"
-    fresco:placeholderImageScaleType="fitCenter"
-    fresco:roundAsCircle="true" />
+    android:layout_height="wrap_content">
+
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="46dp"
+        android:layout_marginEnd="46dp"
+        android:layout_centerInParent="true"
+        fresco:viewAspectRatio="1"
+        fresco:placeholderImage="@drawable/placeholder_disk_song_art"
+        fresco:placeholderImageScaleType="fitCenter" />
+
+    <!-- marginStart + cornerRadius should be 180. We added 2 just to make the white around the circle go away -->
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginStart="92dp"
+        android:layout_marginEnd="92dp"
+        app:cardCornerRadius="90dp"
+        app:cardBackgroundColor="#212121"
+        app:cardElevation="0dp">
+
+        <com.facebook.drawee.view.SimpleDraweeView
+            android:id="@+id/player_song_cover_art"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            fresco:viewAspectRatio="1"
+            fresco:placeholderImageScaleType="fitCenter"
+            fresco:roundAsCircle="true" />
+
+    </android.support.v7.widget.CardView>
+
+</RelativeLayout>

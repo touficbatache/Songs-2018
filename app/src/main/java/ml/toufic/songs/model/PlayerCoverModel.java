@@ -50,7 +50,7 @@ public class PlayerCoverModel extends EpoxyModelWithHolder<PlayerCoverModel.Play
 
     @Override
     protected void bindView(View itemView) {
-      coverArt = (SimpleDraweeView) itemView;
+      coverArt = itemView.findViewById(R.id.player_song_cover_art);
     }
   }
 }

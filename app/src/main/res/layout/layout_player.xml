@@ -77,6 +77,18 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/player_top_controls" />
 
+    <LinearLayout
+        android:id="@+id/circlee"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginStart="280dp"
+        app:layout_constraintBottom_toBottomOf="@id/player_cover_arts_recyclerview"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/player_cover_arts_recyclerview"
+        app:layout_constraintTop_toTopOf="@id/player_cover_arts_recyclerview"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/player_song_title"
         android:layout_width="wrap_content"
