@@ -1,11 +1,9 @@
 package ml.toufic.songs.ui.activities;
 
-import android.Manifest;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -19,7 +17,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -30,7 +27,6 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageButton;
@@ -67,7 +63,6 @@ import ml.toufic.songs.network.SongDownloader;
 import ml.toufic.songs.ui.fragments.ExploreFragment;
 import ml.toufic.songs.ui.fragments.MyMusicFragment;
 import ml.toufic.songs.ui.fragments.PlayingQueueFragment;
-import ml.toufic.songs.util.DeviceUtils;
 import ml.toufic.songs.views.CloudDownloadBorderToFillImageView;
 import ml.toufic.songs.views.MorphingImageView;
 
@@ -204,21 +199,13 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   private static class GraphicsView extends View {
-    private static final String AnimatedTxt =
+    private static final String animatedText =
       "NEXT UP - Make It Look Easy";
 
     private Animation rotateAnim;
 
     public GraphicsView(Context context) {
       super(context);
-    }
-
-    private void createAnim(Canvas canvas) {
-      rotateAnim = new RotateAnimation(360, 0, canvas.getWidth() / 2, canvas.getWidth() / 2);
-      rotateAnim.setDuration(30000L);
-      rotateAnim.setInterpolator(new AccelerateDecelerateInterpolator());
-
-      startAnimation(rotateAnim);
     }
 
     @Override
@@ -242,7 +229,15 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       paint.setTextSize(50);
       paint.setAntiAlias(true);
 
-      canvas.drawTextOnPath(AnimatedTxt, circle, 0, 50, paint);
+      canvas.drawTextOnPath(animatedText, circle, 0, 50, paint);
+    }
+
+    private void createAnim(Canvas canvas) {
+      rotateAnim = new RotateAnimation(360, 0, canvas.getWidth() / 2, canvas.getWidth() / 2);
+      rotateAnim.setDuration(30000L);
+      rotateAnim.setRepeatMode(Animation.INFINITE);
+
+      startAnimation(rotateAnim);
     }
   }
 
