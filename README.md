@@ -43,3 +43,17 @@ These icon animations are inspired by the brand logo and loading state animation
 1. Icon animations
 2. Logo animation
 3. Loading animation
+
+## Guidelines
+### Organizing Experience
+[![Organizing experience](https://i.imgur.com/mqO1vnh.png)](https://material.io/design/navigation/search.html#expandable-search)
+
+## Components
+### Mini Player
+[![Mini Player](https://i.imgur.com/6YleMuW.png)](https://material.io/design/components/sheets-bottom.html#standard-bottom-sheet)
+
+### Player
+[![Player](https://i.imgur.com/nrxNDNH.png)](https://material.io/design/components/sheets-bottom.html#standard-bottom-sheet)
+
+### Playing Queue
+[![Playing Queue](https://i.imgur.com/RAi3YCG.png)](https://material.io/design/components/sheets-bottom.html#anatomy)
