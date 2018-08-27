@@ -82,12 +82,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:layout_marginStart="46dp"
+        android:layout_marginEnd="46dp"
         app:layout_constraintStart_toStartOf="@id/player_cover_arts_recyclerview"
         app:layout_constraintTop_toTopOf="@id/player_cover_arts_recyclerview"
         app:layout_constraintBottom_toBottomOf="@id/player_cover_arts_recyclerview"
         app:layout_constraintEnd_toEndOf="@id/player_cover_arts_recyclerview"
         android:alpha=".3"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/player_song_title"

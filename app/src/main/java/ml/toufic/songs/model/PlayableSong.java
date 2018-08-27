@@ -17,6 +17,9 @@ public class PlayableSong extends Song {
   @ColumnInfo(name = "index")
   private int indexInQueue = 0;
 
+  @ColumnInfo(name = "durationinms")
+  private int durationInMs;
+
   @ColumnInfo(name = "lastposition")
   private int lastPosition = 0;
 
@@ -51,6 +54,14 @@ public class PlayableSong extends Song {
 
   public int getIndexInQueue() {
     return indexInQueue;
+  }
+
+  public void setDurationInMs(int durationInMs) {
+    this.durationInMs = durationInMs;
+  }
+
+  public int getDurationInMs() {
+    return durationInMs;
   }
 
   public void setLastPosition(int lastPosition) {

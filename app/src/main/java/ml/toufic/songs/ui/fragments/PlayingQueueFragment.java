@@ -1,6 +1,8 @@
 package ml.toufic.songs.ui.fragments;
 
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -19,13 +21,17 @@ import com.airbnb.epoxy.EpoxyModelWithHolder;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.w3c.dom.Text;
+
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 import ml.toufic.songs.R;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.ui.activities.MainActivity;
+import ml.toufic.songs.util.TextUtils;
 
 public class PlayingQueueFragment extends BottomSheetDialogFragment {
 
@@ -103,6 +109,8 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
     private PlayableSong song;
     private String songId;
     private File songPath;
+    private int songIndex = -1;
+    private int songDurationInMs = 0;
     private String songTitle;
     private String songArtist;
     private String songCoverArt;
@@ -114,6 +122,8 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
       song = playableSong;
       songId = song.getId();
       songPath = song.getPath();
+      songIndex = song.getIndexInQueue();
+      songDurationInMs = song.getDurationInMs();
       songTitle = song.getTitle();
       songArtist = song.getArtist();
       songCoverArt = song.getCoverArt();
@@ -134,20 +144,31 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
 
     @Override
     protected int getDefaultLayout() {
-      return R.layout.item_song_my_music;
+      return R.layout.item_song_queue;
     }
 
     @Override
     public void bind(@NonNull final PlayingQueueSongHolder holder) {
       super.bind(holder);
 
+      holder.mSongIndex.setText(TextUtils.formatIntoTwoNumbers(songIndex));
+      holder.mSongTitle.setText(songTitle);
+      holder.mSongDuration.setText(TextUtils.formatMilliseconds(mContext, songDurationInMs));
+
       if(isCurrentSong) {
-        holder.mSongIcon.setImageDrawable(getResources().getDrawable(R.drawable.ic_equalizer_24dp));
+        int[] attrs = new int[] { android.R.attr.textColorPrimary };
+        TypedArray a = mContext.getTheme().obtainStyledAttributes(R.style.AppTheme, attrs);
+        int currentSongColor = a.getColor(0, Color.BLACK);
+        a.recycle();
+
+        holder.mSongIndex.setTextColor(currentSongColor);
+        holder.mSongTitle.setTextColor(currentSongColor);
+        holder.mSongDuration.setTextColor(currentSongColor);
+        holder.mSongNowPlaying.setVisibility(View.VISIBLE);
+        return;
       }
 
       holder.itemView.setOnClickListener(onClickListener);
-      holder.mSongTitle.setText(songTitle);
-      holder.mSongArtist.setText(songArtist);
     }
 
     @Override
@@ -161,16 +182,18 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
   private class PlayingQueueSongHolder extends EpoxyHolder {
 
     View itemView;
-    ImageView mSongIcon; //for multiple selection #22
+    TextView mSongIndex;
     TextView mSongTitle;
-    TextView mSongArtist;
+    TextView mSongDuration;
+    ImageView mSongNowPlaying;
 
     @Override
     protected void bindView(View itemView) {
       this.itemView = itemView;
-      mSongIcon = itemView.findViewById(R.id.song_icon);
+      mSongIndex = itemView.findViewById(R.id.song_index);
       mSongTitle = itemView.findViewById(R.id.song_title);
-      mSongArtist = itemView.findViewById(R.id.song_artist);
+      mSongDuration = itemView.findViewById(R.id.song_duration);
+      mSongNowPlaying = itemView.findViewById(R.id.song_now_playing);
     }
   }
 }

@@ -63,6 +63,7 @@ import ml.toufic.songs.network.SongDownloader;
 import ml.toufic.songs.ui.fragments.ExploreFragment;
 import ml.toufic.songs.ui.fragments.MyMusicFragment;
 import ml.toufic.songs.ui.fragments.PlayingQueueFragment;
+import ml.toufic.songs.util.TextUtils;
 import ml.toufic.songs.views.CloudDownloadBorderToFillImageView;
 import ml.toufic.songs.views.MorphingImageView;
 
@@ -337,6 +338,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     for(int i=0; i<playableSongsList.size(); i++) {
       PlayableSong playableSong = playableSongsList.get(i);
       playableSong.setIndexInQueue(i);
+      MediaPlayer mp = MediaPlayer.create(mContext, Uri.parse(playableSong.getPath().getPath()));
+      playableSong.setDurationInMs(mp.getDuration());
+      mp.release();
       mOriginalPlayingQueue.add(playableSong);
     }
   }
@@ -564,10 +568,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
       @Override
       public void onPrepared(MediaPlayer mediaPlayer) {
-        DecimalFormat progressFormat = new DecimalFormat("00");
-        String minutes = progressFormat.format(mPlayerMediaPlayer.getDuration() / 1000 / 60);
-        String seconds = progressFormat.format(mPlayerMediaPlayer.getDuration() / 1000 % 60);
-        mPlayerSongProgressTotal.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
+        mPlayerSongProgressTotal.setText(TextUtils.formatMilliseconds(mContext, mPlayerMediaPlayer.getDuration()));
         mPlayerSongProgress.setMax(mediaPlayer.getDuration());
 
         mPlayerMediaPlayer.seekTo(mPlayerSong.getLastPosition());
@@ -605,10 +606,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         } else if (progress / 1000 >= (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndexInQueue() != getCurrentPlayingQueue().size() - 1) {
           mPlayerNextUp.animate().alpha(1.0f);
         }
-        DecimalFormat formatter = new DecimalFormat("00");
-        String minutes = formatter.format(progress / 1000 / 60);
-        String seconds = formatter.format(progress / 1000 % 60);
-        mPlayerSongProgressCurrent.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
+        mPlayerSongProgressCurrent.setText(TextUtils.formatMilliseconds(mContext, progress));
       }
 
       @Override

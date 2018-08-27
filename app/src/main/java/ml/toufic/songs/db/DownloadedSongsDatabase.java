@@ -8,7 +8,7 @@ import android.content.Context;
 
 import ml.toufic.songs.model.PlayableSong;
 
-@Database(entities = {PlayableSong.class}, version = 1, exportSchema = false)
+@Database(entities = {PlayableSong.class}, version = 2, exportSchema = false)
 
 @TypeConverters({Converters.class})
 public abstract class DownloadedSongsDatabase extends RoomDatabase {
@@ -24,6 +24,7 @@ public abstract class DownloadedSongsDatabase extends RoomDatabase {
           INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
             DownloadedSongsDatabase.class, "downloaded_songs_database")
             .allowMainThreadQueries()
+            .fallbackToDestructiveMigration()
             .build();
         }
       }

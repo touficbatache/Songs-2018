@@ -12,7 +12,7 @@
         android:layout_marginEnd="46dp"
         android:layout_centerInParent="true"
         fresco:viewAspectRatio="1"
-        fresco:placeholderImage="@drawable/placeholder_disk_song_art"
+        fresco:actualImageResource="@drawable/disk_background"
         fresco:placeholderImageScaleType="fitCenter" />
 
     <com.facebook.drawee.view.SimpleDraweeView
@@ -26,5 +26,12 @@
         fresco:viewAspectRatio="1"
         fresco:placeholderImageScaleType="fitCenter"
         fresco:roundAsCircle="true" />
+
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_centerInParent="true"
+        android:src="@drawable/circle_grey_grey_e0"
+        android:background="@color/transparent" />
 
 </RelativeLayout>
