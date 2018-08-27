@@ -25,6 +25,7 @@ From a song screen, users may navigate in reverse in one of two ways:
 ### Iconography
 #### Animated Icons
 [Multi-select Toolbar Transition](https://storage.googleapis.com/spec-host-backup/mio-design%2Fassets%2F0B8wSqcLwbhFuZXc3TmlRbkU0aWM%2F05-stagger.mp4)
+
 [Animated Player Icons](https://storage.googleapis.com/spec-host-backup/mio-design%2Fassets%2F0B8wSqcLwbhFuLVFrWlk1Ymc2TXM%2F04-complex-hype.mp4)
 
 ##### Duration
@@ -35,7 +36,9 @@ From a song screen, users may navigate in reverse in one of two ways:
 
 ##### Theming
 Animations should reflect a brand’s style.
+
 [Animation Theming](https://storage.googleapis.com/spec-host-backup/mio-design%2Fassets%2F0B8wSqcLwbhFuQkMyMTA5RUlkMDA%2F07-style-owl.mp4)
+
 These icon animations are inspired by the brand logo and loading state animations.
 1. Icon animations
 2. Logo animation
