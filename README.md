@@ -22,6 +22,11 @@ From a song screen, users may navigate in reverse in one of two ways:
 ### Color
 [![Color](https://i.imgur.com/0qGZVuK.png)](https://material.io/design/color/the-color-system.html#)
 
+#### Alternative colors for section themes
+Alternative colors can be used to theme different parts of an app.
+
+[![Color](https://i.imgur.com/m6bvLq3.png)](https://material.io/design/color/#color-theme-creation)
+
 ### Iconography
 #### Animated Icons
 [Multi-select Toolbar Transition](https://storage.googleapis.com/spec-host-backup/mio-design%2Fassets%2F0B8wSqcLwbhFuZXc3TmlRbkU0aWM%2F05-stagger.mp4)
