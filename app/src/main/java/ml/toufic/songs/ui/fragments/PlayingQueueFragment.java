@@ -151,7 +151,7 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
     public void bind(@NonNull final PlayingQueueSongHolder holder) {
       super.bind(holder);
 
-      holder.mSongIndex.setText(TextUtils.formatIntoTwoNumbers(songIndex));
+      holder.mSongIndex.setText(TextUtils.formatIntoTwoNumbers(songIndex + 1));
       holder.mSongTitle.setText(songTitle);
       holder.mSongDuration.setText(TextUtils.formatMilliseconds(mContext, songDurationInMs));
 
@@ -163,6 +163,7 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
 
         holder.mSongIndex.setTextColor(currentSongColor);
         holder.mSongTitle.setTextColor(currentSongColor);
+        holder.mSongTitle.setSelected(true);
         holder.mSongDuration.setTextColor(currentSongColor);
         holder.mSongNowPlaying.setVisibility(View.VISIBLE);
         return;

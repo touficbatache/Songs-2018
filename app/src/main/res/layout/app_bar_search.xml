@@ -2,11 +2,11 @@
 <android.support.design.widget.AppBarLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:paddingTop="@dimen/status_bar_height"
     android:id="@+id/appbar"
     android:layout_height="wrap_content"
     android:layout_width="match_parent"
-    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+    android:paddingTop="@dimen/status_bar_height"
+    android:theme="@style/AppTheme.Toolbar">
 
     <FrameLayout
         android:id="@+id/toolbar_container"
@@ -20,7 +20,7 @@
             android:background="?attr/colorPrimary"
             android:elevation="4dp"
             android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Dark"
             app:layout_scrollFlags="scroll|enterAlways" />
 
         <com.miguelcatalan.materialsearchview.MaterialSearchView

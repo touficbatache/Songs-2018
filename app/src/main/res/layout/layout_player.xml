@@ -162,7 +162,7 @@
         app:fromIconAVD="@drawable/playlist_add_to_check"
         app:toIconAVD="@drawable/playlist_check_to_add"
         app:isColorChanging="true"
-        app:toColor="@color/player_action_other"
+        app:toColor="?attr/colorPrimary"
         app:layout_constraintTop_toBottomOf="@id/player_song_artist"
         app:layout_constraintEnd_toStartOf="@id/player_action_share"
         app:layout_constraintStart_toEndOf="@id/player_action_cloud_download"

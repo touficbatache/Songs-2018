@@ -53,6 +53,7 @@ import java.util.Collections;
 import java.util.List;
 
 import at.huber.youtubeExtractor.YtFile;
+import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 import ml.toufic.songs.R;
 import ml.toufic.songs.db.Converters;
 import ml.toufic.songs.db.DownloadedSongViewModel;
@@ -112,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private ImageButton mPlayerShuffleBtn;
 
   private LinearLayout mMiniPlayer;
+  private MaterialProgressBar mMiniPlayerSongProgress;
   private ImageView mMiniPlayerArrowUp;
   private TextView mMiniPlayerSongTitle;
   private MorphingImageView mMiniPlayerPlayToPauseBtn;
@@ -289,6 +291,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerShuffleBtn = findViewById(R.id.player_shuffle_btn);
 
     mMiniPlayer = findViewById(R.id.mini_player_layout);
+    mMiniPlayerSongProgress = findViewById(R.id.mini_player_song_progress);
     mMiniPlayerArrowUp = findViewById(R.id.mini_player_arrow_up);
     mMiniPlayerSongTitle = findViewById(R.id.mini_player_song_title);
     mMiniPlayerPlayToPauseBtn = findViewById(R.id.mini_player_play_to_pause_btn);
@@ -570,9 +573,11 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       public void onPrepared(MediaPlayer mediaPlayer) {
         mPlayerSongProgressTotal.setText(TextUtils.formatMilliseconds(mContext, mPlayerMediaPlayer.getDuration()));
         mPlayerSongProgress.setMax(mediaPlayer.getDuration());
+        mMiniPlayerSongProgress.setMax(mediaPlayer.getDuration());
 
         mPlayerMediaPlayer.seekTo(mPlayerSong.getLastPosition());
         mPlayerSongProgress.setProgress(mPlayerSong.getLastPosition());
+        mMiniPlayerSongProgress.setProgress(mPlayerSong.getLastPosition());
       }
     });
 
@@ -868,6 +873,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private void startProgressTracking() {
     mPlayerSongProgress.setProgress(mPlayerMediaPlayer.getCurrentPosition());
+    mMiniPlayerSongProgress.setProgress(mPlayerMediaPlayer.getCurrentPosition());
     if (mPlayerMediaPlayer.isPlaying()) {
       mPlayerSongProgressHandlerRunnable = new Runnable() {
         @Override

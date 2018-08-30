@@ -22,8 +22,10 @@
         android:layout_height="wrap_content"
         android:padding="16dp"
         android:layout_weight="1"
-        android:maxLines="1"
-        android:ellipsize="end"
+        android:singleLine="true"
+        android:ellipsize="marquee"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:scrollHorizontally="true"
         tools:text="Song Title"/>
 
     <TextView

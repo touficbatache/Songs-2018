@@ -19,17 +19,18 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
+    <style name="AppTheme.Toolbar" parent="Theme.AppCompat.Light">
+        <item name="colorPrimary">@color/white</item> <!-- Status Bar color below overlay -->
+    </style>
+
     <style name="PlayerTheme" parent="AppTheme">
+        <item name="colorPrimary">@color/player_action_other</item>
+
         <item name="android:background">@color/grey_e0</item>
         <item name="android:windowBackground">@color/grey_e0</item>
         <item name="android:colorBackground">@color/grey_e0</item>
     </style>
-
-    <style name="PlayerControlsTheme">
-        <item name="android:tint">@color/grey_67</item>
-        <item name="android:disabledAlpha">@color/white</item>
-    </style>
-
+    
     <style name="ColorAccentWhite">
         <item name="colorAccent">@color/white</item>
     </style>
