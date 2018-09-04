@@ -2,9 +2,7 @@ package ml.toufic.songs.network;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.Log;
 import android.util.SparseArray;
-import android.widget.Toast;
 
 import com.downloader.Error;
 import com.downloader.OnDownloadListener;
@@ -13,10 +11,6 @@ import com.downloader.OnStartOrResumeListener;
 import com.downloader.PRDownloader;
 import com.downloader.Progress;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.List;
-
 import at.huber.youtubeExtractor.VideoMeta;
 import at.huber.youtubeExtractor.YouTubeExtractor;
 import at.huber.youtubeExtractor.YtFile;
@@ -24,6 +18,8 @@ import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.Song;
 import ml.toufic.songs.util.DeviceUtils;
 import ml.toufic.songs.util.SongUtils;
+
+import static ml.toufic.songs.util.SongUtils.PLAYLIST_DOWNLOADS_ID;
 
 public class SongDownloader {
 

@@ -12,12 +12,12 @@ import ml.toufic.songs.R;
 
 public class MorphingImageView extends AppCompatImageView {
 
-  private AnimatedVectorDrawable mFromIconAVD;
-  private AnimatedVectorDrawable mToIconAVD;
+  private AnimatedVectorDrawable mFirstToSecondAVD;
+  private AnimatedVectorDrawable mSecondToFirstAVD;
   int mCurrentFillColor;
-  private int mFromColor;
-  private int mToColor;
-  private boolean mIsShowingToIcon;
+  private int mFirstStateColor;
+  private int mSecondStateColor;
+  private boolean mIsShowingSecondState;
 
   public MorphingImageView(Context context) {
     this(context, null);
@@ -38,55 +38,53 @@ public class MorphingImageView extends AppCompatImageView {
   private void init(AttributeSet attrs){
     TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.MorphingImageView);
 
-    mFromIconAVD = (AnimatedVectorDrawable) ta.getDrawable(R.styleable.MorphingImageView_fromIconAVD);
-    mToIconAVD = (AnimatedVectorDrawable) ta.getDrawable(R.styleable.MorphingImageView_toIconAVD);
+    mFirstToSecondAVD = (AnimatedVectorDrawable) ta.getDrawable(R.styleable.MorphingImageView_fromIconAVD);
+    mSecondToFirstAVD = (AnimatedVectorDrawable) ta.getDrawable(R.styleable.MorphingImageView_toIconAVD);
 
-    mFromColor = ta.getColor(R.styleable.MorphingImageView_fromColor, getResources().getColor(R.color.grey_67));
-    mToColor = ta.getColor(R.styleable.MorphingImageView_toColor, getResources().getColor(R.color.colorAccent));
+    mFirstStateColor = ta.getColor(R.styleable.MorphingImageView_fromColor, getResources().getColor(R.color.grey_67));
+    mSecondStateColor = ta.getColor(R.styleable.MorphingImageView_toColor, getResources().getColor(R.color.colorAccent));
 
     if(!ta.getBoolean(R.styleable.MorphingImageView_isColorChanging, false)) {
       int[] androidSet = {
         android.R.attr.tint, // index 0
       };
       TypedArray a = getContext().obtainStyledAttributes(attrs, androidSet);
-      mFromColor = a.getColor(0, getResources().getColor(R.color.grey_67));
-      mToColor = a.getColor(0, getResources().getColor(R.color.grey_67));
+      mFirstStateColor = a.getColor(0, getResources().getColor(R.color.grey_67));
+      mSecondStateColor = a.getColor(0, getResources().getColor(R.color.grey_67));
       a.recycle();
     }
-    mCurrentFillColor = mFromColor;
+    mCurrentFillColor = mFirstStateColor;
 
     ta.recycle();
 
-    mIsShowingToIcon = false;
-    setImageDrawable(mFromIconAVD);
+    mIsShowingSecondState = false;
+    setImageDrawable(mFirstToSecondAVD);
   }
 
   public void switchState(){
-    if(mIsShowingToIcon) {
-      showFromIcon();
+    if(mIsShowingSecondState) {
+      animateToFirstState();
     } else {
-      showToIcon();
+      animateToSecondState();
     }
   }
 
-  public void showToIcon() {
-    AnimatedVectorDrawable drawable = mFromIconAVD;
-    setImageDrawable(drawable);
-    drawable.start();
+  public void animateToSecondState() {
+    setImageDrawable(mFirstToSecondAVD);
+    mFirstToSecondAVD.start();
     // from -> to. It's now showing to
-    mIsShowingToIcon = true;
+    mIsShowingSecondState = true;
 
-    animateFromColorToColor(mFromColor, mToColor);
+    animateFromColorToColor(mFirstStateColor, mSecondStateColor);
   }
 
-  public void showFromIcon() {
-    AnimatedVectorDrawable drawable = mToIconAVD;
-    setImageDrawable(drawable);
-    drawable.start();
+  public void animateToFirstState() {
+    setImageDrawable(mSecondToFirstAVD);
+    mSecondToFirstAVD.start();
     // to -> from. It's now showing from
-    mIsShowingToIcon = false;
+    mIsShowingSecondState = false;
 
-    animateFromColorToColor(mToColor, mFromColor);
+    animateFromColorToColor(mSecondStateColor, mFirstStateColor);
   }
 
   private void animateFromColorToColor(int fromColor, int toColor) {

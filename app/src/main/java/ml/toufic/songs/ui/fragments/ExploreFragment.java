@@ -268,7 +268,7 @@ public class ExploreFragment extends Fragment {
         mAdapter.addSongModel(song);
       }
 
-      mAdapter.addSeeMore(AnyPlaylistFragment.newInstance(getResources().getString(R.string.new_this_week), SongUtils.NEW_THIS_WEEK_PLAYLIST_ID));
+      mAdapter.addSeeMore(ExploreAnyPlaylistFragment.newInstance(getResources().getString(R.string.new_this_week), SongUtils.NEW_THIS_WEEK_PLAYLIST_ID));
     }
 
     if(hasPopular) {
@@ -280,7 +280,7 @@ public class ExploreFragment extends Fragment {
         mAdapter.addSongModel(song);
       }
 
-      mAdapter.addSeeMore(AnyPlaylistFragment.newInstance(getResources().getString(R.string.popular), SongUtils.POPULAR_PLAYLIST_ID));
+      mAdapter.addSeeMore(ExploreAnyPlaylistFragment.newInstance(getResources().getString(R.string.popular), SongUtils.POPULAR_PLAYLIST_ID));
     }
 
     if(hasNewThisWeek || hasPopular) {

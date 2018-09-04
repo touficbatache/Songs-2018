@@ -29,11 +29,11 @@ import ml.toufic.songs.network.JSONObjectDataFetcher;
 import ml.toufic.songs.ui.activities.MainActivity;
 import ml.toufic.songs.util.SongUtils;
 
-public class AnyPlaylistFragment extends Fragment {
+public class ExploreAnyPlaylistFragment extends Fragment {
 
   private final static String MAX_RESULTS = "50";
 
-  private static final String TAG = "AnyPlaylistFragment : ";
+  private static final String TAG = "ExploreAnyPlaylistFragment : ";
   private MainActivity mActivity;
   private View mRootView;
   private Context mContext;
@@ -47,8 +47,8 @@ public class AnyPlaylistFragment extends Fragment {
   private String playlistId;
   private List<Song> playlistSongs = new ArrayList<>();
 
-  public static AnyPlaylistFragment newInstance(String playlistName, String playlistId) {
-    AnyPlaylistFragment fragment = new AnyPlaylistFragment();
+  public static ExploreAnyPlaylistFragment newInstance(String playlistName, String playlistId) {
+    ExploreAnyPlaylistFragment fragment = new ExploreAnyPlaylistFragment();
     Bundle bundle = new Bundle();
     bundle.putString("playlist-name", playlistName);
     bundle.putString("playlist-id", playlistId);
@@ -80,6 +80,7 @@ public class AnyPlaylistFragment extends Fragment {
     mActivity.getSupportActionBar().setTitle(playlistTitle);
     mActivity.getSupportActionBar().setDisplayShowHomeEnabled(true);
     mActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    mActivity.getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_grey_67_24dp);
 
     mAdapter = new AnyPlaylistAdapter();
     mRecyclerView = mRootView.findViewById(R.id.recyclerview);

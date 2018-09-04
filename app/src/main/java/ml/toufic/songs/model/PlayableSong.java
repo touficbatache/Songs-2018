@@ -2,10 +2,11 @@ package ml.toufic.songs.model;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.ForeignKey;
 
 import java.io.File;
 
-@Entity(tableName = "downloaded_songs_table")
+@Entity(tableName = "songs")
 public class PlayableSong extends Song {
 
   @ColumnInfo(name = "song")

@@ -1,4 +1,4 @@
-package ml.toufic.songs.db;
+package ml.toufic.songs.db.Song;
 
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
@@ -6,18 +6,19 @@ import android.arch.lifecycle.LiveData;
 
 import java.util.List;
 
+import ml.toufic.songs.db.Song.SongRepository;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.ui.activities.MainActivity;
 
-public class DownloadedSongViewModel extends AndroidViewModel {
+public class SongViewModel extends AndroidViewModel {
 
-  private DownloadedSongsRepository mRepository;
+  private SongRepository mRepository;
   private LiveData<List<PlayableSong>> mAllSongs;
 
-  public DownloadedSongViewModel(Application application) {
+  public SongViewModel(Application application) {
     super(application);
-    mRepository = new DownloadedSongsRepository(application);
-    mAllSongs = mRepository.getAllSongs();
+    mRepository = new SongRepository(application);
+    mAllSongs = mRepository.getAllSongsLive();
   }
 
   public void insert(PlayableSong playableSong) {
@@ -36,21 +37,22 @@ public class DownloadedSongViewModel extends AndroidViewModel {
     return mRepository.hasSong(songId);
   }
 
-  public List<PlayableSong> getAllSongsAsync() {
-    return mRepository.getAllSongsAsync();
+  public List<PlayableSong> getAllSongs() {
+    return mRepository.getAllSongs();
   }
 
-  public LiveData<List<PlayableSong>> getAllSongs() { return mAllSongs; }
+  public LiveData<List<PlayableSong>> getAllSongsLive() { return mAllSongs; }
 
-  public void updateSongWithResetAll(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
-    playableSong.setLastPlayed(true);
-    mRepository.updateSongWithResetAll(playableSong, completionCallback);
-  }
   public void updateSongWithResetAll(PlayableSong playableSong) {
     updateSongWithResetAll(playableSong, new MainActivity.OnLastPlayedUpdateCompletionCallback() {
       @Override
       public void onCompletion() {}
     });
+  }
+
+  public void updateSongWithResetAll(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
+    playableSong.setLastPlayed(true);
+    mRepository.updateSongWithResetAll(playableSong, completionCallback);
   }
 
   public PlayableSong getLastPlayedSong() {

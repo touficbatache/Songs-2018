@@ -50,15 +50,20 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import at.huber.youtubeExtractor.YtFile;
 import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 import ml.toufic.songs.R;
 import ml.toufic.songs.db.Converters;
-import ml.toufic.songs.db.DownloadedSongViewModel;
+import ml.toufic.songs.db.PlaylistSongJoin.PlaylistSongJoinViewModel;
+import ml.toufic.songs.db.Playlist.PlaylistViewModel;
+import ml.toufic.songs.db.Song.SongViewModel;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.PlayerCoverModel;
+import ml.toufic.songs.model.Playlist;
+import ml.toufic.songs.model.PlaylistSongJoin;
 import ml.toufic.songs.model.Song;
 import ml.toufic.songs.network.SongDownloader;
 import ml.toufic.songs.ui.fragments.ExploreFragment;
@@ -68,6 +73,9 @@ import ml.toufic.songs.util.TextUtils;
 import ml.toufic.songs.views.CloudDownloadBorderToFillImageView;
 import ml.toufic.songs.views.MorphingImageView;
 
+import static ml.toufic.songs.util.SongUtils.PLAYLIST_DOWNLOADS_ID;
+import static ml.toufic.songs.util.SongUtils.PLAYLIST_LIKES_ID;
+
 public class MainActivity extends AppCompatActivity implements SlidingUpPanelLayout.PanelSlideListener {
 
   private static final String TAG = "MainActivity: ";
@@ -76,7 +84,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private BottomNavigationView mBottomNavigationView;
 
-  private DownloadedSongViewModel mDownloadedSongViewModel;
+  private SongViewModel mSongViewModel;
+  private PlaylistViewModel mPlaylistViewModel;
+  private PlaylistSongJoinViewModel mPlaylistSongJoinViewModel;
 
   private ExploreFragment mExploreFragment;
   private MyMusicFragment mMyMusicFragment;
@@ -178,17 +188,34 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       .replace(R.id.fragment_container, new ExploreFragment())
       .commitAllowingStateLoss();
 
-    mDownloadedSongViewModel = ViewModelProviders.of(this).get(DownloadedSongViewModel.class);
+    mSongViewModel = ViewModelProviders.of(this).get(SongViewModel.class);
+//    mSongViewModel.getAllSongsLive().observe(this, new Observer<List<PlayableSong>>() {
+//      @Override
+//      public void onChanged(@Nullable final List<PlayableSong> songs) {
+//        mMyMusicFragment.loadMyMusicPlaylists();
+//      }
+//    });
 
-    mDownloadedSongViewModel.getAllSongs().observe(this, new Observer<List<PlayableSong>>() {
+    mPlaylistViewModel = ViewModelProviders.of(this).get(PlaylistViewModel.class);
+    mPlaylistViewModel.getAllPlaylistsLive().observe(this, new Observer<List<Playlist>>() {
       @Override
-      public void onChanged(@Nullable final List<PlayableSong> songs) {
-        // Update the cached copy of the songs in the adapter.
-        for(Song song : songs) {
-          Log.d(TAG, "onChanged: tgblog: " + Converters.fromSong(song));
-        }
+      public void onChanged(@Nullable final List<Playlist> playlists) {
+        mMyMusicFragment.loadMyMusicPlaylists();
       }
     });
+
+    mPlaylistSongJoinViewModel = ViewModelProviders.of(this).get(PlaylistSongJoinViewModel.class);
+    mPlaylistSongJoinViewModel.getAllPlaylistSongJoinLive().observe(this, new Observer<List<PlaylistSongJoin>>() {
+      @Override
+      public void onChanged(@Nullable final List<PlaylistSongJoin> playlistSongJoins) {
+        // Update the cached copy of the songs in the adapter.
+        mMyMusicFragment.loadMyMusicPlaylists();
+        mMyMusicFragment.updateSongsInPlaylist();
+      }
+    });
+
+    insertPlaylist(new Playlist(PLAYLIST_LIKES_ID, "Favorites", new Date()));
+    insertPlaylist(new Playlist(PLAYLIST_DOWNLOADS_ID, "Downloads", new Date()));
 
     /* Initialize player & mini player */
 
@@ -300,7 +327,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mSlidingPanelLayout.addPanelSlideListener(this);
     mPlayerSongProgressHandler = new Handler();
 
-    if(mDownloadedSongViewModel.getLastPlayedSong() == null || mOriginalPlayingQueue.isEmpty()) {
+    if(mSongViewModel.getLastPlayedSong() == null || mOriginalPlayingQueue.isEmpty()) {
       mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
     }
   }
@@ -314,7 +341,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   private boolean getLastPlayedSong() {
-    mPlayerSong = mDownloadedSongViewModel.getLastPlayedSong();
+    mPlayerSong = mSongViewModel.getLastPlayedSong();
 
     boolean isSongOK = false;
     if(mPlayerSong != null && mPlayerSong.getPath().exists()) {
@@ -337,7 +364,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private void updatePlayingQueue() {
     mOriginalPlayingQueue = new ArrayList<>();
-    List<PlayableSong> playableSongsList = mDownloadedSongViewModel.getAllSongsAsync();
+    List<PlayableSong> playableSongsList = mSongViewModel.getAllSongs();
     for(int i=0; i<playableSongsList.size(); i++) {
       PlayableSong playableSong = playableSongsList.get(i);
       playableSong.setIndexInQueue(i);
@@ -377,15 +404,29 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerSongTitle.setText(mPlayerSong.getTitle());
     mMiniPlayerSongTitle.setText(mPlayerSong.getTitle());
     mPlayerSongArtist.setText(mPlayerSong.getArtist());
+    mPlayerCloudDownloadBtn.showBorder();
 
+    if(!isSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId())) {
+      mPlayerFavoriteBtn.animateToFirstState();
+    } else {
+      mPlayerFavoriteBtn.animateToSecondState();
+    }
     mPlayerFavoriteBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        mPlayerFavoriteBtn.switchState();
+        if(!isSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId())) {
+          insertSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId());
+          mPlayerFavoriteBtn.animateToSecondState();
+        } else {
+          removeSongFromPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId());
+          mPlayerFavoriteBtn.animateToFirstState();
+        }
       }
     });
 
-    mPlayerCloudDownloadBtn.showFill();
+    if(isSongInPlaylist(PLAYLIST_DOWNLOADS_ID, mPlayerSong.getId())) {
+      mPlayerCloudDownloadBtn.showFill();
+    }
     mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -399,8 +440,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
           })
           .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
+
               deleteSong(mPlayerSong);
-              mMyMusicFragment.updateRecyclerViewDownloadedSongs();
               if(getAllSongsAsync().size() >= 1) {
                 if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
                   loadSong(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue() - 1));
@@ -417,10 +458,69 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       }
     });
 
+    if(!isSongInCustomPlaylist(mPlayerSong.getId())) {
+      mPlayerAddToPlaylistBtn.animateToFirstState();
+    } else {
+      mPlayerAddToPlaylistBtn.animateToSecondState();
+    }
     mPlayerAddToPlaylistBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        mPlayerAddToPlaylistBtn.switchState();
+        final List<Playlist> playlists = getAllPlaylists().subList(2, getAllPlaylists().size());
+        String[] playlistsTitles = new String[playlists.size()];
+        final boolean[] checkedPlaylists = new boolean[playlists.size()];
+        final List<Integer> playlistsIdsToAddTo = new ArrayList<>();
+        for(int i=0; i<playlists.size(); i++) {
+          playlistsTitles[i] = playlists.get(i).getTitle();
+          if(isSongInPlaylist(playlists.get(i).getId(), mPlayerSong.getId())) {
+            checkedPlaylists[i] = true;
+            playlistsIdsToAddTo.add(i);
+          }
+        }
+
+        final AlertDialog.Builder mBuilder = new AlertDialog.Builder(mContext);
+        mBuilder.setTitle("Select playlists");
+        mBuilder.setMultiChoiceItems(playlistsTitles, checkedPlaylists, new DialogInterface.OnMultiChoiceClickListener() {
+          @Override
+          public void onClick(DialogInterface dialogInterface, int position, boolean isChecked) {
+            if(isChecked) {
+              if(!playlistsIdsToAddTo.contains(position)) {
+                playlistsIdsToAddTo.add(position);
+              }
+            } else if(playlistsIdsToAddTo.contains(position)) {
+              playlistsIdsToAddTo.remove(playlistsIdsToAddTo.indexOf(position));
+            }
+          }
+        });
+
+        mBuilder.setCancelable(false);
+        mBuilder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialogInterface, int i) {
+            for(int j=0; j<playlists.size(); j++) {
+              if(playlistsIdsToAddTo.contains(j)) {
+                insertSongInPlaylist(playlists.get(j).getId(), mPlayerSong.getId());
+              } else {
+                removeSongFromPlaylist(playlists.get(j).getId(), mPlayerSong.getId());
+              }
+            }
+            if(!isSongInCustomPlaylist(mPlayerSong.getId())) {
+              mPlayerAddToPlaylistBtn.animateToFirstState();
+            } else {
+              mPlayerAddToPlaylistBtn.animateToSecondState();
+            }
+          }
+        });
+
+        mBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialogInterface, int i) {
+            dialogInterface.dismiss();
+          }
+        });
+
+        AlertDialog mDialog = mBuilder.create();
+        mDialog.show();
       }
     });
 
@@ -465,6 +565,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       public void onClick(View view) {
         if(mPlayerMediaPlayer.getCurrentPosition() / 1000 >= 10) {
           mPlayerMediaPlayer.seekTo(0);
+          mPlayerSongProgress.setProgress(0);
         } else {
           int previousSongIndex = mPlayerSong.getIndexInQueue() - 1;
           mPlayerRecyclerView.smoothScrollToPosition(previousSongIndex);
@@ -586,8 +687,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       public void onCompletion(MediaPlayer mediaPlayer) {
         if (!mPlayerSong.isLooping()) {
           if (mPlayerSong.getIndexInQueue() == getCurrentPlayingQueue().size() - 1) {
-            mPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
-            mMiniPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
+            mPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
+            mMiniPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
             mPlayerMediaPlayer.seekTo(0);
           } else {
             int nextSongIndex = mPlayerSong.getIndexInQueue() + 1;
@@ -653,6 +754,40 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         destroy();
         if(getLastPlayedSong()) {
           prepareForPlaying();
+          playSong();
+        }
+      }
+    });
+  }
+
+  private void prepareForPlaying(List<PlayableSong> queue) {
+    updatePlayingQueue(queue);
+    updateLastPlayedSong();
+    updateCoversInRecyclerView();
+    updateMediaPlayer();
+  }
+
+  private void updatePlayingQueue(List<PlayableSong> queue) {
+    mOriginalPlayingQueue = new ArrayList<>();
+    for(int i=0; i<queue.size(); i++) {
+      PlayableSong playableSong = queue.get(i);
+      playableSong.setIndexInQueue(i);
+      MediaPlayer mp = MediaPlayer.create(mContext, Uri.parse(playableSong.getPath().getPath()));
+      playableSong.setDurationInMs(mp.getDuration());
+      mp.release();
+      mOriginalPlayingQueue.add(playableSong);
+    }
+  }
+
+  public void loadSongFromPlaylist(PlayableSong playableSong, final String playlistId) {
+    isRemoteSongPlaying = false;
+    updateSongWithResetAll(playableSong, new OnLastPlayedUpdateCompletionCallback() {
+      @Override
+      public void onCompletion() {
+        destroy();
+        if(getLastPlayedSong()) {
+          prepareForPlaying();
+//          prepareForPlaying(getSongsForPlaylist(playlistId));
           playSong();
         }
       }
@@ -803,8 +938,8 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onCompletion(MediaPlayer mediaPlayer) {
         if (!isRemoteSongLooping) {
-          mPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
-          mMiniPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
+          mPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
+          mMiniPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
           mPlayerMediaPlayer.seekTo(0);
         } else {
           mPlayerMediaPlayer.seekTo(0);
@@ -859,16 +994,16 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private void playSong() {
     mPlayerMediaPlayer.start();
-    mPlayerPlayToPauseBtn.showToIcon(); //pause icon: playing
-    mMiniPlayerPlayToPauseBtn.showToIcon(); //pause icon: playing
+    mPlayerPlayToPauseBtn.animateToSecondState(); //pause icon: playing
+    mMiniPlayerPlayToPauseBtn.animateToSecondState(); //pause icon: playing
 
     startProgressTracking();
   }
 
   private void pauseSong() {
     mPlayerMediaPlayer.pause();
-    mPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
-    mMiniPlayerPlayToPauseBtn.showFromIcon(); //play icon: paused
+    mPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
+    mMiniPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
   }
 
   private void startProgressTracking() {
@@ -918,38 +1053,92 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerShuffleBtn.setEnabled(!isPlayerLoading);
   }
 
+  public void insertPlaylist(Playlist playlist) {
+    if(!hasPlaylist(playlist.getId())) {
+      mPlaylistViewModel.insert(playlist);
+    }
+  }
+
+  public List<Playlist> getAllPlaylists() {
+    return mPlaylistViewModel.getAllPlaylists();
+  }
+
+  public boolean hasPlaylist(String playlistId) {
+    return mPlaylistViewModel.hasPlaylist(playlistId);
+  }
+
+  public void deletePlaylist(Playlist playlist) {
+    mPlaylistViewModel.delete(playlist);
+  }
+
+  public void deletePlaylist(String playlistId) {
+    mPlaylistViewModel.delete(playlistId);
+  }
+
   public void insertSong(PlayableSong playableSong) {
-    mDownloadedSongViewModel.insert(playableSong);
+    mSongViewModel.insert(playableSong);
   }
 
   public void updateSong(PlayableSong playableSong) {
-    mDownloadedSongViewModel.update(playableSong);
+    mSongViewModel.update(playableSong);
   }
 
   public PlayableSong getSong(String songId) {
-    return mDownloadedSongViewModel.getSong(songId);
+    return mSongViewModel.getSong(songId);
   }
 
   private void updateSongWithResetAll(PlayableSong playableSong) {
-    mDownloadedSongViewModel.updateSongWithResetAll(playableSong);
+    mSongViewModel.updateSongWithResetAll(playableSong);
   }
 
   private void updateSongWithResetAll(PlayableSong playableSong, OnLastPlayedUpdateCompletionCallback completionCallback) {
-    mDownloadedSongViewModel.updateSongWithResetAll(playableSong, completionCallback);
+    mSongViewModel.updateSongWithResetAll(playableSong, completionCallback);
   }
 
   public boolean hasSong(String songId) {
-    return mDownloadedSongViewModel.hasSong(songId);
+    return mSongViewModel.hasSong(songId);
   }
 
   public List<PlayableSong> getAllSongsAsync() {
-    return mDownloadedSongViewModel.getAllSongsAsync();
+    return mSongViewModel.getAllSongs();
   }
 
   public void deleteSong(PlayableSong playableSong) {
     if(playableSong.getPath().delete()) {
-      mDownloadedSongViewModel.delete(playableSong);
+      mSongViewModel.delete(playableSong);
     }
+  }
+
+  public void insertSongInPlaylist(String playlistId, String songId) {
+    if(!isSongInPlaylist(playlistId, songId)) {
+      mPlaylistSongJoinViewModel.insert(new PlaylistSongJoin(playlistId, songId));
+    }
+  }
+
+  public List<Playlist> getPlaylistsForSong(String songId) {
+    return mPlaylistSongJoinViewModel.getPlaylistsForSong(songId);
+  }
+
+  public List<PlayableSong> getSongsForPlaylist(String playlistId) {
+    return mPlaylistSongJoinViewModel.getSongsForPlaylist(playlistId);
+  }
+
+  public boolean isSongInPlaylist(String playlistId, String songId) {
+    return mPlaylistSongJoinViewModel.isSongInPlaylist(playlistId, songId);
+  }
+
+  public boolean isSongInCustomPlaylist(String songId) {
+    boolean isInCustomPlaylist = false;
+    for(Playlist playlist : getPlaylistsForSong(songId)) {
+      if(!playlist.getId().equals(PLAYLIST_LIKES_ID) && !playlist.getId().equals(PLAYLIST_DOWNLOADS_ID)) {
+        isInCustomPlaylist = true;
+      }
+    }
+    return isInCustomPlaylist;
+  }
+
+  public void removeSongFromPlaylist(String playlistId, String songId) {
+    mPlaylistSongJoinViewModel.remove(playlistId, songId);
   }
 
   public void onSongDownloadStartOrResume(String songTitle) {
@@ -960,6 +1149,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   public void onSongDownloadCompletion(PlayableSong playableSong) {
     if(playableSong.getPath().exists()) {
       insertSong(playableSong);
+      insertSongInPlaylist(PLAYLIST_DOWNLOADS_ID, playableSong.getId());
       if (playableSong.getId().equals(mPlayerRemoteSong.getId())) {
         mPlayerCloudDownloadBtn.showFill();
       }
