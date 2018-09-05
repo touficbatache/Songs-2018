@@ -1,11 +1,15 @@
 package ml.toufic.songs.ui.fragments;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.view.ActionMode;
@@ -66,6 +70,7 @@ public class MyMusicFragment extends Fragment {
   private MyMusicAdapter mAdapter;
   private RecyclerView mRecyclerView;
   private SwipeRefreshLayout mSwipeRefreshLayout;
+  private FloatingActionButton mNewPlaylistBtn;
   private List<Playlist> playlists = new ArrayList<>();
 
   private MyMusicAnyPlaylistFragment myMusicAnyPlaylistFragment = new MyMusicAnyPlaylistFragment();
@@ -102,6 +107,8 @@ public class MyMusicFragment extends Fragment {
       }
     });
 
+    mNewPlaylistBtn = mRootView.findViewById(R.id.new_playlist_btn);
+
     return mRootView;
   }
 
@@ -109,51 +116,43 @@ public class MyMusicFragment extends Fragment {
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
+    mNewPlaylistBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        new NewPlaylistDialogFragment().show(mActivity.getSupportFragmentManager(), "dialog");
+
+//        AlertDialog.Builder mBuilder = new AlertDialog.Builder(mContext);
+//        mBuilder.setTitle("New playlist");
+//
+//        View mView = getLayoutInflater().inflate(R.layout.dialog_new_playlist, null);
+//        final EditText playlistTitleTv = mView.findViewById(R.id.playlist_title);
+//        mBuilder.setView(mView);
+//
+//        // Set up the buttons
+//        mBuilder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
+//          @Override
+//          public void onClick(DialogInterface dialog, int which) {
+//            if(!Objects.equals(playlistTitleTv.getText().toString().trim(), "")) {
+//              mActivity.insertPlaylist(new Playlist(String.valueOf(mActivity.getAllPlaylists().size() + 1), playlistTitleTv.getText().toString().trim(), new Date()));
+//              Toast.makeText(mContext, "Playlist created successfully!", Toast.LENGTH_SHORT).show();
+//            } else {
+//              Toast.makeText(mContext, "Playlist name is empty!", Toast.LENGTH_SHORT).show();
+//            }
+//          }
+//        });
+//        mBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+//          @Override
+//          public void onClick(DialogInterface dialog, int which) {
+//            dialog.cancel();
+//          }
+//        });
+//
+//        AlertDialog dialog = mBuilder.create();
+//        dialog.show();
+      }
+    });
+
     loadMyMusicPlaylists();
-  }
-
-  @Override
-  public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-    inflater.inflate(R.menu.menu_toolbar_my_music, menu);
-  }
-
-  @Override
-  public boolean onOptionsItemSelected(MenuItem item){
-    switch(item.getItemId()){
-      case R.id.action_new_playlist:
-
-        AlertDialog.Builder mBuilder = new AlertDialog.Builder(mContext);
-        mBuilder.setTitle("New playlist");
-
-        View mView = getLayoutInflater().inflate(R.layout.dialog_new_playlist, null);
-        final EditText playlistTitleTv = mView.findViewById(R.id.playlist_title);
-        mBuilder.setView(mView);
-
-        // Set up the buttons
-        mBuilder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialog, int which) {
-            if(!Objects.equals(playlistTitleTv.getText().toString().trim(), "")) {
-              mActivity.insertPlaylist(new Playlist(String.valueOf(mActivity.getAllPlaylists().size() + 1), playlistTitleTv.getText().toString().trim(), new Date()));
-              Toast.makeText(mContext, "Playlist created successfully!", Toast.LENGTH_SHORT).show();
-            } else {
-              Toast.makeText(mContext, "Playlist name is empty!", Toast.LENGTH_SHORT).show();
-            }
-          }
-        });
-        mBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialog, int which) {
-            dialog.cancel();
-          }
-        });
-
-        AlertDialog dialog = mBuilder.create();
-        dialog.show();
-        return true;
-      default:
-        return super.onOptionsItemSelected(item);
-    }
   }
 
   public void loadMyMusicPlaylists() {
