@@ -9,6 +9,7 @@ import java.util.List;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.Playlist;
 import ml.toufic.songs.model.PlaylistSongJoin;
+import ml.toufic.songs.model.Song;
 
 public class PlaylistSongJoinViewModel extends AndroidViewModel {
 
@@ -31,12 +32,20 @@ public class PlaylistSongJoinViewModel extends AndroidViewModel {
     return mRepository.getSongsForPlaylist(playlistId);
   }
 
+  public List<Song> getRemoteSongsForPlaylist(String playlistId) {
+    return mRepository.getRemoteSongsForPlaylist(playlistId);
+  }
+
   public LiveData<List<PlaylistSongJoin>> getAllPlaylistSongJoinLive() {
     return mRepository.getAllPlaylistSongJoinLive();
   }
 
   public boolean isSongInPlaylist(String playlistId, String songId) {
     return mRepository.isSongInPlaylist(playlistId, songId);
+  }
+
+  public boolean isRemoteSongInPlaylist(String playlistId, String songId) {
+    return mRepository.isRemoteSongInPlaylist(playlistId, songId);
   }
 
   public void remove(String playlistId, String songId) {

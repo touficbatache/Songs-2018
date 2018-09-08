@@ -10,10 +10,11 @@ import ml.toufic.songs.db.Playlist.PlaylistDao;
 import ml.toufic.songs.db.PlaylistSongJoin.PlaylistSongJoinDao;
 import ml.toufic.songs.db.Song.SongDao;
 import ml.toufic.songs.model.Playlist;
+import ml.toufic.songs.model.Song;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.PlaylistSongJoin;
 
-@Database(entities = {Playlist.class, PlayableSong.class, PlaylistSongJoin.class}, version = 1, exportSchema = false)
+@Database(entities = {Playlist.class, Song.class, PlayableSong.class, PlaylistSongJoin.class}, version = 2, exportSchema = false)
 
 @TypeConverters({Converters.class})
 public abstract class SongsDatabase extends RoomDatabase {

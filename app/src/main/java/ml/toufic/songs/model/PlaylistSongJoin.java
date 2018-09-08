@@ -21,9 +21,11 @@ import static android.arch.persistence.room.ForeignKey.CASCADE;
 public class PlaylistSongJoin {
   @NonNull public String playlistId;
   @NonNull public String songId;
+  public boolean isRemoteSong;
 
-  public PlaylistSongJoin(String playlistId, String songId) {
+  public PlaylistSongJoin(@NonNull String playlistId, @NonNull String songId, boolean isRemoteSong) {
     this.playlistId = playlistId;
     this.songId = songId;
+    this.isRemoteSong = isRemoteSong;
   }
 }

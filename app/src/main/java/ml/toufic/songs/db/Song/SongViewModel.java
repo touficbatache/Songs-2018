@@ -2,27 +2,28 @@ package ml.toufic.songs.db.Song;
 
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
-import android.arch.lifecycle.LiveData;
 
 import java.util.List;
 
-import ml.toufic.songs.db.Song.SongRepository;
 import ml.toufic.songs.model.PlayableSong;
+import ml.toufic.songs.model.Song;
 import ml.toufic.songs.ui.activities.MainActivity;
 
 public class SongViewModel extends AndroidViewModel {
 
   private SongRepository mRepository;
-  private LiveData<List<PlayableSong>> mAllSongs;
 
   public SongViewModel(Application application) {
     super(application);
     mRepository = new SongRepository(application);
-    mAllSongs = mRepository.getAllSongsLive();
   }
 
   public void insert(PlayableSong playableSong) {
     mRepository.insert(playableSong);
+  }
+
+  public void insert(Song song) {
+    mRepository.insert(song);
   }
 
   public void update(PlayableSong playableSong) {
@@ -41,16 +42,14 @@ public class SongViewModel extends AndroidViewModel {
     return mRepository.getAllSongs();
   }
 
-  public LiveData<List<PlayableSong>> getAllSongsLive() { return mAllSongs; }
-
   public void updateSongWithResetAll(PlayableSong playableSong) {
-    updateSongWithResetAll(playableSong, new MainActivity.OnLastPlayedUpdateCompletionCallback() {
+    updateSongWithResetAll(playableSong, new MainActivity.OnLastClickedUpdateCompletion() {
       @Override
       public void onCompletion() {}
     });
   }
 
-  public void updateSongWithResetAll(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
+  public void updateSongWithResetAll(PlayableSong playableSong, MainActivity.OnLastClickedUpdateCompletion completionCallback) {
     playableSong.setLastPlayed(true);
     mRepository.updateSongWithResetAll(playableSong, completionCallback);
   }

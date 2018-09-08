@@ -10,6 +10,7 @@ import ml.toufic.songs.db.SongsDatabase;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.Playlist;
 import ml.toufic.songs.model.PlaylistSongJoin;
+import ml.toufic.songs.model.Song;
 
 public class PlaylistSongJoinRepository {
 
@@ -34,6 +35,10 @@ public class PlaylistSongJoinRepository {
     return mPlaylistDao.getSongsForPlaylist(playlistId);
   }
 
+  public List<Song> getRemoteSongsForPlaylist(String playlistId) {
+    return mPlaylistDao.getRemoteSongsForPlaylist(playlistId);
+  }
+
   public LiveData<List<PlaylistSongJoin>> getAllPlaylistSongJoinLive() {
     return mAllPlaylistSongJoin;
   }
@@ -41,6 +46,15 @@ public class PlaylistSongJoinRepository {
   boolean isSongInPlaylist(String playlistId, String songId) {
     for(PlayableSong playableSong : getSongsForPlaylist(playlistId)) {
       if(playableSong.getId().equals(songId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  boolean isRemoteSongInPlaylist(String playlistId, String songId) {
+    for(Song song : getRemoteSongsForPlaylist(playlistId)) {
+      if(song.getId().equals(songId)) {
         return true;
       }
     }

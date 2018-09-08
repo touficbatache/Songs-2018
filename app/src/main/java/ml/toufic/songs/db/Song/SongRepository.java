@@ -1,29 +1,30 @@
 package ml.toufic.songs.db.Song;
 
 import android.app.Application;
-import android.arch.lifecycle.LiveData;
 import android.os.AsyncTask;
 
 import java.util.List;
 
-import ml.toufic.songs.db.Song.SongDao;
 import ml.toufic.songs.db.SongsDatabase;
 import ml.toufic.songs.model.PlayableSong;
+import ml.toufic.songs.model.Song;
 import ml.toufic.songs.ui.activities.MainActivity;
 
 public class SongRepository {
 
   private SongDao mSongDao;
-  private LiveData<List<PlayableSong>> mAllSongs;
 
   SongRepository(Application application) {
     SongsDatabase db = SongsDatabase.getDatabase(application);
     mSongDao = db.songDao();
-    mAllSongs = mSongDao.getAllSongsLive();
   }
 
   public void insert(PlayableSong playableSong) {
     new insertAsyncTask(mSongDao).execute(playableSong);
+  }
+
+  public void insert(Song song) {
+    new insertSongAsyncTask(mSongDao).execute(song);
   }
 
   public void update(PlayableSong playableSong) {
@@ -42,11 +43,7 @@ public class SongRepository {
     return mSongDao.getAllSongs();
   }
 
-  LiveData<List<PlayableSong>> getAllSongsLive() {
-    return mAllSongs;
-  }
-
-  public void updateSongWithResetAll(PlayableSong playableSong, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
+  public void updateSongWithResetAll(PlayableSong playableSong, MainActivity.OnLastClickedUpdateCompletion completionCallback) {
     new resetAllSongsExceptAsyncTask(mSongDao).execute(playableSong.getId());
     new updateAsyncTask(mSongDao, completionCallback).execute(playableSong);
   }
@@ -82,16 +79,31 @@ public class SongRepository {
     }
   }
 
+  private static class insertSongAsyncTask extends AsyncTask<Song, Void, Void> {
+
+    private SongDao mAsyncTaskDao;
+
+    insertSongAsyncTask(SongDao dao) {
+      mAsyncTaskDao = dao;
+    }
+
+    @Override
+    protected Void doInBackground(final Song... params) {
+      mAsyncTaskDao.insert(params[0]);
+      return null;
+    }
+  }
+
   private static class updateAsyncTask extends AsyncTask<PlayableSong, Void, Void> {
 
     private SongDao mAsyncTaskDao;
-    private MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback;
+    private MainActivity.OnLastClickedUpdateCompletion completionCallback;
 
     updateAsyncTask(SongDao dao) {
       mAsyncTaskDao = dao;
     }
 
-    updateAsyncTask(SongDao dao, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
+    updateAsyncTask(SongDao dao, MainActivity.OnLastClickedUpdateCompletion completionCallback) {
       mAsyncTaskDao = dao;
       this.completionCallback = completionCallback;
     }

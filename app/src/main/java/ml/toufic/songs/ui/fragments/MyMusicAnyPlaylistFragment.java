@@ -206,8 +206,9 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
                     Song song = new Song(id, title, author, thumbnail);
                     PlayableSong playableSong = new PlayableSong(song, DeviceUtils.getInternalFilesSongsDirFilePath(mContext, SongUtils.getSongFileName(id)));
 
+                    playableSong.setIndexInQueue(mActivity.getSongsForPlaylist(PLAYLIST_DOWNLOADS_ID).size());
                     mActivity.insertSong(playableSong);
-                    mActivity.insertSongInPlaylist(playlistId, playableSong.getId());
+                    mActivity.insertSongInPlaylist(playlistId, playableSong.getId(), false);
                     updateRecyclerViewSongs();
                   }
                 } catch (JSONException e) {
@@ -293,7 +294,7 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
       onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-          mActivity.loadSongFromPlaylist(playableSong, playlistId);
+          mActivity.loadSong(playableSong, playlistId);
         }
       };
     }

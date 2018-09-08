@@ -1,6 +1,5 @@
 package ml.toufic.songs.db.Song;
 
-import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
@@ -11,12 +10,16 @@ import android.arch.persistence.room.Update;
 import java.util.List;
 
 import ml.toufic.songs.model.PlayableSong;
+import ml.toufic.songs.model.Song;
 
 @Dao
 public interface SongDao {
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   void insert(PlayableSong playableSong);
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  void insert(Song song);
 
   @Update
   void update(PlayableSong playableSong);
@@ -26,9 +29,6 @@ public interface SongDao {
 
   @Query("SELECT * FROM songs")
   List<PlayableSong> getAllSongs();
-
-  @Query("SELECT * FROM songs ORDER BY `index` ASC")
-  LiveData<List<PlayableSong>> getAllSongsLive();
 
   @Query("UPDATE songs SET lastplayed = 0 AND lastposition = 0 WHERE id != :songId")
   void resetAllSongsExcept(String songId);

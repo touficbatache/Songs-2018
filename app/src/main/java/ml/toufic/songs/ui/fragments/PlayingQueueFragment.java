@@ -41,12 +41,14 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
   private RecyclerView mRecyclerView;
   private List<PlayableSong> playingQueueSongs = new ArrayList<>();
   private int currentSongIndex = -1;
+  private String playlistId;
 
-  public static PlayingQueueFragment newInstance(List<PlayableSong> playingQueueSongs, int currentSongIndex) {
+  public static PlayingQueueFragment newInstance(List<PlayableSong> playingQueueSongs, int currentSongIndex, String playlistId) {
     PlayingQueueFragment fragment = new PlayingQueueFragment();
     Bundle args = new Bundle();
     args.putString("playingQueueSongs", new Gson().toJson(playingQueueSongs));
     args.putInt("currentSongIndex", currentSongIndex);
+    args.putString("playlistId", playlistId);
     fragment.setArguments(args);
     return fragment;
   }
@@ -57,8 +59,10 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
 
     mActivity = (MainActivity) getActivity();
     mContext = getContext();
-    playingQueueSongs = new Gson().fromJson(getArguments().getString("playingQueueSongs"), new TypeToken<List<PlayableSong>>(){}.getType());
-    currentSongIndex = getArguments().getInt("currentSongIndex");
+    Bundle bundle = getArguments();
+    playingQueueSongs = new Gson().fromJson(bundle.getString("playingQueueSongs"), new TypeToken<List<PlayableSong>>(){}.getType());
+    currentSongIndex = bundle.getInt("currentSongIndex");
+    playlistId = bundle.getString("playlistId");
   }
 
   @Nullable
@@ -128,7 +132,7 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
       onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-          mActivity.loadSong(playableSong);
+          mActivity.loadSong(playableSong, playlistId);
           dismiss();
         }
       };

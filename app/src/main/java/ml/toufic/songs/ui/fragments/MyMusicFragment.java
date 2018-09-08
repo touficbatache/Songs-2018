@@ -1,61 +1,36 @@
 package ml.toufic.songs.ui.fragments;
 
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.InputType;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.airbnb.epoxy.EpoxyAdapter;
 import com.airbnb.epoxy.EpoxyHolder;
 import com.airbnb.epoxy.EpoxyModelWithHolder;
-import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
-import ml.toufic.songs.db.Converters;
-import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.Playlist;
-import ml.toufic.songs.model.Song;
-import ml.toufic.songs.network.JSONObjectDataFetcher;
 import ml.toufic.songs.ui.activities.MainActivity;
 import ml.toufic.songs.R;
-import ml.toufic.songs.util.DeviceUtils;
-import ml.toufic.songs.util.SongUtils;
 
 import static ml.toufic.songs.util.SongUtils.PLAYLIST_DOWNLOADS_ID;
 import static ml.toufic.songs.util.SongUtils.PLAYLIST_LIKES_ID;
@@ -119,36 +94,33 @@ public class MyMusicFragment extends Fragment {
     mNewPlaylistBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        new NewPlaylistDialogFragment().show(mActivity.getSupportFragmentManager(), "dialog");
 
-//        AlertDialog.Builder mBuilder = new AlertDialog.Builder(mContext);
-//        mBuilder.setTitle("New playlist");
-//
-//        View mView = getLayoutInflater().inflate(R.layout.dialog_new_playlist, null);
-//        final EditText playlistTitleTv = mView.findViewById(R.id.playlist_title);
-//        mBuilder.setView(mView);
-//
-//        // Set up the buttons
-//        mBuilder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
-//          @Override
-//          public void onClick(DialogInterface dialog, int which) {
-//            if(!Objects.equals(playlistTitleTv.getText().toString().trim(), "")) {
-//              mActivity.insertPlaylist(new Playlist(String.valueOf(mActivity.getAllPlaylists().size() + 1), playlistTitleTv.getText().toString().trim(), new Date()));
-//              Toast.makeText(mContext, "Playlist created successfully!", Toast.LENGTH_SHORT).show();
-//            } else {
-//              Toast.makeText(mContext, "Playlist name is empty!", Toast.LENGTH_SHORT).show();
-//            }
-//          }
-//        });
-//        mBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//          @Override
-//          public void onClick(DialogInterface dialog, int which) {
-//            dialog.cancel();
-//          }
-//        });
-//
-//        AlertDialog dialog = mBuilder.create();
-//        dialog.show();
+        MaterialDialog.Builder newPlaylistDialog = new MaterialDialog.Builder(mContext);
+        newPlaylistDialog.title(R.string.new_playlist);
+        newPlaylistDialog.inputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        newPlaylistDialog.alwaysCallInputCallback();
+        newPlaylistDialog.input(getString(R.string.playlist_name), null, false, new MaterialDialog.InputCallback() {
+          @Override
+          public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+            if(Objects.equals(input.toString().trim(), "")) {
+              dialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
+            }
+          }
+        });
+        newPlaylistDialog.cancelable(true);
+        newPlaylistDialog.positiveText(R.string.create);
+        newPlaylistDialog.onPositive(new MaterialDialog.SingleButtonCallback() {
+          @Override
+          public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+            List<Playlist> playlists = mActivity.getAllPlaylists();
+            dialog.getActionButton(DialogAction.POSITIVE).setEnabled(true);
+            mActivity.insertPlaylist(new Playlist(String.valueOf(Integer.valueOf(playlists.get(playlists.size() - 1).getId()) + 1), dialog.getInputEditText().getText().toString().trim(), new Date()));
+            Toast.makeText(mContext, R.string.playlist_created_successfully, Toast.LENGTH_SHORT).show();
+          }
+        });
+        newPlaylistDialog.negativeText(R.string.cancel);
+        newPlaylistDialog.show();
+
       }
     });
 
@@ -161,7 +133,7 @@ public class MyMusicFragment extends Fragment {
 
       mAdapter.clear();
 
-      mAdapter.addSubheader("Playlists");
+      mAdapter.addSubheader(getString(R.string.playlists));
 
       for(Playlist playlist : playlists) {
         if(playlist.getId().equals(PLAYLIST_LIKES_ID)) {
@@ -289,7 +261,7 @@ public class MyMusicFragment extends Fragment {
         holder.mPlaylistIcon.setImageResource(playlistIcon);
       }
       holder.mPlaylistTitle.setText(playlistTitle);
-      holder.mPlaylistSongsCount.setText(playlistSongsCount + " songs");
+      holder.mPlaylistSongsCount.setText(String.format(getString(R.string.NUMBER_songs), playlistSongsCount));
 
     }
 

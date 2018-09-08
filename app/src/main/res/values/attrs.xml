@@ -7,4 +7,11 @@
         <attr name="fromColor" format="color"/>
         <attr name="toColor" format="color"/>
     </declare-styleable>
+
+    <declare-styleable name="IconToggleView">
+        <attr name="firstIcon" format="integer"/>
+        <attr name="secondIcon" format="integer"/>
+        <attr name="firstIconColor" format="color"/>
+        <attr name="secondIconColor" format="color"/>
+    </declare-styleable>
 </resources>

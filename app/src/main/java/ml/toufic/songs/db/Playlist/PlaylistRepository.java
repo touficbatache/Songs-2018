@@ -45,7 +45,7 @@ public class PlaylistRepository {
     return mAllPlaylists;
   }
 
-  public void updatePlaylistWithResetAll(Playlist playlist, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
+  public void updatePlaylistWithResetAll(Playlist playlist, MainActivity.OnLastClickedUpdateCompletion completionCallback) {
     new resetAllPlaylistsExceptAsyncTask(mPlaylistDao).execute(playlist.getId());
     new updateAsyncTask(mPlaylistDao, completionCallback).execute(playlist);
   }
@@ -84,13 +84,13 @@ public class PlaylistRepository {
   private static class updateAsyncTask extends AsyncTask<Playlist, Void, Void> {
 
     private PlaylistDao mAsyncTaskDao;
-    private MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback;
+    private MainActivity.OnLastClickedUpdateCompletion completionCallback;
 
     updateAsyncTask(PlaylistDao dao) {
       mAsyncTaskDao = dao;
     }
 
-    updateAsyncTask(PlaylistDao dao, MainActivity.OnLastPlayedUpdateCompletionCallback completionCallback) {
+    updateAsyncTask(PlaylistDao dao, MainActivity.OnLastClickedUpdateCompletion completionCallback) {
       mAsyncTaskDao = dao;
       this.completionCallback = completionCallback;
     }

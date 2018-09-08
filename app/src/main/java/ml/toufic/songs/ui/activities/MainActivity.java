@@ -3,10 +3,6 @@ package ml.toufic.songs.ui.activities;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -17,18 +13,14 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PagerSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -36,6 +28,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.airbnb.epoxy.EpoxyAdapter;
 import com.downloader.Error;
 import com.downloader.PRDownloader;
@@ -56,7 +50,6 @@ import java.util.List;
 import at.huber.youtubeExtractor.YtFile;
 import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 import ml.toufic.songs.R;
-import ml.toufic.songs.db.Converters;
 import ml.toufic.songs.db.PlaylistSongJoin.PlaylistSongJoinViewModel;
 import ml.toufic.songs.db.Playlist.PlaylistViewModel;
 import ml.toufic.songs.db.Song.SongViewModel;
@@ -71,6 +64,7 @@ import ml.toufic.songs.ui.fragments.MyMusicFragment;
 import ml.toufic.songs.ui.fragments.PlayingQueueFragment;
 import ml.toufic.songs.util.TextUtils;
 import ml.toufic.songs.views.CloudDownloadBorderToFillImageView;
+import ml.toufic.songs.views.IconToggleView;
 import ml.toufic.songs.views.MorphingImageView;
 
 import static ml.toufic.songs.util.SongUtils.PLAYLIST_DOWNLOADS_ID;
@@ -92,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private MyMusicFragment mMyMusicFragment;
 
   private List<PlayableSong> mOriginalPlayingQueue = new ArrayList<>();
+  private Playlist mPlayerPlaylist;
   private PlayableSong mPlayerSong;
   private List<PlayableSong> mShuffledPlayingQueue = new ArrayList<>();
   private boolean isPlayingQueueShuffled = false;
@@ -109,9 +104,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private RecyclerView.OnScrollListener mPlayerRecyclerViewListener;
   private TextView mPlayerSongTitle;
   private TextView mPlayerSongArtist;
-  private MorphingImageView mPlayerFavoriteBtn;
+  private IconToggleView mPlayerFavoriteBtn;
   private CloudDownloadBorderToFillImageView mPlayerCloudDownloadBtn;
-  private MorphingImageView mPlayerAddToPlaylistBtn;
+  private IconToggleView mPlayerAddToPlaylistBtn;
   private ImageView mPlayerShareBtn;
   private SeekBar mPlayerSongProgress;
   private TextView mPlayerSongProgressCurrent;
@@ -189,12 +184,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       .commitAllowingStateLoss();
 
     mSongViewModel = ViewModelProviders.of(this).get(SongViewModel.class);
-//    mSongViewModel.getAllSongsLive().observe(this, new Observer<List<PlayableSong>>() {
-//      @Override
-//      public void onChanged(@Nullable final List<PlayableSong> songs) {
-//        mMyMusicFragment.loadMyMusicPlaylists();
-//      }
-//    });
 
     mPlaylistViewModel = ViewModelProviders.of(this).get(PlaylistViewModel.class);
     mPlaylistViewModel.getAllPlaylistsLive().observe(this, new Observer<List<Playlist>>() {
@@ -211,64 +200,22 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         // Update the cached copy of the songs in the adapter.
         mMyMusicFragment.loadMyMusicPlaylists();
         mMyMusicFragment.updateSongsInPlaylist();
+        updateVisuals();
       }
     });
 
-    insertPlaylist(new Playlist(PLAYLIST_LIKES_ID, "Favorites", new Date()));
-    insertPlaylist(new Playlist(PLAYLIST_DOWNLOADS_ID, "Downloads", new Date()));
+    insertPlaylist(new Playlist(PLAYLIST_LIKES_ID, getString(R.string.favorites), new Date()));
+    insertPlaylist(new Playlist(PLAYLIST_DOWNLOADS_ID, getString(R.string.downloads), new Date()));
 
     /* Initialize player & mini player */
 
     initializePlayer();
     initializeRecyclerView();
-    if(getLastPlayedSong()) {
-      prepareForPlaying();
+    if(isLastOpenedPlaylistGood() && isLastPlayedSongGood()) {
+      prepareForPlaying(getLastOpenedPlaylist().getId());
     }
 
-    ((LinearLayout)findViewById(R.id.circlee)).addView(new GraphicsView(this));
-  }
-
-  private static class GraphicsView extends View {
-    private static final String animatedText =
-      "NEXT UP - Make It Look Easy";
-
-    private Animation rotateAnim;
-
-    public GraphicsView(Context context) {
-      super(context);
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-      super.onDraw(canvas);
-
-      // creates the animation the first time
-      if (rotateAnim == null) {
-        createAnim(canvas);
-      }
-
-      Path circle = new Path();
-
-      int centerX = canvas.getWidth() / 2;
-      int centerY = canvas.getWidth() / 2;
-      int r = Math.min(centerX, centerY);
-
-      circle.addCircle(centerX, centerY, r, Path.Direction.CW);
-      Paint paint = new Paint();
-      paint.setColor(getResources().getColor(R.color.grey_67));
-      paint.setTextSize(50);
-      paint.setAntiAlias(true);
-
-      canvas.drawTextOnPath(animatedText, circle, 0, 50, paint);
-    }
-
-    private void createAnim(Canvas canvas) {
-      rotateAnim = new RotateAnimation(360, 0, canvas.getWidth() / 2, canvas.getWidth() / 2);
-      rotateAnim.setDuration(30000L);
-      rotateAnim.setRepeatMode(Animation.INFINITE);
-
-      startAnimation(rotateAnim);
-    }
+//    ((LinearLayout)findViewById(R.id.circlee)).addView(new GraphicsView(this));
   }
 
   private boolean loadFragment(Fragment fragment) {
@@ -340,7 +287,17 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     snapHelper.attachToRecyclerView(mPlayerRecyclerView);
   }
 
-  private boolean getLastPlayedSong() {
+  private boolean isLastOpenedPlaylistGood() {
+    mPlayerPlaylist = getLastOpenedPlaylist();
+
+    boolean isPlaylistOK = false;
+    if(mPlayerPlaylist != null) {
+      isPlaylistOK = true;
+    }
+    return isPlaylistOK;
+  }
+
+  private boolean isLastPlayedSongGood() {
     mPlayerSong = mSongViewModel.getLastPlayedSong();
 
     boolean isSongOK = false;
@@ -350,23 +307,23 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     return isSongOK;
   }
 
-  private void prepareForPlaying() {
-    updatePlayingQueue();
-    updateLastPlayedSong();
-    updateCoversInRecyclerView();
+  private void prepareForPlaying(String playlistId) {
+    updatePlayingQueue(playlistId);
+    updateLastPlayedSong(playlistId);
+    updateCoversInRecyclerView(playlistId);
     updateMediaPlayer();
   }
 
   private void updateVisuals() {
-    updateLastPlayedSong();
-    updateCoversInRecyclerView();
+    updateLastPlayedSong(getLastOpenedPlaylist().getId());
+    updateCoversInRecyclerView(getLastOpenedPlaylist().getId());
   }
 
-  private void updatePlayingQueue() {
+  private void updatePlayingQueue(String playlistId) {
     mOriginalPlayingQueue = new ArrayList<>();
-    List<PlayableSong> playableSongsList = mSongViewModel.getAllSongs();
-    for(int i=0; i<playableSongsList.size(); i++) {
-      PlayableSong playableSong = playableSongsList.get(i);
+    List<PlayableSong> playlistSongs = getSongsForPlaylist(playlistId);
+    for(int i=0; i<playlistSongs.size(); i++) {
+      PlayableSong playableSong = playlistSongs.get(i);
       playableSong.setIndexInQueue(i);
       MediaPlayer mp = MediaPlayer.create(mContext, Uri.parse(playableSong.getPath().getPath()));
       playableSong.setDurationInMs(mp.getDuration());
@@ -375,7 +332,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     }
   }
 
-  private void updateLastPlayedSong() {
+  private void updateLastPlayedSong(final String playlistId) {
     mMiniPlayerArrowUp.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -395,7 +352,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerSeePlayingQueue.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(getCurrentPlayingQueue(), mPlayerSong.getIndexInQueue());
+        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(getCurrentPlayingQueue(), mPlayerSong.getIndexInQueue(), playlistId);
         playingQueueFragment.show(getSupportFragmentManager(),
           "playing_queue_fragment");
       }
@@ -407,19 +364,19 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerCloudDownloadBtn.showBorder();
 
     if(!isSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId())) {
-      mPlayerFavoriteBtn.animateToFirstState();
+      mPlayerFavoriteBtn.showFirstState();
     } else {
-      mPlayerFavoriteBtn.animateToSecondState();
+      mPlayerFavoriteBtn.showSecondState();
     }
     mPlayerFavoriteBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
         if(!isSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId())) {
-          insertSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId());
-          mPlayerFavoriteBtn.animateToSecondState();
+          insertSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId(), false);
+          mPlayerFavoriteBtn.showSecondState();
         } else {
           removeSongFromPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId());
-          mPlayerFavoriteBtn.animateToFirstState();
+          mPlayerFavoriteBtn.showFirstState();
         }
       }
     });
@@ -430,97 +387,91 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-        builder.setMessage("Are you sure you want to delete this song? This action cannot be reverted!")
-          .setCancelable(true)
-          .setNegativeButton("No", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-              dialog.cancel();
-            }
-          })
-          .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-
-              deleteSong(mPlayerSong);
-              if(getAllSongsAsync().size() >= 1) {
-                if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
-                  loadSong(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue() - 1));
-                } else {
-                  loadSong(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue() + 1));
-                }
+        MaterialDialog.Builder songDeletionDialog = new MaterialDialog.Builder(mContext);
+        songDeletionDialog.title(R.string.delete_song);
+        songDeletionDialog.content(R.string.delete_song_warning);
+        songDeletionDialog.cancelable(true);
+        songDeletionDialog.positiveText(R.string.delete);
+        songDeletionDialog.onPositive(new MaterialDialog.SingleButtonCallback() {
+          @Override
+          public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+            deleteSong(mPlayerSong);
+            if(getAllSongsAsync().size() >= 1) {
+              if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
+                loadSong(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue() - 1), playlistId);
               } else {
-                mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+                loadSong(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue() + 1), playlistId);
               }
+            } else {
+              mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
             }
-          });
-        AlertDialog alert = builder.create();
-        alert.show();
+          }
+        });
+        songDeletionDialog.negativeText(R.string.cancel);
+        songDeletionDialog.show();
       }
     });
 
     if(!isSongInCustomPlaylist(mPlayerSong.getId())) {
-      mPlayerAddToPlaylistBtn.animateToFirstState();
+      mPlayerAddToPlaylistBtn.showFirstState();
     } else {
-      mPlayerAddToPlaylistBtn.animateToSecondState();
+      mPlayerAddToPlaylistBtn.showSecondState();
     }
     mPlayerAddToPlaylistBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
         final List<Playlist> playlists = getAllPlaylists().subList(2, getAllPlaylists().size());
         String[] playlistsTitles = new String[playlists.size()];
-        final boolean[] checkedPlaylists = new boolean[playlists.size()];
-        final List<Integer> playlistsIdsToAddTo = new ArrayList<>();
+
+        final List<Integer> checkedPlaylistsList = new ArrayList<>();
+
         for(int i=0; i<playlists.size(); i++) {
           playlistsTitles[i] = playlists.get(i).getTitle();
           if(isSongInPlaylist(playlists.get(i).getId(), mPlayerSong.getId())) {
-            checkedPlaylists[i] = true;
-            playlistsIdsToAddTo.add(i);
+            checkedPlaylistsList.add(i);
           }
         }
 
-        final AlertDialog.Builder mBuilder = new AlertDialog.Builder(mContext);
-        mBuilder.setTitle("Select playlists");
-        mBuilder.setMultiChoiceItems(playlistsTitles, checkedPlaylists, new DialogInterface.OnMultiChoiceClickListener() {
+        Integer[] checkedPlaylists = new Integer[checkedPlaylistsList.size()];
+        for(int index=0; index<checkedPlaylists.length; index++) {
+          checkedPlaylists[index] = checkedPlaylistsList.get(index);
+        }
+
+        MaterialDialog.Builder addToPlaylistDialog = new MaterialDialog.Builder(mContext);
+        addToPlaylistDialog.title(R.string.select_playlists);
+        addToPlaylistDialog.items(playlistsTitles);
+        addToPlaylistDialog.alwaysCallMultiChoiceCallback();
+        addToPlaylistDialog.itemsCallbackMultiChoice(checkedPlaylists, new MaterialDialog.ListCallbackMultiChoice() {
           @Override
-          public void onClick(DialogInterface dialogInterface, int position, boolean isChecked) {
-            if(isChecked) {
-              if(!playlistsIdsToAddTo.contains(position)) {
-                playlistsIdsToAddTo.add(position);
-              }
-            } else if(playlistsIdsToAddTo.contains(position)) {
-              playlistsIdsToAddTo.remove(playlistsIdsToAddTo.indexOf(position));
-            }
+          public boolean onSelection(MaterialDialog dialog, Integer[] checked, CharSequence[] text) {
+            return true;
           }
         });
-
-        mBuilder.setCancelable(false);
-        mBuilder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+        addToPlaylistDialog.cancelable(true);
+        addToPlaylistDialog.positiveText(R.string.add);
+        addToPlaylistDialog.onPositive(new MaterialDialog.SingleButtonCallback() {
           @Override
-          public void onClick(DialogInterface dialogInterface, int i) {
-            for(int j=0; j<playlists.size(); j++) {
-              if(playlistsIdsToAddTo.contains(j)) {
-                insertSongInPlaylist(playlists.get(j).getId(), mPlayerSong.getId());
-              } else {
-                removeSongFromPlaylist(playlists.get(j).getId(), mPlayerSong.getId());
-              }
+          public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+            Integer[] playlistsIdsToAddTo = dialog.getSelectedIndices();
+            for(Playlist playlist : playlists) {
+              removeSongFromPlaylist(playlist.getId(), mPlayerSong.getId());
             }
-            if(!isSongInCustomPlaylist(mPlayerSong.getId())) {
-              mPlayerAddToPlaylistBtn.animateToFirstState();
+            if (playlistsIdsToAddTo != null && playlistsIdsToAddTo.length > 0) {
+              for (Integer index : playlistsIdsToAddTo) {
+                insertSongInPlaylist(String.valueOf(playlists.get(index).getId()), mPlayerSong.getId(), false);
+              }
+              mPlayerAddToPlaylistBtn.showSecondState();
             } else {
-              mPlayerAddToPlaylistBtn.animateToSecondState();
+              mPlayerAddToPlaylistBtn.showFirstState();
             }
           }
         });
-
-        mBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialogInterface, int i) {
-            dialogInterface.dismiss();
-          }
-        });
-
-        AlertDialog mDialog = mBuilder.create();
-        mDialog.show();
+        addToPlaylistDialog.negativeText(R.string.cancel);
+        if(playlists.size() > 0) {
+          addToPlaylistDialog.show();
+        } else {
+          Toast.makeText(mContext, R.string.no_custom_playlists_error, Toast.LENGTH_LONG).show();
+        }
       }
     });
 
@@ -541,7 +492,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       } else {
         mPlayerNextBtn.setEnabled(true);
         setColorEnabled(mPlayerNextBtn, true);
-        mPlayerNextUpSongTitle.setText(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue()+1).getTitle());
+//        mPlayerNextUpSongTitle.setText(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue()+1).getTitle());
       }
 
       setColorEnabled(mPlayerRepeatBtn, mPlayerSong.isLooping());
@@ -628,7 +579,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     }
   }
 
-  private void updateCoversInRecyclerView() {
+  private void updateCoversInRecyclerView(final String playlistId) {
     mPlayerAdapter.clear();
     for (PlayableSong playableSong : getCurrentPlayingQueue()) {
       mPlayerAdapter.addCoverArt(playableSong);
@@ -642,7 +593,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
           int songIndex = ((LinearLayoutManager) mPlayerRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
           if(mPlayerSong.getIndexInQueue() != songIndex) {
-            loadSong(getCurrentPlayingQueue().get(songIndex));
+            loadSong(getCurrentPlayingQueue().get(songIndex), playlistId);
           }
         }
       }
@@ -746,55 +697,22 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     return mCurrentPlayingQueue;
   }
 
-  public void loadSong(PlayableSong playableSong) {
+  public void loadSong(PlayableSong playableSong, final String playlistId) {
     isRemoteSongPlaying = false;
-    updateSongWithResetAll(playableSong, new OnLastPlayedUpdateCompletionCallback() {
+    updateSongWithResetAll(playableSong, new OnLastClickedUpdateCompletion() {
       @Override
       public void onCompletion() {
         destroy();
-        if(getLastPlayedSong()) {
-          prepareForPlaying();
+        if(isLastPlayedSongGood()) {
+          setLastOpenedPlaylist(getPlaylist(playlistId));
+          prepareForPlaying(playlistId);
           playSong();
         }
       }
     });
   }
 
-  private void prepareForPlaying(List<PlayableSong> queue) {
-    updatePlayingQueue(queue);
-    updateLastPlayedSong();
-    updateCoversInRecyclerView();
-    updateMediaPlayer();
-  }
-
-  private void updatePlayingQueue(List<PlayableSong> queue) {
-    mOriginalPlayingQueue = new ArrayList<>();
-    for(int i=0; i<queue.size(); i++) {
-      PlayableSong playableSong = queue.get(i);
-      playableSong.setIndexInQueue(i);
-      MediaPlayer mp = MediaPlayer.create(mContext, Uri.parse(playableSong.getPath().getPath()));
-      playableSong.setDurationInMs(mp.getDuration());
-      mp.release();
-      mOriginalPlayingQueue.add(playableSong);
-    }
-  }
-
-  public void loadSongFromPlaylist(PlayableSong playableSong, final String playlistId) {
-    isRemoteSongPlaying = false;
-    updateSongWithResetAll(playableSong, new OnLastPlayedUpdateCompletionCallback() {
-      @Override
-      public void onCompletion() {
-        destroy();
-        if(getLastPlayedSong()) {
-          prepareForPlaying();
-//          prepareForPlaying(getSongsForPlaylist(playlistId));
-          playSong();
-        }
-      }
-    });
-  }
-
-  public interface OnLastPlayedUpdateCompletionCallback {
+  public interface OnLastClickedUpdateCompletion {
     void onCompletion();
   }
 
@@ -824,10 +742,22 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mMiniPlayerSongTitle.setText(mPlayerRemoteSong.getTitle());
     mPlayerSongArtist.setText(mPlayerRemoteSong.getArtist());
 
+    if(!isRemoteSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerRemoteSong.getId())) {
+      mPlayerFavoriteBtn.showFirstState();
+    } else {
+      mPlayerFavoriteBtn.showSecondState();
+    }
     mPlayerFavoriteBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        mPlayerFavoriteBtn.switchState();
+        if(!isRemoteSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerRemoteSong.getId())) {
+//          insertRemoteSong(mPlayerRemoteSong);
+//          insertSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerRemoteSong.getId(), true);
+          mPlayerFavoriteBtn.showSecondState();
+        } else {
+          removeSongFromPlaylist(PLAYLIST_LIKES_ID, mPlayerRemoteSong.getId());
+          mPlayerFavoriteBtn.showFirstState();
+        }
       }
     });
 
@@ -853,7 +783,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
             @Override
             public void onError(Error error) {
-              Toast.makeText(mContext, "Oops, we couldn't download your song. Please try again later", Toast.LENGTH_LONG).show();
+              Toast.makeText(mContext, R.string.download_failed_error, Toast.LENGTH_LONG).show();
             }
           });
         }
@@ -974,7 +904,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   public void loadSong(Song remoteSong) {
     if(hasSong(remoteSong.getId())) {
-      loadSong(getSong(remoteSong.getId()));
+      loadSong(getSong(remoteSong.getId()), PLAYLIST_DOWNLOADS_ID);
       return;
     }
     destroy();
@@ -1042,6 +972,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerShareBtn.setEnabled(!isPlayerLoading);
     setColorEnabled(mPlayerShareBtn, !isPlayerLoading);
     mPlayerSongProgress.setEnabled(!isPlayerLoading);
+    mMiniPlayerSongProgress.setProgress(0);
     mPlayerSongProgressCurrent.setText("00:00");
     mPlayerRepeatBtn.setEnabled(!isPlayerLoading);
     mPlayerPrevBtn.setEnabled(!isPlayerLoading);
@@ -1059,8 +990,20 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     }
   }
 
+  public Playlist getPlaylist(String playlistId) {
+    return mPlaylistViewModel.getPlaylist(playlistId);
+  }
+
   public List<Playlist> getAllPlaylists() {
     return mPlaylistViewModel.getAllPlaylists();
+  }
+
+  private void setLastOpenedPlaylist(Playlist playlist) {
+    mPlaylistViewModel.updatePlaylistWithResetAll(playlist);
+  }
+
+  public Playlist getLastOpenedPlaylist() {
+    return mPlaylistViewModel.getLastOpenedPlaylist();
   }
 
   public boolean hasPlaylist(String playlistId) {
@@ -1079,6 +1022,10 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mSongViewModel.insert(playableSong);
   }
 
+  public void insertRemoteSong(Song song) {
+    mSongViewModel.insert(song);
+  }
+
   public void updateSong(PlayableSong playableSong) {
     mSongViewModel.update(playableSong);
   }
@@ -1091,7 +1038,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mSongViewModel.updateSongWithResetAll(playableSong);
   }
 
-  private void updateSongWithResetAll(PlayableSong playableSong, OnLastPlayedUpdateCompletionCallback completionCallback) {
+  private void updateSongWithResetAll(PlayableSong playableSong, OnLastClickedUpdateCompletion completionCallback) {
     mSongViewModel.updateSongWithResetAll(playableSong, completionCallback);
   }
 
@@ -1109,9 +1056,9 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     }
   }
 
-  public void insertSongInPlaylist(String playlistId, String songId) {
+  public void insertSongInPlaylist(String playlistId, String songId, boolean isRemoteSong) {
     if(!isSongInPlaylist(playlistId, songId)) {
-      mPlaylistSongJoinViewModel.insert(new PlaylistSongJoin(playlistId, songId));
+      mPlaylistSongJoinViewModel.insert(new PlaylistSongJoin(playlistId, songId, isRemoteSong));
     }
   }
 
@@ -1125,6 +1072,10 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   public boolean isSongInPlaylist(String playlistId, String songId) {
     return mPlaylistSongJoinViewModel.isSongInPlaylist(playlistId, songId);
+  }
+
+  public boolean isRemoteSongInPlaylist(String playlistId, String songId) {
+    return mPlaylistSongJoinViewModel.isRemoteSongInPlaylist(playlistId, songId);
   }
 
   public boolean isSongInCustomPlaylist(String songId) {
@@ -1143,13 +1094,14 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   public void onSongDownloadStartOrResume(String songTitle) {
     mPlayerCloudDownloadBtn.showBlinkingAnimation();
-    Toast.makeText(mContext, "Download started for " + songTitle, Toast.LENGTH_SHORT).show();
+    Toast.makeText(mContext, String.format(getString(R.string.download_started_for_TITLE), songTitle), Toast.LENGTH_SHORT).show();
   }
 
   public void onSongDownloadCompletion(PlayableSong playableSong) {
     if(playableSong.getPath().exists()) {
+      playableSong.setIndexInQueue(getSongsForPlaylist(PLAYLIST_DOWNLOADS_ID).size());
       insertSong(playableSong);
-      insertSongInPlaylist(PLAYLIST_DOWNLOADS_ID, playableSong.getId());
+      insertSongInPlaylist(PLAYLIST_DOWNLOADS_ID, playableSong.getId(), false);
       if (playableSong.getId().equals(mPlayerRemoteSong.getId())) {
         mPlayerCloudDownloadBtn.showFill();
       }
@@ -1234,4 +1186,47 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     super.onDestroy();
     destroy();
   }
+
+//  private static class GraphicsView extends View {
+//    private static final String animatedText =
+//      "NEXT UP - Make It Look Easy";
+//
+//    private Animation rotateAnim;
+//
+//    public GraphicsView(Context context) {
+//      super(context);
+//    }
+//
+//    @Override
+//    protected void onDraw(Canvas canvas) {
+//      super.onDraw(canvas);
+//
+//      // creates the animation the first time
+//      if (rotateAnim == null) {
+//        createAnim(canvas);
+//      }
+//
+//      Path circle = new Path();
+//
+//      int centerX = canvas.getWidth() / 2;
+//      int centerY = canvas.getWidth() / 2;
+//      int r = Math.min(centerX, centerY);
+//
+//      circle.addCircle(centerX, centerY, r, Path.Direction.CW);
+//      Paint paint = new Paint();
+//      paint.setColor(getResources().getColor(R.color.grey_67));
+//      paint.setTextSize(50);
+//      paint.setAntiAlias(true);
+//
+//      canvas.drawTextOnPath(animatedText, circle, 0, 50, paint);
+//    }
+//
+//    private void createAnim(Canvas canvas) {
+//      rotateAnim = new RotateAnimation(360, 0, canvas.getWidth() / 2, canvas.getWidth() / 2);
+//      rotateAnim.setDuration(30000L);
+//      rotateAnim.setRepeatMode(Animation.INFINITE);
+//
+//      startAnimation(rotateAnim);
+//    }
+//  }
 }

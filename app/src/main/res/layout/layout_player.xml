@@ -119,7 +119,7 @@
         app:layout_constraintTop_toBottomOf="@+id/player_song_title"
         tools:text="Song artist" />
 
-    <ml.toufic.songs.views.MorphingImageView
+    <ml.toufic.songs.views.IconToggleView
         android:id="@+id/player_action_favorite"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -127,10 +127,9 @@
         android:layout_marginTop="16dp"
         android:scaleType="fitXY"
         android:background="?attr/selectableItemBackgroundBorderless"
-        app:fromIconAVD="@drawable/favorite_border_to_fill"
-        app:toIconAVD="@drawable/favorite_fill_to_border"
-        app:isColorChanging="true"
-        app:toColor="@color/player_action_favorite"
+        app:firstIcon="@drawable/ic_favorite_border_24dp"
+        app:secondIcon="@drawable/ic_favorite_24dp"
+        app:secondIconColor="@color/player_action_favorite"
         app:layout_constraintTop_toBottomOf="@id/player_song_artist"
         app:layout_constraintEnd_toStartOf="@id/player_action_cloud_download"
         app:layout_constraintStart_toStartOf="parent"
@@ -150,7 +149,7 @@
         app:layout_constraintStart_toEndOf="@id/player_action_favorite"
         app:layout_constraintHorizontal_chainStyle="packed" />
 
-    <ml.toufic.songs.views.MorphingImageView
+    <ml.toufic.songs.views.IconToggleView
         android:id="@+id/player_action_add_to_playlist"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -159,10 +158,9 @@
         android:layout_marginStart="36dp"
         android:scaleType="fitXY"
         android:background="?attr/selectableItemBackgroundBorderless"
-        app:fromIconAVD="@drawable/playlist_add_to_check"
-        app:toIconAVD="@drawable/playlist_check_to_add"
-        app:isColorChanging="true"
-        app:toColor="?attr/colorPrimary"
+        app:firstIcon="@drawable/ic_playlist_add_24dp"
+        app:secondIcon="@drawable/ic_playlist_add_check_24dp"
+        app:secondIconColor="?attr/colorPrimary"
         app:layout_constraintTop_toBottomOf="@id/player_song_artist"
         app:layout_constraintEnd_toStartOf="@id/player_action_share"
         app:layout_constraintStart_toEndOf="@id/player_action_cloud_download"
