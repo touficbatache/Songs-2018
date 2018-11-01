@@ -206,7 +206,6 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
                     Song song = new Song(id, title, author, thumbnail);
                     PlayableSong playableSong = new PlayableSong(song, DeviceUtils.getInternalFilesSongsDirFilePath(mContext, SongUtils.getSongFileName(id)));
 
-                    playableSong.setIndexInQueue(mActivity.getSongsForPlaylist(PLAYLIST_DOWNLOADS_ID).size());
                     mActivity.insertSong(playableSong);
                     mActivity.insertSongInPlaylist(playlistId, playableSong.getId(), false);
                     updateRecyclerViewSongs();

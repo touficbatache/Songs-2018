@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Songs</string>
-    <string name="title_explore">Explore</string>
-    <string name="title_my_music">My Music</string>
-    <string name="title_search">Search</string>
+    <string name="explore">Explore</string>
+    <string name="my_music">My Music</string>
+    <string name="search">Search</string>
     <string name="hint_search">Search for a song or an artist&#8230;</string>
     <string name="hint_search_playlist">Search in your playlist&#8230;</string>
     <string name="player_progress_text">%1$s:%2$s</string>

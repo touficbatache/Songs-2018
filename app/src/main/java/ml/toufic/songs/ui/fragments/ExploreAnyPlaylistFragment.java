@@ -203,7 +203,6 @@ public class ExploreAnyPlaylistFragment extends Fragment {
       this.holder = holder;
       holder.itemView.setOnClickListener(playListener);
       holder.mSongTitle.setText(songTitle);
-      holder.mSongArtist.setText(songArtist);
     }
 
     @Override
@@ -218,13 +217,11 @@ public class ExploreAnyPlaylistFragment extends Fragment {
 
     View itemView;
     TextView mSongTitle;
-    TextView mSongArtist;
 
     @Override
     protected void bindView(View itemView) {
       this.itemView = itemView;
       mSongTitle = itemView.findViewById(R.id.song_title);
-      mSongArtist = itemView.findViewById(R.id.song_artist);
     }
   }
 }

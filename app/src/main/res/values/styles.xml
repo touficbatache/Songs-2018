@@ -35,6 +35,13 @@
         <item name="colorAccent">@color/white</item>
     </style>
 
+    <style name="Theme1" parent="AppTheme">
+        <!--<item name="backgroundColorPrimary">@color/backgroundColorPrimary1</item>-->
+        <!--<item name="textColorPrimary">@color/textColorPrimary1</item>-->
+        <item name="backgroundColorPrimary">@color/grey_fa</item>
+        <item name="textColorPrimary">@color/colorPrimary</item>
+    </style>
+
     <style name="MaterialSearchViewStyle">
         <!-- Background for the search bar -->
         <item name="searchBackground">@color/white</item>

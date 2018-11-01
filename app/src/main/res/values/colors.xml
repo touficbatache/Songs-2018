@@ -9,6 +9,7 @@
     <color name="transparent">#00000000</color>
     <color name="hint">#808080</color>
     <color name="grey_fa">#fafafa</color>
+    <color name="grey_f5">#F5F5F5</color>
     <color name="grey_e0">#e0e0e0</color>
     <color name="grey_c0">#c0c0c0</color>
     <color name="grey_80">#808080</color>
@@ -20,4 +21,7 @@
 
     <color name="player_action_favorite">#E0245E</color>
     <color name="player_action_other">#1DA1F2</color>
+
+    <color name="backgroundColorPrimary1">#2979FF</color>
+    <color name="textColorPrimary1">#FFDE03</color>
 </resources>

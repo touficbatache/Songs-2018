@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="end"
+    android:gravity="center_vertical|end"
     android:background="?attr/selectableItemBackground"
     android:clickable="true">
 
@@ -12,12 +12,19 @@
         android:layout_height="wrap_content"
         android:paddingStart="8dp"
         android:paddingTop="16dp"
-        android:paddingEnd="8dp"
+        android:paddingEnd="4dp"
         android:paddingBottom="16dp"
-        android:layout_marginEnd="16dp"
         android:text="@string/see_more"
         android:textColor="@color/colorPrimary"
         android:textAllCaps="true"
         android:fontFamily="@string/roboto_medium" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_keyboard_arrow_up_24dp"
+        android:tint="@color/colorPrimary"
+        android:rotation="90" />
 
 </LinearLayout>

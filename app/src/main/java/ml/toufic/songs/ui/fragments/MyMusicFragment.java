@@ -65,7 +65,7 @@ public class MyMusicFragment extends Fragment {
   public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
     mRootView = inflater.inflate(R.layout.fragment_my_music, null);
 
-    mActivity.getSupportActionBar().setTitle(R.string.title_my_music);
+    mActivity.getSupportActionBar().setTitle(R.string.my_music);
     mActivity.getSupportActionBar().setDisplayShowHomeEnabled(false);
     mActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(false);
 

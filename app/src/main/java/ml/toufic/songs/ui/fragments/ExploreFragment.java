@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -81,7 +82,7 @@ public class ExploreFragment extends Fragment {
   public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
     mRootView = inflater.inflate(R.layout.layout_recyclerview, null);
 
-    mActivity.getSupportActionBar().setTitle(R.string.title_explore);
+    mActivity.getSupportActionBar().setTitle(R.string.explore);
     mActivity.getSupportActionBar().setDisplayShowHomeEnabled(false);
     mActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(false);
 
@@ -256,11 +257,6 @@ public class ExploreFragment extends Fragment {
   private void updateRecyclerViewSongs() {
     mAdapter.clear();
 
-    if(hasNewThisWeek || hasPopular) {
-      mAdapter.addDivider();
-      mAdapter.addDivider();
-    }
-
     if(hasNewThisWeek) {
       mAdapter.addSubheader(getString(R.string.new_this_week));
 
@@ -272,8 +268,6 @@ public class ExploreFragment extends Fragment {
     }
 
     if(hasPopular) {
-      mAdapter.addDivider();
-
       mAdapter.addSubheader(getString(R.string.popular));
 
       for (Song song : popularSongs) {
@@ -281,11 +275,6 @@ public class ExploreFragment extends Fragment {
       }
 
       mAdapter.addSeeMore(ExploreAnyPlaylistFragment.newInstance(getResources().getString(R.string.popular), SongUtils.POPULAR_PLAYLIST_ID));
-    }
-
-    if(hasNewThisWeek || hasPopular) {
-      mAdapter.addDivider();
-      mAdapter.addDivider();
     }
   }
 
@@ -296,10 +285,6 @@ public class ExploreFragment extends Fragment {
 
     void addSongModel(Song song) {
       addModel(new SongModel(song));
-    }
-
-    void addDivider() {
-      addModel(new DividerModel());
     }
 
     void addSeeMore(Fragment fragment) {
@@ -382,7 +367,6 @@ public class ExploreFragment extends Fragment {
       this.holder = holder;
       holder.itemView.setOnClickListener(playListener);
       holder.mSongTitle.setText(songTitle);
-      holder.mSongArtist.setText(songArtist);
     }
 
     @Override
@@ -404,6 +388,7 @@ public class ExploreFragment extends Fragment {
   private class SeeMoreModel extends EpoxyModelWithHolder<SeeMoreHolder> {
 
     Fragment fragment;
+    AppCompatActivity appCompatActivity;
     View.OnClickListener onClickListener;
 
     SeeMoreModel(final Fragment fragment) {
@@ -438,13 +423,11 @@ public class ExploreFragment extends Fragment {
 
     View itemView;
     TextView mSongTitle;
-    TextView mSongArtist;
 
     @Override
     protected void bindView(View itemView) {
       this.itemView = itemView;
       mSongTitle = itemView.findViewById(R.id.song_title);
-      mSongArtist = itemView.findViewById(R.id.song_artist);
     }
   }
 

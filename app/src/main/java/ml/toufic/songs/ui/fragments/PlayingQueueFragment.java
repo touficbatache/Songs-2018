@@ -40,14 +40,14 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
   private PlayingQueueAdapter mAdapter;
   private RecyclerView mRecyclerView;
   private List<PlayableSong> playingQueueSongs = new ArrayList<>();
-  private int currentSongIndex = -1;
+  private String currentSongId;
   private String playlistId;
 
-  public static PlayingQueueFragment newInstance(List<PlayableSong> playingQueueSongs, int currentSongIndex, String playlistId) {
+  public static PlayingQueueFragment newInstance(List<PlayableSong> playingQueueSongs, String currentSongId, String playlistId) {
     PlayingQueueFragment fragment = new PlayingQueueFragment();
     Bundle args = new Bundle();
     args.putString("playingQueueSongs", new Gson().toJson(playingQueueSongs));
-    args.putInt("currentSongIndex", currentSongIndex);
+    args.putString("currentSongId", currentSongId);
     args.putString("playlistId", playlistId);
     fragment.setArguments(args);
     return fragment;
@@ -61,7 +61,7 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
     mContext = getContext();
     Bundle bundle = getArguments();
     playingQueueSongs = new Gson().fromJson(bundle.getString("playingQueueSongs"), new TypeToken<List<PlayableSong>>(){}.getType());
-    currentSongIndex = bundle.getInt("currentSongIndex");
+    currentSongId = bundle.getString("currentSongId");
     playlistId = bundle.getString("playlistId");
   }
 
@@ -83,7 +83,7 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
     super.onViewCreated(view, savedInstanceState);
 
     for(PlayableSong playableSong : playingQueueSongs) {
-      if(playableSong.getIndexInQueue() == currentSongIndex) {
+      if(playableSong.getId().equals(currentSongId)) {
         mAdapter.addCurrentSongModel(playableSong);
       } else {
         mAdapter.addPlayingQueueSongModel(playableSong);
@@ -123,7 +123,7 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
       song = playableSong;
       songId = song.getId();
       songPath = song.getPath();
-      songIndex = song.getIndexInQueue();
+      songIndex = playingQueueSongs.indexOf(playableSong);
       songDurationInMs = song.getDurationInMs();
       songTitle = song.getTitle();
       songArtist = song.getArtist();

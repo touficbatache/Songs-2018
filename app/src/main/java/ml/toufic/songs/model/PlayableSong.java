@@ -15,9 +15,6 @@ public class PlayableSong extends Song {
   @ColumnInfo(name = "path")
   private File path;
 
-  @ColumnInfo(name = "index")
-  private int indexInQueue = 0;
-
   @ColumnInfo(name = "durationinms")
   private int durationInMs;
 
@@ -47,14 +44,6 @@ public class PlayableSong extends Song {
 
   public File getPath() {
     return path;
-  }
-
-  public void setIndexInQueue(int index) {
-    indexInQueue = index;
-  }
-
-  public int getIndexInQueue() {
-    return indexInQueue;
   }
 
   public void setDurationInMs(int durationInMs) {

@@ -4,53 +4,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:padding="16dp"
+    android:paddingStart="32dp"
     android:orientation="vertical"
     android:background="?attr/selectableItemBackground"
     android:clickable="true">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        style="@style/TextAppearance.AppCompat.Subhead"
+        android:id="@+id/song_title"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:gravity="center_vertical">
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_music_note_24dp"
-            android:tint="@color/colorPrimary"
-            android:layout_marginEnd="16dp" />
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/song_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:maxLines="1"
-                android:ellipsize="end"
-                style="@style/TextAppearance.AppCompat.Subhead"
-                tools:text="Song title"/>
-
-            <TextView
-                android:id="@+id/song_artist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxLines="1"
-                tools:text="Song artist" />
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginStart="56dp"
-        android:background="#1e000000" />
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@color/grey_21"
+        tools:text="Song title"/>
 
 </LinearLayout>

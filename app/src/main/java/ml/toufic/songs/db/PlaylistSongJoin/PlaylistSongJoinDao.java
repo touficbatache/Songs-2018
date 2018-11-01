@@ -22,10 +22,10 @@ public interface PlaylistSongJoinDao {
   @Query("SELECT * FROM playlists INNER JOIN playlist_song_join ON playlists.id=playlist_song_join.playlistId WHERE playlist_song_join.songId = :songId")
   List<Playlist> getPlaylistsForSong(String songId);
 
-  @Query("SELECT * FROM songs INNER JOIN playlist_song_join ON songs.id=playlist_song_join.songId WHERE playlist_song_join.playlistId = :playlistId AND playlist_song_join.isRemoteSong = 0 ORDER BY `index` ASC")
+  @Query("SELECT * FROM songs INNER JOIN playlist_song_join ON songs.id=playlist_song_join.songId WHERE playlist_song_join.playlistId = :playlistId AND playlist_song_join.isRemoteSong = 0")
   List<PlayableSong> getSongsForPlaylist(String playlistId);
 
-  @Query("SELECT * FROM songs INNER JOIN playlist_song_join ON songs.id=playlist_song_join.songId WHERE playlist_song_join.playlistId = :playlistId AND playlist_song_join.isRemoteSong = 1 ORDER BY `index` ASC")
+  @Query("SELECT * FROM songs INNER JOIN playlist_song_join ON songs.id=playlist_song_join.songId WHERE playlist_song_join.playlistId = :playlistId AND playlist_song_join.isRemoteSong = 1")
   List<Song> getRemoteSongsForPlaylist(String playlistId);
 
   @Query("SELECT * FROM playlist_song_join")

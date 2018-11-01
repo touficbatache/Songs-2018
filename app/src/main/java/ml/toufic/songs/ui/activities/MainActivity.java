@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   private List<PlayableSong> mOriginalPlayingQueue = new ArrayList<>();
   private Playlist mPlayerPlaylist;
   private PlayableSong mPlayerSong;
+  private int mPlayerSongIndexInQueue;
   private List<PlayableSong> mShuffledPlayingQueue = new ArrayList<>();
   private boolean isPlayingQueueShuffled = false;
 
@@ -299,6 +300,11 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   private boolean isLastPlayedSongGood() {
     mPlayerSong = mSongViewModel.getLastPlayedSong();
+    for(int i=0; i<getCurrentPlayingQueue().size(); i++) {
+      if (getCurrentPlayingQueue().get(i).getId().equals(mPlayerSong.getId())) {
+        mPlayerSongIndexInQueue = i;
+      }
+    }
 
     boolean isSongOK = false;
     if(mPlayerSong != null && mPlayerSong.getPath().exists()) {
@@ -315,8 +321,10 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
   }
 
   private void updateVisuals() {
-    updateLastPlayedSong(getLastOpenedPlaylist().getId());
-    updateCoversInRecyclerView(getLastOpenedPlaylist().getId());
+    if(isLastPlayedSongGood()) {
+      updateLastPlayedSong(getLastOpenedPlaylist().getId());
+      updateCoversInRecyclerView(getLastOpenedPlaylist().getId());
+    }
   }
 
   private void updatePlayingQueue(String playlistId) {
@@ -324,7 +332,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     List<PlayableSong> playlistSongs = getSongsForPlaylist(playlistId);
     for(int i=0; i<playlistSongs.size(); i++) {
       PlayableSong playableSong = playlistSongs.get(i);
-      playableSong.setIndexInQueue(i);
       MediaPlayer mp = MediaPlayer.create(mContext, Uri.parse(playableSong.getPath().getPath()));
       playableSong.setDurationInMs(mp.getDuration());
       mp.release();
@@ -352,7 +359,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerSeePlayingQueue.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(getCurrentPlayingQueue(), mPlayerSong.getIndexInQueue(), playlistId);
+        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(getCurrentPlayingQueue(), mPlayerSong.getId(), playlistId);
         playingQueueFragment.show(getSupportFragmentManager(),
           "playing_queue_fragment");
       }
@@ -397,10 +404,10 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
           public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
             deleteSong(mPlayerSong);
             if(getAllSongsAsync().size() >= 1) {
-              if(mPlayerSong.getIndexInQueue() - 1 >= 0) {
-                loadSong(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue() - 1), playlistId);
+              if(mPlayerSongIndexInQueue - 1 >= 0) {
+                loadSong(getCurrentPlayingQueue().get(mPlayerSongIndexInQueue - 1), playlistId);
               } else {
-                loadSong(getCurrentPlayingQueue().get(mPlayerSong.getIndexInQueue() + 1), playlistId);
+                loadSong(getCurrentPlayingQueue().get(mPlayerSongIndexInQueue + 1), playlistId);
               }
             } else {
               mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
@@ -478,7 +485,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     setPlayerLoading(false);
 
     if (getCurrentPlayingQueue() != null) {
-      if (mPlayerSong.getIndexInQueue() == 0) {
+      if (mPlayerSongIndexInQueue == 0) {
         mPlayerPrevBtn.setEnabled(false);
         setColorEnabled(mPlayerPrevBtn, false);
       } else {
@@ -486,7 +493,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         setColorEnabled(mPlayerPrevBtn, true);
       }
 
-      if (mPlayerSong.getIndexInQueue() == getCurrentPlayingQueue().size() - 1) {
+      if (mPlayerSongIndexInQueue == getCurrentPlayingQueue().size() - 1) {
         mPlayerNextBtn.setEnabled(false);
         setColorEnabled(mPlayerNextBtn, false);
       } else {
@@ -518,7 +525,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
           mPlayerMediaPlayer.seekTo(0);
           mPlayerSongProgress.setProgress(0);
         } else {
-          int previousSongIndex = mPlayerSong.getIndexInQueue() - 1;
+          int previousSongIndex = mPlayerSongIndexInQueue - 1;
           mPlayerRecyclerView.smoothScrollToPosition(previousSongIndex);
         }
       }
@@ -541,7 +548,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mPlayerNextBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        int nextSongIndex = mPlayerSong.getIndexInQueue() + 1;
+        int nextSongIndex = mPlayerSongIndexInQueue + 1;
         mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
       }
     });
@@ -554,18 +561,13 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
           Collections.shuffle(shuffledPlayingQueue);
           for(PlayableSong currentSongInShuffled : shuffledPlayingQueue) {
             if(currentSongInShuffled.getId().equals(mPlayerSong.getId())) {
-              Collections.swap(shuffledPlayingQueue, mPlayerSong.getIndexInQueue(), shuffledPlayingQueue.indexOf(currentSongInShuffled));
+              Collections.swap(shuffledPlayingQueue, mPlayerSongIndexInQueue, shuffledPlayingQueue.indexOf(currentSongInShuffled));
             }
           }
           updateShuffledPlayingQueue(shuffledPlayingQueue);
           isPlayingQueueShuffled = true;
           mPlayerShuffleBtn.setColorFilter(getResources().getColor(R.color.grey_67));
         } else {
-          for(PlayableSong currentSongInOriginal : mOriginalPlayingQueue) {
-            if(currentSongInOriginal.getId().equals(mPlayerSong.getId())) {
-              mPlayerSong.setIndexInQueue(mOriginalPlayingQueue.indexOf(currentSongInOriginal));
-            }
-          }
           isPlayingQueueShuffled = false;
           mPlayerShuffleBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
           updateVisuals();
@@ -592,7 +594,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         super.onScrollStateChanged(recyclerView, newState);
         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
           int songIndex = ((LinearLayoutManager) mPlayerRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-          if(mPlayerSong.getIndexInQueue() != songIndex) {
+          if(mPlayerSongIndexInQueue != songIndex) {
             loadSong(getCurrentPlayingQueue().get(songIndex), playlistId);
           }
         }
@@ -600,7 +602,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     };
     mPlayerRecyclerView.addOnScrollListener(mPlayerRecyclerViewListener);
 
-    mPlayerRecyclerView.scrollToPosition(mPlayerSong.getIndexInQueue());
+    mPlayerRecyclerView.scrollToPosition(mPlayerSongIndexInQueue);
   }
 
   class PlayerCoversAdapter extends EpoxyAdapter {
@@ -637,12 +639,12 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
       @Override
       public void onCompletion(MediaPlayer mediaPlayer) {
         if (!mPlayerSong.isLooping()) {
-          if (mPlayerSong.getIndexInQueue() == getCurrentPlayingQueue().size() - 1) {
+          if (mPlayerSongIndexInQueue == getCurrentPlayingQueue().size() - 1) {
             mPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
             mMiniPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
             mPlayerMediaPlayer.seekTo(0);
           } else {
-            int nextSongIndex = mPlayerSong.getIndexInQueue() + 1;
+            int nextSongIndex = mPlayerSongIndexInQueue + 1;
             mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
           }
         } else {
@@ -660,7 +662,7 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
         }
         if(progress / 1000 < (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerNextUp.getAlpha() == 1.0f) {
           mPlayerNextUp.animate().alpha(0.0f);
-        } else if (progress / 1000 >= (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSong.getIndexInQueue() != getCurrentPlayingQueue().size() - 1) {
+        } else if (progress / 1000 >= (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSongIndexInQueue != getCurrentPlayingQueue().size() - 1) {
           mPlayerNextUp.animate().alpha(1.0f);
         }
         mPlayerSongProgressCurrent.setText(TextUtils.formatMilliseconds(mContext, progress));
@@ -682,7 +684,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
     mShuffledPlayingQueue = new ArrayList<>();
     for(int i=0; i<playableSongsList.size(); i++) {
       PlayableSong playableSong = playableSongsList.get(i);
-      playableSong.setIndexInQueue(i);
       mShuffledPlayingQueue.add(playableSong);
     }
   }
@@ -1099,7 +1100,6 @@ public class MainActivity extends AppCompatActivity implements SlidingUpPanelLay
 
   public void onSongDownloadCompletion(PlayableSong playableSong) {
     if(playableSong.getPath().exists()) {
-      playableSong.setIndexInQueue(getSongsForPlaylist(PLAYLIST_DOWNLOADS_ID).size());
       insertSong(playableSong);
       insertSongInPlaylist(PLAYLIST_DOWNLOADS_ID, playableSong.getId(), false);
       if (playableSong.getId().equals(mPlayerRemoteSong.getId())) {

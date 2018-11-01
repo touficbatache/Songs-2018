@@ -14,4 +14,9 @@
         <attr name="firstIconColor" format="color"/>
         <attr name="secondIconColor" format="color"/>
     </declare-styleable>
+
+    <declare-styleable name="Theme1">
+        <attr name="backgroundColorPrimary" format="color"/>
+        <attr name="textColorPrimary" format="color"/>
+    </declare-styleable>
 </resources>
