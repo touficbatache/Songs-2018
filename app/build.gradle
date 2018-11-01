@@ -19,7 +19,7 @@ android {
 }
 
 ext {
-    supportLibVersion = '28.0.0-rc02'
+    supportLibVersion = '28.0.0'
     roomVersion = '1.1.1'
     archLifecycleVersion = '1.1.1'
 }
@@ -33,7 +33,7 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     implementation 'com.airbnb.android:epoxy:2.14.0'
     implementation 'com.miguelcatalan:materialsearchview:1.4.0'
-    implementation 'com.github.barisahmet:youtubeExtractor:master-SNAPSHOT'
+    implementation 'com.github.HaarigerHarald:android-youtubeExtractor:master-SNAPSHOT'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
     implementation 'com.facebook.fresco:fresco:1.10.0'
