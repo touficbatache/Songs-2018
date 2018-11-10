@@ -40,6 +40,7 @@ dependencies {
     implementation 'com.mindorks.android:prdownloader:0.4.0'
     implementation 'me.zhanghai.android.materialprogressbar:library:1.4.2'
     implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
+    implementation 'org.jsoup:jsoup:1.11.2'
 
     // Room components
     implementation "android.arch.persistence.room:runtime:$roomVersion"

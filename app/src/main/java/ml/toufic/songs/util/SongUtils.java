@@ -8,6 +8,7 @@ public class SongUtils {
   public final static String NEW_THIS_WEEK_PLAYLIST_ID = "PLFgquLnL59alW3xmYiWRaoz0oM3H17Lth";
   public final static String POPULAR_PLAYLIST_ID = "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI";
   public final static String API_KEY = "YOUR_YOUTUBE_API_KEY";
+  public final static String AS_API_KEY = "YOUR_LASTFM_API_KEY"; //AudioScrobbler API Key
 
   public static String getSongFileName(String songId) {
     return songId + ".m4a";
