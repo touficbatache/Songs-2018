@@ -99,7 +99,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   private ImageButton mPlayerNextBtn;
   private ImageButton mPlayerShuffleBtn;
 
-  private LinearLayout mMiniPlayer;
+  public LinearLayout mMiniPlayer;
   private MaterialProgressBar mMiniPlayerSongProgress;
   private ImageView mMiniPlayerArrowUp;
   private TextView mMiniPlayerSongTitle;
@@ -124,7 +124,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     mRootView = inflater.inflate(R.layout.fragment_player, null);
 
     /* Initialize player & mini player */
-
     initializePlayer();
     initializeRecyclerView();
     if (isLastOpenedPlaylistGood() && isLastPlayedSongGood()) {
@@ -538,29 +537,11 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   class PlayerCoversAdapter extends EpoxyAdapter {
     void addCoverArt(PlayableSong playableSong) {
       addModel(new PlayerCoverModel(mContext, playableSong,
-        new PlayerCoverModel.LyricScrollCallback() {
-          @SuppressLint("ClickableViewAccessibility")
+        new PlayerCoverModel.PlayerCoverLyricsCallback() {
           @Override
-          public void onScroll() {
+          public void onLyricsBtnClick() {
+            mActivity.pushFragmentInPlayer(LyricsFragment.newInstance(mPlayerSong.getTitle()));
             mActivity.mSlidingPanelLayout.setTouchEnabled(false);
-            mPlayerRecyclerView.setOnTouchListener(new View.OnTouchListener() {
-              @Override
-              public boolean onTouch(View v, MotionEvent event) {
-                return true;
-              }
-            });
-          }
-
-          @SuppressLint("ClickableViewAccessibility")
-          @Override
-          public void onScrollEnd() {
-            mActivity.mSlidingPanelLayout.setTouchEnabled(true);
-            mPlayerRecyclerView.setOnTouchListener(new View.OnTouchListener() {
-              @Override
-              public boolean onTouch(View v, MotionEvent event) {
-                return false;
-              }
-            });
           }
         }));
     }
@@ -650,7 +631,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     });
   }
 
-    private void updateRemoteSong(final Song remoteSong) {
+  private void updateRemoteSong(final Song remoteSong) {
     mPlayerRemoteSong = remoteSong;
 
     mMiniPlayerArrowUp.setOnClickListener(new View.OnClickListener() {

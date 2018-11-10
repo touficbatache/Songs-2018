@@ -10,6 +10,8 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.view.View;
+
 import com.downloader.PRDownloader;
 import com.downloader.PRDownloaderConfig;
 import com.facebook.drawee.backends.pipeline.Fresco;
@@ -106,11 +108,9 @@ public class MainActivity extends AppCompatActivity {
       .commitAllowingStateLoss();
 
     mPlayerFragment = new PlayerFragment();
+
     mSlidingPanelLayout = findViewById(R.id.sliding_layout);
-    getSupportFragmentManager()
-      .beginTransaction()
-      .replace(R.id.player_fragment_container, mPlayerFragment)
-      .commitAllowingStateLoss();
+    loadFragmentInPlayer(mPlayerFragment);
 
     mSongViewModel = ViewModelProviders.of(this).get(SongViewModel.class);
 
@@ -154,6 +154,30 @@ public class MainActivity extends AppCompatActivity {
       getSupportFragmentManager()
         .beginTransaction()
         .replace(R.id.fragment_container, fragment)
+        .addToBackStack(null)
+        .commitAllowingStateLoss();
+      return true;
+    }
+    return false;
+  }
+
+  private boolean loadFragmentInPlayer(Fragment fragment) {
+    if (fragment != null) {
+      getSupportFragmentManager().popBackStack();
+      getSupportFragmentManager()
+        .beginTransaction()
+        .replace(R.id.player_fragment_container, fragment)
+        .commitAllowingStateLoss();
+      return true;
+    }
+    return false;
+  }
+
+  public boolean pushFragmentInPlayer(Fragment fragment) {
+    if (fragment != null) {
+      getSupportFragmentManager()
+        .beginTransaction()
+        .replace(R.id.player_fragment_container, fragment)
         .addToBackStack(null)
         .commitAllowingStateLoss();
       return true;
@@ -278,6 +302,13 @@ public class MainActivity extends AppCompatActivity {
     MaterialSearchView searchView = findViewById(R.id.search_view);
     if (searchView.isSearchOpen()) {
       searchView.closeSearch();
+      return;
+    }
+
+    if(mSlidingPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED && getSupportFragmentManager().getBackStackEntryCount() > 0) {
+      getSupportFragmentManager().popBackStack();
+      mSlidingPanelLayout.setTouchEnabled(true);
+      mPlayerFragment.mMiniPlayer.setVisibility(View.GONE);
       return;
     }
 

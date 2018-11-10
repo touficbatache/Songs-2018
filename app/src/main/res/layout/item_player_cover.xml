@@ -1,67 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<android.support.constraint.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:fresco="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:background="@color/transparent">
 
-    <android.support.constraint.ConstraintLayout
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/player_cover_background_disc"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:background="@color/transparent">
+        android:layout_marginStart="62dp"
+        android:layout_marginEnd="62dp"
+        fresco:actualImageResource="@drawable/disk_background"
+        fresco:layout_constraintEnd_toEndOf="parent"
+        fresco:layout_constraintStart_toStartOf="parent"
+        fresco:layout_constraintTop_toTopOf="parent"
+        fresco:placeholderImageScaleType="fitCenter"
+        fresco:viewAspectRatio="1" />
 
-        <com.facebook.drawee.view.SimpleDraweeView
-            android:id="@+id/player_cover_background_disc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="46dp"
-            android:layout_marginEnd="46dp"
-            fresco:viewAspectRatio="1"
-            fresco:actualImageResource="@drawable/disk_background"
-            fresco:placeholderImageScaleType="fitCenter"
-            fresco:layout_constraintTop_toTopOf="parent"
-            fresco:layout_constraintBottom_toBottomOf="parent"
-            fresco:layout_constraintStart_toStartOf="parent"
-            fresco:layout_constraintEnd_toEndOf="parent"/>
+    <!-- 120 -->
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/player_song_cover_art"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="136dp"
+        android:layout_marginEnd="136dp"
+        android:background="@color/transparent"
+        app:layout_constraintBottom_toBottomOf="@+id/player_cover_background_disc"
+        fresco:layout_constraintTop_toTopOf="@+id/player_cover_background_disc"
+        fresco:placeholderImageScaleType="fitCenter"
+        fresco:roundAsCircle="true"
+        fresco:viewAspectRatio="1" />
 
-        <com.facebook.drawee.view.SimpleDraweeView
-            android:id="@+id/player_song_cover_art"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            fresco:layout_constraintTop_toTopOf="parent"
-            fresco:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginStart="120dp"
-            android:layout_marginEnd="120dp"
-            android:background="@color/transparent"
-            fresco:viewAspectRatio="1"
-            fresco:placeholderImageScaleType="fitCenter"
-            fresco:roundAsCircle="true" />
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="@color/transparent"
+        android:src="@drawable/circle_grey_grey_e0"
+        fresco:layout_constraintBottom_toBottomOf="parent"
+        fresco:layout_constraintEnd_toEndOf="parent"
+        fresco:layout_constraintStart_toStartOf="parent"
+        fresco:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/circle_grey_grey_e0"
-            android:background="@color/transparent"
-            fresco:layout_constraintTop_toTopOf="parent"
-            fresco:layout_constraintBottom_toBottomOf="parent"
-            fresco:layout_constraintStart_toStartOf="parent"
-            fresco:layout_constraintEnd_toEndOf="parent" />
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/lyrics_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_filter_list_24dp"
+        android:tint="@color/colorAccent"
+        app:backgroundTint="@color/white"
+        app:fabSize="mini"
+        app:layout_constraintTop_toBottomOf="@id/player_cover_background_disc"
+        app:layout_constraintBottom_toBottomOf="@id/player_cover_background_disc"
+        app:layout_constraintStart_toStartOf="@id/player_cover_background_disc"
+        app:layout_constraintEnd_toEndOf="@id/player_cover_background_disc" />
 
-        <TextView
-            android:id="@+id/player_song_lyrics"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            fresco:layout_constraintBottom_toBottomOf="@+id/player_cover_background_disc"
-            fresco:layout_constraintTop_toTopOf="@+id/player_cover_background_disc"
-            fresco:layout_constraintStart_toStartOf="@+id/player_cover_background_disc"
-            fresco:layout_constraintEnd_toEndOf="@+id/player_cover_background_disc"
-            android:background="@color/transparent"
-            android:scrollbars="vertical"
-            android:textColor="@color/white"
-            android:textStyle="bold" />
-
-    </android.support.constraint.ConstraintLayout>
-
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>
