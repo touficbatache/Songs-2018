@@ -306,9 +306,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     if(mSlidingPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED && getSupportFragmentManager().getBackStackEntryCount() > 0) {
-      getSupportFragmentManager().popBackStack();
-      mSlidingPanelLayout.setTouchEnabled(true);
-      mPlayerFragment.mMiniPlayer.setVisibility(View.GONE);
+      finishLyricsFragment();
       return;
     }
 
@@ -323,6 +321,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     super.onBackPressed();
+  }
+
+  public void finishLyricsFragment() {
+    getSupportFragmentManager().popBackStack();
+    mSlidingPanelLayout.setTouchEnabled(true);
   }
 
   @Override

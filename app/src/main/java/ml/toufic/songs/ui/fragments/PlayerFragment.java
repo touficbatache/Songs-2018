@@ -99,7 +99,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   private ImageButton mPlayerNextBtn;
   private ImageButton mPlayerShuffleBtn;
 
-  public LinearLayout mMiniPlayer;
+  private LinearLayout mMiniPlayer;
   private MaterialProgressBar mMiniPlayerSongProgress;
   private ImageView mMiniPlayerArrowUp;
   private TextView mMiniPlayerSongTitle;
@@ -166,6 +166,9 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
     if (mSongViewModel.getLastPlayedSong() == null || mOriginalPlayingQueue.isEmpty()) {
       mActivity.mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+    }
+    if(mActivity.mSlidingPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
+      mMiniPlayer.setVisibility(View.GONE);
     }
   }
 

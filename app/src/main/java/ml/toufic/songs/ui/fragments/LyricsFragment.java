@@ -28,6 +28,7 @@ import java.util.List;
 import ml.toufic.songs.R;
 import ml.toufic.songs.network.HTMLDataFetcher;
 import ml.toufic.songs.network.JSONObjectDataFetcher;
+import ml.toufic.songs.ui.activities.MainActivity;
 
 import static ml.toufic.songs.util.SongUtils.AS_API_KEY;
 
@@ -35,6 +36,7 @@ public class LyricsFragment extends Fragment {
 
   private static String songTitleKey = "songtitlekey";
 
+  private MainActivity mActivity;
   private Context mContext;
   private View mRootView;
   private LyricAdapter mLyricAdapter;
@@ -53,6 +55,7 @@ public class LyricsFragment extends Fragment {
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    mActivity = (MainActivity) getActivity();
     mContext = getContext();
   }
 
@@ -66,6 +69,12 @@ public class LyricsFragment extends Fragment {
       songTitle = args.getString(songTitleKey);
     }
 
+    mRootView.findViewById(R.id.back_arrow).setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        mActivity.finishLyricsFragment();
+      }
+    });
     ((TextView) mRootView.findViewById(R.id.song_title)).setText(songTitle);
 
     mLyricAdapter = new LyricAdapter();
