@@ -3,12 +3,14 @@ package ml.toufic.songs.ui.fragments;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,16 +19,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.airbnb.epoxy.EpoxyAdapter;
 import com.airbnb.epoxy.EpoxyHolder;
 import com.airbnb.epoxy.EpoxyModelWithHolder;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,7 +39,6 @@ import java.util.List;
 
 import ml.toufic.songs.R;
 import ml.toufic.songs.model.PlayableSong;
-import ml.toufic.songs.model.Playlist;
 import ml.toufic.songs.model.Song;
 import ml.toufic.songs.network.JSONObjectDataFetcher;
 import ml.toufic.songs.ui.activities.MainActivity;
@@ -125,7 +123,7 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
     inflater.inflate(R.menu.menu_toolbar_my_music_playlist, menu);
 
-    if(playlistId.equals(PLAYLIST_LIKES_ID) || playlistId.equals(PLAYLIST_DOWNLOADS_ID)) {
+    if (playlistId.equals(PLAYLIST_LIKES_ID) || playlistId.equals(PLAYLIST_DOWNLOADS_ID)) {
       menu.findItem(R.id.action_delete).setVisible(false);
     }
 
@@ -135,15 +133,15 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
   }
 
   @Override
-  public boolean onOptionsItemSelected(MenuItem item){
-    switch(item.getItemId()){
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
       case R.id.action_delete:
         AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
         builder.setMessage("Are you sure you want to delete this playlist? This action cannot be undone!")
           .setCancelable(true)
           .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-              for(PlayableSong playableSong : mActivity.getSongsForPlaylist(playlistId)) {
+              for (PlayableSong playableSong : mActivity.getSongsForPlaylist(playlistId)) {
                 mActivity.removeSongFromPlaylist(playlistId, playableSong.getId());
               }
               mActivity.deletePlaylist(playlistId);
@@ -163,8 +161,8 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
     }
   }
 
-  public void loadSongsInPlaylist() {
-    if(mActivity != null) {
+  private void loadSongsInPlaylist() {
+    if (mActivity != null) {
       playlistSongs = mActivity.getSongsForPlaylist(playlistId);
 
       for (Iterator<PlayableSong> playableSongsIterator = playlistSongs.iterator(); playableSongsIterator.hasNext(); ) {
@@ -239,11 +237,12 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
 
       @Override
       public boolean onQueryTextChange(String newText) {
-        if(!TextUtils.isEmpty(newText.trim())) {
+        if (!TextUtils.isEmpty(newText.trim())) {
           mAdapter.clear();
-          for(PlayableSong playableSong : playlistSongs) {
-            if(playableSong.getTitle().toLowerCase().contains(newText.trim().toLowerCase()) || playableSong.getArtist().toLowerCase().contains(newText.trim().toLowerCase())) {
-              mAdapter.addSongModel(playableSong);
+          for (int i = 0; i < playlistSongs.size(); i++) {
+            PlayableSong playableSong = playlistSongs.get(i);
+            if (playableSong.getTitle().toLowerCase().contains(newText.trim().toLowerCase()) || playableSong.getArtist().toLowerCase().contains(newText.trim().toLowerCase())) {
+              mAdapter.addSongModel(playableSong, i);
             }
           }
         } else {
@@ -257,14 +256,18 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
   private void updateRecyclerViewSongs() {
     mAdapter.clear();
 
-    for (PlayableSong playableSong : playlistSongs) {
-      mAdapter.addSongModel(playableSong);
+//    for (PlayableSong playableSong : playlistSongs) {
+//      mAdapter.addSongModel(playableSong);
+//    }
+    for (int i = 0; i < playlistSongs.size(); i++) {
+      PlayableSong playableSong = playlistSongs.get(i);
+      mAdapter.addSongModel(playableSong, i);
     }
   }
 
   class AnyPlaylistAdapter extends EpoxyAdapter {
-    void addSongModel(PlayableSong playableSong) {
-      addModel(new SongModel(playableSong));
+    void addSongModel(PlayableSong playableSong, int index) {
+      addModel(new SongModel(playableSong, index));
     }
 
     void clear() {
@@ -275,25 +278,19 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
   private class SongModel extends EpoxyModelWithHolder<SongHolder> {
 
     private PlayableSong song;
-    private String songId;
-    private File songPath;
     private String songTitle;
     private String songArtist;
-    private String songCoverArt;
 
     private View.OnClickListener onClickListener;
 
-    SongModel(final PlayableSong playableSong) {
+    SongModel(final PlayableSong playableSong, final int index) {
       song = playableSong;
-      songId = song.getId();
-      songPath = song.getPath();
       songTitle = song.getTitle();
       songArtist = song.getArtist();
-      songCoverArt = song.getCoverArt();
       onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-          mActivity.loadSong(playableSong, playlistId);
+          mActivity.loadSong(index, playlistId);
         }
       };
     }

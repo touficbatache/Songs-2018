@@ -1,23 +1,24 @@
 package ml.toufic.songs.ui.fragments;
 
-import android.annotation.SuppressLint;
-import android.arch.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProviders;
+
 import android.content.Context;
-import android.media.AudioManager;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.FloatRange;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.PagerSnapHelper;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SnapHelper;
+
+import androidx.annotation.FloatRange;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.PagerSnapHelper;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SnapHelper;
+
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -32,10 +33,27 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.airbnb.epoxy.EpoxyAdapter;
 import com.downloader.Error;
 import com.downloader.Progress;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.audio.AudioAttributes;
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
+import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.FileDataSource;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
-import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,16 +67,21 @@ import ml.toufic.songs.model.PlayerCoverModel;
 import ml.toufic.songs.model.Playlist;
 import ml.toufic.songs.model.Song;
 import ml.toufic.songs.network.SongDownloader;
+import ml.toufic.songs.ui.activities.LyricsActivity;
 import ml.toufic.songs.ui.activities.MainActivity;
 import ml.toufic.songs.util.TextUtils;
 import ml.toufic.songs.views.CloudDownloadBorderToFillImageView;
 import ml.toufic.songs.views.IconToggleView;
 import ml.toufic.songs.views.MorphingImageView;
+import ml.toufic.songs.views.RepeatToggleView;
 
+import static ml.toufic.songs.ui.activities.LyricsActivity.songTitleKey;
 import static ml.toufic.songs.util.SongUtils.PLAYLIST_DOWNLOADS_ID;
 import static ml.toufic.songs.util.SongUtils.PLAYLIST_LIKES_ID;
 
 public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.PanelSlideListener {
+
+  private static String TAG = "PlayerFragment : ";
 
   private SongViewModel mSongViewModel;
 
@@ -68,8 +91,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
   private List<PlayableSong> mOriginalPlayingQueue = new ArrayList<>();
   private Playlist mPlayerPlaylist;
-  private PlayableSong mPlayerSong;
-  private int mPlayerSongIndexInQueue;
+  private boolean isPlayerPlaying = false;
   private List<PlayableSong> mShuffledPlayingQueue = new ArrayList<>();
   private boolean isPlayingQueueShuffled = false;
 
@@ -93,7 +115,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   private SeekBar mPlayerSongProgress;
   private TextView mPlayerSongProgressCurrent;
   private TextView mPlayerSongProgressTotal;
-  private ImageButton mPlayerRepeatBtn;
+  private RepeatToggleView mPlayerRepeatBtn;
   private ImageButton mPlayerPrevBtn;
   private MorphingImageView mPlayerPlayToPauseBtn;
   private ImageButton mPlayerNextBtn;
@@ -105,7 +127,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   private TextView mMiniPlayerSongTitle;
   private MorphingImageView mMiniPlayerPlayToPauseBtn;
 
-  private MediaPlayer mPlayerMediaPlayer;
+  private SimpleExoPlayer mPlayerExoPlayer;
   private Handler mPlayerSongProgressHandler;
   private Runnable mPlayerSongProgressHandlerRunnable;
 
@@ -126,7 +148,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     /* Initialize player & mini player */
     initializePlayer();
     initializeRecyclerView();
-    if (isLastOpenedPlaylistGood() && isLastPlayedSongGood()) {
+    if (isLastOpenedPlaylistGood() /*&& isLastPlayedSongGood()*/) {
       prepareForPlaying(mActivity.getLastOpenedPlaylist().getId());
     }
 
@@ -167,7 +189,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     if (mSongViewModel.getLastPlayedSong() == null || mOriginalPlayingQueue.isEmpty()) {
       mActivity.mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
     }
-    if(mActivity.mSlidingPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
+    if (mActivity.mSlidingPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
       mMiniPlayer.setVisibility(View.GONE);
     }
   }
@@ -190,21 +212,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     return isPlaylistOK;
   }
 
-  private boolean isLastPlayedSongGood() {
-    mPlayerSong = mSongViewModel.getLastPlayedSong();
-    for (int i = 0; i < getCurrentPlayingQueue().size(); i++) {
-      if (getCurrentPlayingQueue().get(i).getId().equals(mPlayerSong.getId())) {
-        mPlayerSongIndexInQueue = i;
-      }
-    }
-
-    boolean isSongOK = false;
-    if (mPlayerSong != null && mPlayerSong.getPath().exists()) {
-      isSongOK = true;
-    }
-    return isSongOK;
-  }
-
   private List<PlayableSong> getCurrentPlayingQueue() {
     List<PlayableSong> mCurrentPlayingQueue;
     if (!isPlayingQueueShuffled) {
@@ -217,9 +224,9 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
   private void prepareForPlaying(String playlistId) {
     updatePlayingQueue(playlistId);
-    updateLastPlayedSong(playlistId);
-    updateCoversInRecyclerView(playlistId);
     updateMediaPlayer();
+    updateLastPlayedSong(mPlayerExoPlayer.getCurrentPeriodIndex());
+    updateCoversInRecyclerView();
   }
 
   private void updatePlayingQueue(String playlistId) {
@@ -234,7 +241,9 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     }
   }
 
-  private void updateLastPlayedSong(final String playlistId) {
+  private void updateLastPlayedSong(final int indexInExoPlayer) {
+    final PlayableSong currentSong = getCurrentPlayingQueue().get(indexInExoPlayer);
+
     mMiniPlayerArrowUp.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -254,18 +263,18 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     mPlayerSeePlayingQueue.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(getCurrentPlayingQueue(), mPlayerSong.getId(), playlistId);
+        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(getCurrentPlayingQueue(), currentSong.getId(), mPlayerPlaylist.getId());
         playingQueueFragment.show(mActivity.getSupportFragmentManager(),
           "playing_queue_fragment");
       }
     });
 
-    mPlayerSongTitle.setText(mPlayerSong.getTitle());
-    mMiniPlayerSongTitle.setText(mPlayerSong.getTitle());
-    mPlayerSongArtist.setText(mPlayerSong.getArtist());
+    mPlayerSongTitle.setText(currentSong.getTitle());
+    mMiniPlayerSongTitle.setText(currentSong.getTitle());
+    mPlayerSongArtist.setText(currentSong.getArtist());
     mPlayerCloudDownloadBtn.showBorder();
 
-    if (!mActivity.isSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId())) {
+    if (!mActivity.isSongInPlaylist(PLAYLIST_LIKES_ID, currentSong.getId())) {
       mPlayerFavoriteBtn.showFirstState();
     } else {
       mPlayerFavoriteBtn.showSecondState();
@@ -273,17 +282,17 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     mPlayerFavoriteBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        if (!mActivity.isSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId())) {
-          mActivity.insertSongInPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId(), false);
+        if (!mActivity.isSongInPlaylist(PLAYLIST_LIKES_ID, currentSong.getId())) {
+          mActivity.insertSongInPlaylist(PLAYLIST_LIKES_ID, currentSong.getId(), false);
           mPlayerFavoriteBtn.showSecondState();
         } else {
-          mActivity.removeSongFromPlaylist(PLAYLIST_LIKES_ID, mPlayerSong.getId());
+          mActivity.removeSongFromPlaylist(PLAYLIST_LIKES_ID, currentSong.getId());
           mPlayerFavoriteBtn.showFirstState();
         }
       }
     });
 
-    if (mActivity.isSongInPlaylist(PLAYLIST_DOWNLOADS_ID, mPlayerSong.getId())) {
+    if (mActivity.isSongInPlaylist(PLAYLIST_DOWNLOADS_ID, currentSong.getId())) {
       mPlayerCloudDownloadBtn.showFill();
     }
     mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
@@ -297,12 +306,12 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
         songDeletionDialog.onPositive(new MaterialDialog.SingleButtonCallback() {
           @Override
           public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-            mActivity.deleteSong(mPlayerSong);
+            mActivity.deleteSong(currentSong);
             if (mActivity.getAllSongsAsync().size() >= 1) {
-              if (mPlayerSongIndexInQueue - 1 >= 0) {
-                loadSong(getCurrentPlayingQueue().get(mPlayerSongIndexInQueue - 1), playlistId);
+              if (mPlayerExoPlayer.getCurrentPeriodIndex() - 1 >= 0) {
+                loadSong(mPlayerExoPlayer.getCurrentPeriodIndex() - 1, mPlayerPlaylist.getId());
               } else {
-                loadSong(getCurrentPlayingQueue().get(mPlayerSongIndexInQueue + 1), playlistId);
+                loadSong(mPlayerExoPlayer.getCurrentPeriodIndex() + 1, mPlayerPlaylist.getId());
               }
             } else {
               mActivity.mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
@@ -314,7 +323,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       }
     });
 
-    if (!mActivity.isSongInCustomPlaylist(mPlayerSong.getId())) {
+    if (!mActivity.isSongInCustomPlaylist(currentSong.getId())) {
       mPlayerAddToPlaylistBtn.showFirstState();
     } else {
       mPlayerAddToPlaylistBtn.showSecondState();
@@ -329,7 +338,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
         for (int i = 0; i < playlists.size(); i++) {
           playlistsTitles[i] = playlists.get(i).getTitle();
-          if (mActivity.isSongInPlaylist(playlists.get(i).getId(), mPlayerSong.getId())) {
+          if (mActivity.isSongInPlaylist(playlists.get(i).getId(), currentSong.getId())) {
             checkedPlaylistsList.add(i);
           }
         }
@@ -356,11 +365,11 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
           public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
             Integer[] playlistsIdsToAddTo = dialog.getSelectedIndices();
             for (Playlist playlist : playlists) {
-              mActivity.removeSongFromPlaylist(playlist.getId(), mPlayerSong.getId());
+              mActivity.removeSongFromPlaylist(playlist.getId(), currentSong.getId());
             }
             if (playlistsIdsToAddTo != null && playlistsIdsToAddTo.length > 0) {
               for (Integer index : playlistsIdsToAddTo) {
-                mActivity.insertSongInPlaylist(String.valueOf(playlists.get(index).getId()), mPlayerSong.getId(), false);
+                mActivity.insertSongInPlaylist(String.valueOf(playlists.get(index).getId()), currentSong.getId(), false);
               }
               mPlayerAddToPlaylistBtn.showSecondState();
             } else {
@@ -379,35 +388,16 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
     setPlayerLoading(false);
 
-    if (getCurrentPlayingQueue() != null) {
-      setColorEnabled(mPlayerRepeatBtn, mPlayerSong.isLooping());
-    }
-
-    mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View view) {
-        if (!mPlayerSong.isLooping()) {
-          mPlayerSong.setLooping(true);
-          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_67));
-        } else {
-          mPlayerSong.setLooping(false);
-          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
-        }
-      }
-    });
-
     mPlayerPrevBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        if (mPlayerSongIndexInQueue == 0) {
-          mPlayerMediaPlayer.seekTo(0);
-          mPlayerSongProgress.setProgress(0);
+        if (mPlayerExoPlayer.getCurrentPeriodIndex() == 0) {
+          mPlayerExoPlayer.seekTo(0);
         } else {
-          if (mPlayerMediaPlayer.getCurrentPosition() / 1000 >= 10) {
-            mPlayerMediaPlayer.seekTo(0);
-            mPlayerSongProgress.setProgress(0);
+          if (mPlayerExoPlayer.getCurrentPosition() / 1000 >= 10) {
+            mPlayerExoPlayer.seekTo(0);
           } else {
-            int previousSongIndex = mPlayerSongIndexInQueue - 1;
+            int previousSongIndex = mPlayerExoPlayer.getCurrentPeriodIndex() - 1;
             mPlayerRecyclerView.smoothScrollToPosition(previousSongIndex);
           }
         }
@@ -431,11 +421,10 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     mPlayerNextBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        if (mPlayerSongIndexInQueue == getCurrentPlayingQueue().size() - 1) {
-          mPlayerMediaPlayer.seekTo(0);
-          mPlayerSongProgress.setProgress(0);
+        if (mPlayerExoPlayer.getCurrentPeriodIndex() == getCurrentPlayingQueue().size() - 1) {
+          mPlayerExoPlayer.seekTo(0);
         } else {
-          int nextSongIndex = mPlayerSongIndexInQueue + 1;
+          int nextSongIndex = mPlayerExoPlayer.getCurrentPeriodIndex() + 1;
           mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
         }
       }
@@ -448,8 +437,8 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
           List<PlayableSong> shuffledPlayingQueue = mOriginalPlayingQueue;
           Collections.shuffle(shuffledPlayingQueue);
           for (PlayableSong currentSongInShuffled : shuffledPlayingQueue) {
-            if (currentSongInShuffled.getId().equals(mPlayerSong.getId())) {
-              Collections.swap(shuffledPlayingQueue, mPlayerSongIndexInQueue, shuffledPlayingQueue.indexOf(currentSongInShuffled));
+            if (currentSongInShuffled.getId().equals(currentSong.getId())) {
+              Collections.swap(shuffledPlayingQueue, mPlayerExoPlayer.getCurrentPeriodIndex(), shuffledPlayingQueue.indexOf(currentSongInShuffled));
             }
           }
           updateShuffledPlayingQueue(shuffledPlayingQueue);
@@ -490,30 +479,24 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
   private void onPlayPauseClick() {
     if (mPlayerPlayToPauseBtn.isEnabled()) {
-      if (mPlayerMediaPlayer.isPlaying()) {
-        pauseSong();
-      } else {
+      if (!isPlayerPlaying) {
         playSong();
+      } else {
+        pauseSong();
       }
     }
   }
 
   private void updateShuffledPlayingQueue(List<PlayableSong> playableSongsList) {
-    mShuffledPlayingQueue = new ArrayList<>();
-    for (int i = 0; i < playableSongsList.size(); i++) {
-      PlayableSong playableSong = playableSongsList.get(i);
-      mShuffledPlayingQueue.add(playableSong);
-    }
+    mShuffledPlayingQueue = new ArrayList<>(playableSongsList);
   }
 
-  public void updateVisuals() {
-    if (isLastPlayedSongGood()) {
-      updateLastPlayedSong(mActivity.getLastOpenedPlaylist().getId());
-      updateCoversInRecyclerView(mActivity.getLastOpenedPlaylist().getId());
-    }
+  private void updateVisuals() {
+    updateLastPlayedSong(mPlayerExoPlayer.getCurrentPeriodIndex());
+    updateCoversInRecyclerView();
   }
 
-  private void updateCoversInRecyclerView(final String playlistId) {
+  private void updateCoversInRecyclerView() {
     mPlayerAdapter.clear();
     for (PlayableSong playableSong : getCurrentPlayingQueue()) {
       mPlayerAdapter.addCoverArt(playableSong);
@@ -525,32 +508,71 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
         super.onScrollStateChanged(recyclerView, newState);
         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-          int songIndex = ((LinearLayoutManager) mPlayerRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-          if (mPlayerSongIndexInQueue != songIndex) {
-            loadSong(getCurrentPlayingQueue().get(songIndex), playlistId);
-          }
+          mPlayerExoPlayer.seekTo(((LinearLayoutManager) mPlayerRecyclerView.getLayoutManager()).findFirstVisibleItemPosition(), C.TIME_UNSET);
+          playSong();
         }
       }
     };
     mPlayerRecyclerView.addOnScrollListener(mPlayerRecyclerViewListener);
-
-    mPlayerRecyclerView.scrollToPosition(mPlayerSongIndexInQueue);
   }
 
   class PlayerCoversAdapter extends EpoxyAdapter {
     void addCoverArt(PlayableSong playableSong) {
       addModel(new PlayerCoverModel(mContext, playableSong,
-        new PlayerCoverModel.PlayerCoverLyricsCallback() {
+        new PlayerCoverModel.PlayerCoverCallback() {
           @Override
           public void onLyricsBtnClick() {
-            mActivity.pushFragmentInPlayer(LyricsFragment.newInstance(mPlayerSong.getTitle()));
-            mActivity.mSlidingPanelLayout.setTouchEnabled(false);
+            PlayableSong currentSong = getCurrentPlayingQueue().get(mPlayerExoPlayer.getCurrentPeriodIndex());
+            Intent lyricsActivityIntent = new Intent(mActivity, LyricsActivity.class);
+            lyricsActivityIntent.putExtra(songTitleKey, currentSong.getTitle());
+            startActivity(lyricsActivityIntent);
+          }
+
+          @Override
+          public void onSeekPrevious() {
+            int seekTo = (int) mPlayerExoPlayer.getCurrentPosition() - 10000;
+            mPlayerExoPlayer.seekTo(seekTo);
+            mPlayerSongProgress.setProgress(seekTo);
+            mMiniPlayerSongProgress.setProgress(seekTo);
+          }
+
+          @Override
+          public void onSeekNext() {
+            int seekTo = (int) mPlayerExoPlayer.getCurrentPosition() + 10000;
+            mPlayerExoPlayer.seekTo(seekTo);
+            mPlayerSongProgress.setProgress(seekTo);
+            mMiniPlayerSongProgress.setProgress(seekTo);
           }
         }));
     }
 
     void addCoverArt(String coverArtUrl) {
-      addModel(new PlayerCoverModel(mContext, coverArtUrl));
+      addModel(new PlayerCoverModel(mContext, coverArtUrl,
+        new PlayerCoverModel.PlayerCoverCallback() {
+          @Override
+          public void onLyricsBtnClick() {
+            PlayableSong mPlayerSong = getCurrentPlayingQueue().get(mPlayerExoPlayer.getCurrentPeriodIndex());
+            Intent lyricsActivityIntent = new Intent(mActivity, LyricsActivity.class);
+            lyricsActivityIntent.putExtra(songTitleKey, mPlayerSong.getTitle());
+            startActivity(lyricsActivityIntent);
+          }
+
+          @Override
+          public void onSeekPrevious() {
+            int seekTo = (int) mPlayerExoPlayer.getCurrentPosition() - 10000;
+            mPlayerExoPlayer.seekTo(seekTo);
+            mPlayerSongProgress.setProgress(seekTo);
+            mMiniPlayerSongProgress.setProgress(seekTo);
+          }
+
+          @Override
+          public void onSeekNext() {
+            int seekTo = (int) mPlayerExoPlayer.getCurrentPosition() + 10000;
+            mPlayerExoPlayer.seekTo(seekTo);
+            mPlayerSongProgress.setProgress(seekTo);
+            mMiniPlayerSongProgress.setProgress(seekTo);
+          }
+        }));
     }
 
     void clear() {
@@ -559,52 +581,114 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   }
 
   private void updateMediaPlayer() {
-    mPlayerMediaPlayer = MediaPlayer.create(mContext, Uri.fromFile(mPlayerSong.getPath()));
-    mPlayerMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-    mPlayerMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-      @Override
-      public void onPrepared(MediaPlayer mediaPlayer) {
-        mPlayerSongProgressTotal.setText(TextUtils.formatMilliseconds(mContext, mPlayerMediaPlayer.getDuration()));
-        mPlayerSongProgress.setMax(mediaPlayer.getDuration());
-        mMiniPlayerSongProgress.setMax(mediaPlayer.getDuration());
+    AudioAttributes audioAttributes = new AudioAttributes.Builder()
+      .setUsage(C.USAGE_MEDIA)
+      .setContentType(C.CONTENT_TYPE_MOVIE)
+      .build();
 
-        mPlayerMediaPlayer.seekTo(mPlayerSong.getLastPosition());
-        mPlayerSongProgress.setProgress(mPlayerSong.getLastPosition());
-        mMiniPlayerSongProgress.setProgress(mPlayerSong.getLastPosition());
+    mPlayerExoPlayer = ExoPlayerFactory.newSimpleInstance(mContext, new DefaultTrackSelector());
+    MediaSource[] playlist = new MediaSource[getCurrentPlayingQueue().size()];
+    for (int i = 0; i < getCurrentPlayingQueue().size(); i++) {
+      Uri uri = Uri.fromFile(getCurrentPlayingQueue().get(i).getPath());
+      playlist[i] = new ExtractorMediaSource.Factory(getSongFactory(uri)).setExtractorsFactory(new DefaultExtractorsFactory()).createMediaSource(getSongFactory(uri).createDataSource().getUri());
+    }
+    ConcatenatingMediaSource concatenatingMediaSource = new ConcatenatingMediaSource(playlist);
+    mPlayerExoPlayer.prepare(concatenatingMediaSource);
+    mPlayerExoPlayer.addListener(new Player.EventListener() {
+      @Override
+      public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
+
       }
-    });
 
-    mPlayerMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
       @Override
-      public void onCompletion(MediaPlayer mediaPlayer) {
-        if (!mPlayerSong.isLooping()) {
-          if (mPlayerSongIndexInQueue == getCurrentPlayingQueue().size() - 1) {
-            mPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
-            mMiniPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
-            mPlayerMediaPlayer.seekTo(0);
-          } else {
-            int nextSongIndex = mPlayerSongIndexInQueue + 1;
-            mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
-          }
-        } else {
-          mPlayerMediaPlayer.seekTo(0);
-          mPlayerMediaPlayer.start();
+      public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+      }
+
+      @Override
+      public void onLoadingChanged(boolean isLoading) {
+
+      }
+
+      @Override
+      public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        switch (playbackState) {
+          case Player.STATE_ENDED:
+            mPlayerExoPlayer.seekTo(0);
+            pauseSong();
+            break;
+
+          case Player.STATE_READY:
+            updateLastPlayedSong(mPlayerExoPlayer.getCurrentPeriodIndex());
+            setProgress();
+
+            final boolean repeating = mPlayerExoPlayer.getRepeatMode() == Player.REPEAT_MODE_ONE || mPlayerExoPlayer.getRepeatMode() == Player.REPEAT_MODE_ALL;
+            if (getCurrentPlayingQueue() != null) {
+              setColorEnabled(mPlayerRepeatBtn, repeating);
+            }
+
+            mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
+              @Override
+              public void onClick(View view) {
+                if (mPlayerExoPlayer.getRepeatMode() == Player.REPEAT_MODE_OFF) {
+                  mPlayerExoPlayer.setRepeatMode(Player.REPEAT_MODE_ALL);
+                } else if (mPlayerExoPlayer.getRepeatMode() == Player.REPEAT_MODE_ALL) {
+                  mPlayerExoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
+                } else if (mPlayerExoPlayer.getRepeatMode() == Player.REPEAT_MODE_ONE) {
+                  mPlayerExoPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
+                }
+
+                mPlayerRepeatBtn.showState(mPlayerExoPlayer.getRepeatMode());
+              }
+            });
+            break;
         }
       }
+
+      @Override
+      public void onRepeatModeChanged(int repeatMode) {
+        boolean repeating = repeatMode == Player.REPEAT_MODE_ONE || repeatMode == Player.REPEAT_MODE_ALL;
+        setColorEnabled(mPlayerRepeatBtn, repeating);
+      }
+
+      @Override
+      public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+
+      }
+
+      @Override
+      public void onPlayerError(ExoPlaybackException error) {
+
+      }
+
+      @Override
+      public void onPositionDiscontinuity(int reason) {
+        if (reason == Player.DISCONTINUITY_REASON_PERIOD_TRANSITION) {
+          mPlayerRecyclerView.smoothScrollToPosition(mPlayerExoPlayer.getCurrentPeriodIndex());
+          updateLastPlayedSong(mPlayerExoPlayer.getCurrentPeriodIndex());
+        }
+      }
+
+      @Override
+      public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+
+      }
+
+      @Override
+      public void onSeekProcessed() {
+
+      }
     });
+    mPlayerExoPlayer.setAudioAttributes(audioAttributes);
 
     mPlayerSongProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
-      public void onProgressChanged(SeekBar seekBar, int progress, boolean input) {
-        if (input) {
-          mPlayerMediaPlayer.seekTo(progress);
+      public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        if (fromUser) {
+          mPlayerExoPlayer.seekTo(progress * 1000);
         }
-        if (progress / 1000 < (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerNextUp.getAlpha() == 1.0f) {
-          mPlayerNextUp.animate().alpha(0.0f);
-        } else if (progress / 1000 >= (mPlayerMediaPlayer.getDuration() / 1000 - 7) && mPlayerSongIndexInQueue != getCurrentPlayingQueue().size() - 1) {
-          mPlayerNextUp.animate().alpha(1.0f);
-        }
-        mPlayerSongProgressCurrent.setText(TextUtils.formatMilliseconds(mContext, progress));
+        // We're not interested in programmatically generated changes to
+        // the progress bar's position.
       }
 
       @Override
@@ -619,17 +703,60 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     });
   }
 
-  public void loadSong(PlayableSong playableSong, final String playlistId) {
+  private DataSource.Factory getSongFactory(Uri uri) {
+    DataSpec dataSpec = new DataSpec(uri);
+    final FileDataSource fileDataSource = new FileDataSource();
+    try {
+      fileDataSource.open(dataSpec);
+    } catch (FileDataSource.FileDataSourceException e) {
+      e.printStackTrace();
+    }
+
+    return new DataSource.Factory() {
+      @Override
+      public DataSource createDataSource() {
+        return fileDataSource;
+      }
+    };
+  }
+
+  private void setProgress() {
+    mPlayerRecyclerView.scrollToPosition(mPlayerExoPlayer.getCurrentPeriodIndex());
+
+    mPlayerSongProgress.setMax((int) mPlayerExoPlayer.getDuration() / 1000);
+    mPlayerSongProgressCurrent.setText(TextUtils.formatMilliseconds(mContext, (int) mPlayerExoPlayer.getCurrentPosition()));
+    mPlayerSongProgressTotal.setText(TextUtils.formatMilliseconds(mContext, (int) mPlayerExoPlayer.getDuration()));
+
+    //Make sure you update Seekbar on UI thread
+    mPlayerSongProgressHandlerRunnable = new Runnable() {
+      @Override
+      public void run() {
+        if (mPlayerExoPlayer != null) {
+          mPlayerSongProgress.setMax((int) mPlayerExoPlayer.getDuration() / 1000);
+          mMiniPlayerSongProgress.setMax((int) mPlayerExoPlayer.getDuration() / 1000);
+          int mCurrentPosition = (int) mPlayerExoPlayer.getCurrentPosition() / 1000;
+          mPlayerSongProgress.setProgress(mCurrentPosition);
+          mMiniPlayerSongProgress.setProgress(mCurrentPosition);
+          mPlayerSongProgressCurrent.setText(TextUtils.formatMilliseconds(mContext, (int) mPlayerExoPlayer.getCurrentPosition()));
+          mPlayerSongProgressTotal.setText(TextUtils.formatMilliseconds(mContext, (int) mPlayerExoPlayer.getDuration()));
+
+          mPlayerSongProgressHandler.postDelayed(this, 1000);
+        }
+      }
+    };
+    mPlayerSongProgressHandler.post(mPlayerSongProgressHandlerRunnable);
+  }
+
+  public void loadSong(final int index, final String playlistId) {
     isRemoteSongPlaying = false;
-    mActivity.updateSongWithResetAll(playableSong, new MainActivity.OnLastClickedUpdateCompletion() {
+    mActivity.updateSongWithResetAll(getCurrentPlayingQueue().get(index), new MainActivity.OnLastClickedUpdateCompletion() {
       @Override
       public void onCompletion() {
         destroy();
-        if (isLastPlayedSongGood()) {
-          mActivity.setLastOpenedPlaylist(mActivity.getPlaylist(playlistId));
-          prepareForPlaying(playlistId);
-          playSong();
-        }
+        mActivity.setLastOpenedPlaylist(mActivity.getPlaylist(playlistId));
+        prepareForPlaying(playlistId);
+        mPlayerExoPlayer.seekTo(index, C.TIME_UNSET);
+        playSong();
       }
     });
   }
@@ -756,56 +883,97 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   }
 
   private void updateMediaPlayer(String songUrl) {
-    mPlayerMediaPlayer = new MediaPlayer();
-    mPlayerMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-    try {
-      mPlayerMediaPlayer.setDataSource(songUrl);
-      mPlayerMediaPlayer.prepare();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    mPlayerMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-      @Override
-      public void onPrepared(MediaPlayer mediaPlayer) {
-        setPlayerLoading(false);
-        mPlayerPrevBtn.setEnabled(false);
-        setColorEnabled(mPlayerPrevBtn, false);
-        mPlayerNextBtn.setEnabled(false);
-        setColorEnabled(mPlayerNextBtn, false);
-        mPlayerShuffleBtn.setEnabled(false);
+    AudioAttributes audioAttributes = new AudioAttributes.Builder()
+      .setUsage(C.USAGE_MEDIA)
+      .setContentType(C.CONTENT_TYPE_MOVIE)
+      .build();
 
-        DecimalFormat progressFormat = new DecimalFormat("00");
-        String minutes = progressFormat.format(mPlayerMediaPlayer.getDuration() / 1000 / 60);
-        String seconds = progressFormat.format(mPlayerMediaPlayer.getDuration() / 1000 % 60);
-        mPlayerSongProgressTotal.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
-        mPlayerSongProgress.setMax(mediaPlayer.getDuration());
+    mPlayerExoPlayer = ExoPlayerFactory.newSimpleInstance(mContext, new DefaultTrackSelector());
+    Uri uri = Uri.parse(songUrl);
+    MediaSource mediaSource = new ExtractorMediaSource.Factory(new DefaultHttpDataSourceFactory("exoplayer-codelab")).createMediaSource(uri);
+    mPlayerExoPlayer.prepare(mediaSource);
+
+    mPlayerExoPlayer.addListener(new Player.EventListener() {
+      @Override
+      public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
+
       }
-    });
 
-    mPlayerMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
       @Override
-      public void onCompletion(MediaPlayer mediaPlayer) {
-        if (!isRemoteSongLooping) {
-          mPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
-          mMiniPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
-          mPlayerMediaPlayer.seekTo(0);
-        } else {
-          mPlayerMediaPlayer.seekTo(0);
-          mPlayerMediaPlayer.start();
+      public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+      }
+
+      @Override
+      public void onLoadingChanged(boolean isLoading) {
+
+      }
+
+      @Override
+      public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        switch (playbackState) {
+          case Player.STATE_ENDED:
+            mPlayerExoPlayer.seekTo(0);
+            pauseSong();
+            break;
+
+          case Player.STATE_READY:
+            setProgress();
+            setPlayerLoading(false);
+
+            mPlayerPrevBtn.setEnabled(false);
+            setColorEnabled(mPlayerPrevBtn, false);
+            mPlayerNextBtn.setEnabled(false);
+            setColorEnabled(mPlayerNextBtn, false);
+            mPlayerShuffleBtn.setEnabled(false);
+            mPlayerRepeatBtn.setEnabled(false);
         }
       }
+
+      @Override
+      public void onRepeatModeChanged(int repeatMode) {
+        boolean repeating = repeatMode == Player.REPEAT_MODE_ONE || repeatMode == Player.REPEAT_MODE_ALL;
+        setColorEnabled(mPlayerRepeatBtn, repeating);
+      }
+
+      @Override
+      public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+
+      }
+
+      @Override
+      public void onPlayerError(ExoPlaybackException error) {
+
+      }
+
+      @Override
+      public void onPositionDiscontinuity(int reason) {
+        if (reason == Player.DISCONTINUITY_REASON_PERIOD_TRANSITION) {
+          mPlayerRecyclerView.smoothScrollToPosition(mPlayerExoPlayer.getCurrentPeriodIndex());
+          updateLastPlayedSong(mPlayerExoPlayer.getCurrentPeriodIndex());
+        }
+      }
+
+      @Override
+      public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+
+      }
+
+      @Override
+      public void onSeekProcessed() {
+
+      }
     });
+    mPlayerExoPlayer.setAudioAttributes(audioAttributes);
 
     mPlayerSongProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
-      public void onProgressChanged(SeekBar seekBar, int progress, boolean input) {
-        if (input) {
-          mPlayerMediaPlayer.seekTo(progress - 1);
+      public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        if (fromUser) {
+          mPlayerExoPlayer.seekTo(progress * 1000);
         }
-        DecimalFormat formatter = new DecimalFormat("00");
-        String minutes = formatter.format(progress / 1000 / 60);
-        String seconds = formatter.format(progress / 1000 % 60);
-        mPlayerSongProgressCurrent.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
+        // We're not interested in programmatically generated changes to
+        // the progress bar's position.
       }
 
       @Override
@@ -820,14 +988,83 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     });
   }
 
+//  private void updateMediaPlayer(String songUrl) {
+//    mPlayerExoPlayer = new MediaPlayer();
+//    mPlayerExoPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+//    try {
+//      mPlayerExoPlayer.setDataSource(songUrl);
+//      mPlayerExoPlayer.prepare();
+//    } catch (IOException e) {
+//      e.printStackTrace();
+//    }
+//    mPlayerExoPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+//      @Override
+//      public void onPrepared(MediaPlayer mediaPlayer) {
+//        setPlayerLoading(false);
+//        mPlayerPrevBtn.setEnabled(false);
+//        setColorEnabled(mPlayerPrevBtn, false);
+//        mPlayerNextBtn.setEnabled(false);
+//        setColorEnabled(mPlayerNextBtn, false);
+//        mPlayerShuffleBtn.setEnabled(false);
+//
+//        DecimalFormat progressFormat = new DecimalFormat("00");
+//        String minutes = progressFormat.format(mPlayerExoPlayer.getDuration() / 1000 / 60);
+//        String seconds = progressFormat.format(mPlayerExoPlayer.getDuration() / 1000 % 60);
+//        mPlayerSongProgressTotal.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
+//        mPlayerSongProgress.setMax(mediaPlayer.getDuration());
+//      }
+//    });
+//
+//    mPlayerExoPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//      @Override
+//      public void onCompletion(MediaPlayer mediaPlayer) {
+//        if (!isRemoteSongLooping) {
+//          mPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
+//          mMiniPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
+//          mPlayerExoPlayer.seekTo(0);
+//        } else {
+//          mPlayerExoPlayer.seekTo(0);
+//          mPlayerExoPlayer.start();
+//        }
+//      }
+//    });
+//
+//    mPlayerSongProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+//      @Override
+//      public void onProgressChanged(SeekBar seekBar, int progress, boolean input) {
+//        if (input) {
+//          mPlayerExoPlayer.seekTo(progress - 1);
+//        }
+//        DecimalFormat formatter = new DecimalFormat("00");
+//        String minutes = formatter.format(progress / 1000 / 60);
+//        String seconds = formatter.format(progress / 1000 % 60);
+//        mPlayerSongProgressCurrent.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
+//      }
+//
+//      @Override
+//      public void onStartTrackingTouch(SeekBar seekBar) {
+//
+//      }
+//
+//      @Override
+//      public void onStopTrackingTouch(SeekBar seekBar) {
+//
+//      }
+//    });
+//  }
+
   public void loadSong(Song remoteSong) {
     if (mActivity.hasSong(remoteSong.getId())) {
-      loadSong(mActivity.getSong(remoteSong.getId()), PLAYLIST_DOWNLOADS_ID);
+      List<PlayableSong> playlist = mActivity.getSongsForPlaylist(PLAYLIST_DOWNLOADS_ID);
+      for(int i=0; i<playlist.size(); i++) {
+        if(playlist.get(i).getId().equals(remoteSong.getId())) {
+          loadSong(i, PLAYLIST_DOWNLOADS_ID);
+        }
+      }
       return;
     }
     destroy();
     isRemoteSongPlaying = true;
-    isRemoteSongLooping = false;
 
     updateRemoteSong(remoteSong);
     updateRemoteSongRecyclerView();
@@ -841,44 +1078,25 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   }
 
   private void playSong() {
-    mPlayerMediaPlayer.start();
+    isPlayerPlaying = true;
+    mPlayerExoPlayer.setPlayWhenReady(true);
     mPlayerPlayToPauseBtn.animateToSecondState(); //pause icon: playing
     mMiniPlayerPlayToPauseBtn.animateToSecondState(); //pause icon: playing
-
-    startProgressTracking();
   }
 
   private void pauseSong() {
-    mPlayerMediaPlayer.pause();
+    isPlayerPlaying = false;
+    mPlayerExoPlayer.setPlayWhenReady(false);
     mPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
     mMiniPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
   }
 
-  private void startProgressTracking() {
-    mPlayerSongProgress.setProgress(mPlayerMediaPlayer.getCurrentPosition());
-    mMiniPlayerSongProgress.setProgress(mPlayerMediaPlayer.getCurrentPosition());
-    if (mPlayerMediaPlayer.isPlaying()) {
-      mPlayerSongProgressHandlerRunnable = new Runnable() {
-        @Override
-        public void run() {
-          startProgressTracking();
-        }
-      };
-      mPlayerSongProgressHandler.postDelayed(mPlayerSongProgressHandlerRunnable, 1000);
-    }
-
-    if (!isRemoteSongPlaying) {
-      mPlayerSong.setLastPosition(mPlayerMediaPlayer.getCurrentPosition());
-      mActivity.updateSongWithResetAll(mPlayerSong);
-    }
-  }
-
-  public void onSongDownloadStartOrResume(String songTitle) {
+  private void onSongDownloadStartOrResume(String songTitle) {
     mPlayerCloudDownloadBtn.showBlinkingAnimation();
     Toast.makeText(mContext, String.format(getString(R.string.download_started_for_TITLE), songTitle), Toast.LENGTH_SHORT).show();
   }
 
-  public void onSongDownloadCompletion(PlayableSong playableSong) {
+  private void onSongDownloadCompletion(PlayableSong playableSong) {
     if (playableSong.getPath().exists()) {
       mActivity.insertSong(playableSong);
       mActivity.insertSongInPlaylist(PLAYLIST_DOWNLOADS_ID, playableSong.getId(), false);
@@ -929,8 +1147,8 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   }
 
   private void destroy() {
-    if (mPlayerMediaPlayer != null) {
-      mPlayerMediaPlayer.release();
+    if (mPlayerExoPlayer != null) {
+      mPlayerExoPlayer.release();
     }
     if (mPlayerSongProgressHandler != null) {
       mPlayerSongProgressHandler.removeCallbacks(mPlayerSongProgressHandlerRunnable);

@@ -1,8 +1,8 @@
 package ml.toufic.songs.model;
 
-import android.arch.persistence.room.ColumnInfo;
-import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.ForeignKey;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.ForeignKey;
 
 import java.io.File;
 
@@ -20,9 +20,6 @@ public class PlayableSong extends Song {
 
   @ColumnInfo(name = "lastposition")
   private int lastPosition = 0;
-
-  @ColumnInfo(name = "looping")
-  private boolean looping = false;
 
   @ColumnInfo(name = "lastplayed")
   private boolean lastPlayed = false;
@@ -60,14 +57,6 @@ public class PlayableSong extends Song {
 
   public int getLastPosition() {
     return lastPosition;
-  }
-
-  public void setLooping(boolean looping) {
-    this.looping = looping;
-  }
-
-  public boolean isLooping() {
-    return looping;
   }
 
   public void setLastPlayed(boolean lastPlayed) {

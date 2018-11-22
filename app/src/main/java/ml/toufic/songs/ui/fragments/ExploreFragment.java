@@ -3,12 +3,12 @@ package ml.toufic.songs.ui.fragments;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -45,8 +45,6 @@ public class ExploreFragment extends Fragment {
   private MainActivity mActivity;
   private View mRootView;
   private Context mContext;
-
-  private Song songToDownload;
 
   private ExploreAdapter mAdapter;
   private RecyclerView mRecyclerView;
@@ -255,26 +253,28 @@ public class ExploreFragment extends Fragment {
   }
 
   private void updateRecyclerViewSongs() {
-    mAdapter.clear();
+    if(getActivity() != null) {
+      mAdapter.clear();
 
-    if(hasNewThisWeek) {
-      mAdapter.addSubheader(getString(R.string.new_this_week));
+      if (hasNewThisWeek) {
+        mAdapter.addSubheader(getString(R.string.new_this_week));
 
-      for (Song song : newThisWeekSongs) {
-        mAdapter.addSongModel(song);
+        for (Song song : newThisWeekSongs) {
+          mAdapter.addSongModel(song);
+        }
+
+        mAdapter.addSeeMore(ExploreAnyPlaylistFragment.newInstance(getResources().getString(R.string.new_this_week), SongUtils.NEW_THIS_WEEK_PLAYLIST_ID));
       }
 
-      mAdapter.addSeeMore(ExploreAnyPlaylistFragment.newInstance(getResources().getString(R.string.new_this_week), SongUtils.NEW_THIS_WEEK_PLAYLIST_ID));
-    }
+      if (hasPopular) {
+        mAdapter.addSubheader(getString(R.string.popular));
 
-    if(hasPopular) {
-      mAdapter.addSubheader(getString(R.string.popular));
+        for (Song song : popularSongs) {
+          mAdapter.addSongModel(song);
+        }
 
-      for (Song song : popularSongs) {
-        mAdapter.addSongModel(song);
+        mAdapter.addSeeMore(ExploreAnyPlaylistFragment.newInstance(getResources().getString(R.string.popular), SongUtils.POPULAR_PLAYLIST_ID));
       }
-
-      mAdapter.addSeeMore(ExploreAnyPlaylistFragment.newInstance(getResources().getString(R.string.popular), SongUtils.POPULAR_PLAYLIST_ID));
     }
   }
 
@@ -327,24 +327,15 @@ public class ExploreFragment extends Fragment {
     private SongHolder holder;
 
     private Song mSong;
-    private String songId;
-    private String songLink;
     private String songTitle;
-    private String songArtist;
-    private String songCoverArt;
     private View.OnClickListener playListener;
 
     SongModel(Song song) {
       mSong = song;
-      songId = song.getId();
-      songLink = song.getLink();
       songTitle = song.getTitle();
-      songArtist = song.getArtist();
-      songCoverArt = song.getCoverArt();
       playListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-          songToDownload = mSong;
           mActivity.loadSong(mSong);
         }
       };
@@ -374,14 +365,6 @@ public class ExploreFragment extends Fragment {
       super.unbind(holder);
 
       holder.itemView.setOnClickListener(null);
-    }
-  }
-
-  private class DividerModel extends EpoxyModel {
-
-    @Override
-    protected int getDefaultLayout() {
-      return R.layout.item_divider;
     }
   }
 

@@ -4,11 +4,11 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.BottomSheetDialogFragment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -108,31 +108,23 @@ public class PlayingQueueFragment extends BottomSheetDialogFragment {
   private class PlayingQueueSongModel extends EpoxyModelWithHolder<PlayingQueueSongHolder> {
 
     private PlayableSong song;
-    private String songId;
-    private File songPath;
     private int songIndex = -1;
     private int songDurationInMs = 0;
     private String songTitle;
-    private String songArtist;
-    private String songCoverArt;
     private boolean isCurrentSong;
 
     private View.OnClickListener onClickListener;
 
     PlayingQueueSongModel(final PlayableSong playableSong, boolean isCurrentSong) {
       song = playableSong;
-      songId = song.getId();
-      songPath = song.getPath();
       songIndex = playingQueueSongs.indexOf(playableSong);
       songDurationInMs = song.getDurationInMs();
       songTitle = song.getTitle();
-      songArtist = song.getArtist();
-      songCoverArt = song.getCoverArt();
       this.isCurrentSong = isCurrentSong;
       onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-          mActivity.loadSong(playableSong, playlistId);
+          mActivity.loadSong(songIndex, playlistId);
           dismiss();
         }
       };

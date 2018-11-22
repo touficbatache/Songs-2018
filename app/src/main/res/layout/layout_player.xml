@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,7 +9,7 @@
     android:paddingTop="24dp"
     android:theme="@style/PlayerTheme">
 
-    <android.support.constraint.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/player_top_controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -69,9 +69,9 @@
 
         </LinearLayout>
 
-    </android.support.constraint.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <android.support.v7.widget.RecyclerView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/player_cover_arts_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -219,7 +219,7 @@
 
     </LinearLayout>
 
-    <ImageButton
+    <ml.toufic.songs.views.RepeatToggleView
         android:id="@+id/player_repeat_btn"
         android:layout_width="72dp"
         android:layout_height="72dp"
@@ -229,7 +229,6 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:padding="22dp"
         android:scaleType="fitCenter"
-        android:tint="@color/grey_c0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/player_progress_text"
         app:srcCompat="@drawable/ic_repeat_24dp"
@@ -303,4 +302,4 @@
         app:srcCompat="@drawable/ic_shuffle_24dp"
         tools:ignore="MissingPrefix" />
 
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

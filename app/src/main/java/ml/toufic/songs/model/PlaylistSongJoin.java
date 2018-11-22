@@ -1,10 +1,10 @@
 package ml.toufic.songs.model;
 
-import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.ForeignKey;
-import android.support.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.ForeignKey;
+import androidx.annotation.NonNull;
 
-import static android.arch.persistence.room.ForeignKey.CASCADE;
+import static androidx.room.ForeignKey.CASCADE;
 
 @Entity(tableName = "playlist_song_join",
         primaryKeys = { "playlistId", "songId" },

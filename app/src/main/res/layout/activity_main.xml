@@ -17,7 +17,7 @@
         sothree:umanoPanelHeight="@dimen/sliding_layout_height"
         sothree:umanoShadowHeight="4dp">
 
-        <android.support.constraint.ConstraintLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -37,7 +37,7 @@
                 sothree:layout_constraintEnd_toEndOf="parent"
                 sothree:layout_constraintBottom_toBottomOf="parent"/>
 
-        </android.support.constraint.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!--<FrameLayout-->
             <!--android:id="@+id/sliding_panel"-->
@@ -59,7 +59,7 @@
 
     </com.sothree.slidinguppanel.SlidingUpPanelLayout>
 
-    <android.support.design.widget.BottomNavigationView
+    <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -1,16 +1,20 @@
 package ml.toufic.songs.ui.activities;
 
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
+
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.BottomNavigationView;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
 import android.view.MenuItem;
-import android.view.View;
 
 import com.downloader.PRDownloader;
 import com.downloader.PRDownloaderConfig;
@@ -68,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
           break;
 
         case R.id.navigation_my_music:
+          closeSearch();
           fragment = mMyMusicFragment;
           break;
       }
@@ -128,8 +133,7 @@ public class MainActivity extends AppCompatActivity {
       public void onChanged(@Nullable final List<PlaylistSongJoin> playlistSongJoins) {
         // Update the cached copy of the songs in the adapter.
         mMyMusicFragment.loadMyMusicPlaylists();
-        mMyMusicFragment.updateSongsInPlaylist();
-        mPlayerFragment.updateVisuals();
+//        mPlayerFragment.updateVisuals();
       }
     });
 
@@ -299,19 +303,14 @@ public class MainActivity extends AppCompatActivity {
 
   @Override
   public void onBackPressed() {
+    if (mSlidingPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
+      mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+      return;
+    }
+
     MaterialSearchView searchView = findViewById(R.id.search_view);
     if (searchView.isSearchOpen()) {
       searchView.closeSearch();
-      return;
-    }
-
-    if(mSlidingPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED && getSupportFragmentManager().getBackStackEntryCount() > 0) {
-      finishLyricsFragment();
-      return;
-    }
-
-    if (mSlidingPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
-      mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
       return;
     }
 
@@ -323,11 +322,6 @@ public class MainActivity extends AppCompatActivity {
     super.onBackPressed();
   }
 
-  public void finishLyricsFragment() {
-    getSupportFragmentManager().popBackStack();
-    mSlidingPanelLayout.setTouchEnabled(true);
-  }
-
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
@@ -337,11 +331,15 @@ public class MainActivity extends AppCompatActivity {
     return super.onOptionsItemSelected(item);
   }
 
-  public void loadSong(PlayableSong playableSong, String playlistId) {
-    mPlayerFragment.loadSong(playableSong, playlistId);
+  public void loadSong(int index, String playlistId) {
+    mPlayerFragment.loadSong(index, playlistId);
   }
 
   public void loadSong(Song remoteSong) {
     mPlayerFragment.loadSong(remoteSong);
+  }
+
+  public void closeSearch() {
+    ((MaterialSearchView) findViewById(R.id.search_view)).closeSearch();
   }
 }
