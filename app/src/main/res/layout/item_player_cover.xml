@@ -18,6 +18,7 @@
         app:layout_constraintStart_toStartOf="@id/player_cover_background_disc"
         app:layout_constraintTop_toTopOf="@id/player_cover_background_disc" />
 
+    <!--70dp-->
     <com.facebook.drawee.view.SimpleDraweeView
         android:id="@+id/player_cover_background_disc"
         android:layout_width="match_parent"

@@ -16,6 +16,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 ext {
@@ -41,8 +45,8 @@ dependencies {
     implementation 'me.zhanghai.android.materialprogressbar:library:1.6.0'
     implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
     implementation 'org.jsoup:jsoup:1.11.2'
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.7.3'
-    implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.7.3'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.9.1'
+    implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.9.1'
 
     // Room components
     implementation 'androidx.room:room-runtime:2.1.0-alpha02'

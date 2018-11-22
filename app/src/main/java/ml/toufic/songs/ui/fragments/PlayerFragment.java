@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SnapHelper;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -95,8 +96,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   private List<PlayableSong> mShuffledPlayingQueue = new ArrayList<>();
   private boolean isPlayingQueueShuffled = false;
 
-  private boolean isRemoteSongPlaying = false;
-  private boolean isRemoteSongLooping = false;
   private Song mPlayerRemoteSong;
 
   private ImageButton mPlayerArrowDown;
@@ -594,6 +593,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     }
     ConcatenatingMediaSource concatenatingMediaSource = new ConcatenatingMediaSource(playlist);
     mPlayerExoPlayer.prepare(concatenatingMediaSource);
+
     mPlayerExoPlayer.addListener(new Player.EventListener() {
       @Override
       public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
@@ -643,6 +643,10 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
             });
             break;
         }
+
+        if(!playWhenReady) {
+          pauseSong();
+        }
       }
 
       @Override
@@ -679,7 +683,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
       }
     });
-    mPlayerExoPlayer.setAudioAttributes(audioAttributes);
+    mPlayerExoPlayer.setAudioAttributes(audioAttributes, true);
 
     mPlayerSongProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
@@ -748,7 +752,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   }
 
   public void loadSong(final int index, final String playlistId) {
-    isRemoteSongPlaying = false;
     mActivity.updateSongWithResetAll(getCurrentPlayingQueue().get(index), new MainActivity.OnLastClickedUpdateCompletion() {
       @Override
       public void onCompletion() {
@@ -839,19 +842,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       @Override
       public void onClick(View view) {
         mPlayerAddToPlaylistBtn.switchState();
-      }
-    });
-
-    mPlayerRepeatBtn.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View view) {
-        if (!isRemoteSongLooping) {
-          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_67));
-          isRemoteSongLooping = true;
-        } else {
-          mPlayerRepeatBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
-          isRemoteSongLooping = false;
-        }
       }
     });
 
@@ -1064,7 +1054,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       return;
     }
     destroy();
-    isRemoteSongPlaying = true;
 
     updateRemoteSong(remoteSong);
     updateRemoteSongRecyclerView();
