@@ -954,7 +954,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
       }
     });
-    mPlayerExoPlayer.setAudioAttributes(audioAttributes);
+    mPlayerExoPlayer.setAudioAttributes(audioAttributes, true);
 
     mPlayerSongProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
@@ -977,72 +977,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       }
     });
   }
-
-//  private void updateMediaPlayer(String songUrl) {
-//    mPlayerExoPlayer = new MediaPlayer();
-//    mPlayerExoPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-//    try {
-//      mPlayerExoPlayer.setDataSource(songUrl);
-//      mPlayerExoPlayer.prepare();
-//    } catch (IOException e) {
-//      e.printStackTrace();
-//    }
-//    mPlayerExoPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-//      @Override
-//      public void onPrepared(MediaPlayer mediaPlayer) {
-//        setPlayerLoading(false);
-//        mPlayerPrevBtn.setEnabled(false);
-//        setColorEnabled(mPlayerPrevBtn, false);
-//        mPlayerNextBtn.setEnabled(false);
-//        setColorEnabled(mPlayerNextBtn, false);
-//        mPlayerShuffleBtn.setEnabled(false);
-//
-//        DecimalFormat progressFormat = new DecimalFormat("00");
-//        String minutes = progressFormat.format(mPlayerExoPlayer.getDuration() / 1000 / 60);
-//        String seconds = progressFormat.format(mPlayerExoPlayer.getDuration() / 1000 % 60);
-//        mPlayerSongProgressTotal.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
-//        mPlayerSongProgress.setMax(mediaPlayer.getDuration());
-//      }
-//    });
-//
-//    mPlayerExoPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-//      @Override
-//      public void onCompletion(MediaPlayer mediaPlayer) {
-//        if (!isRemoteSongLooping) {
-//          mPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
-//          mMiniPlayerPlayToPauseBtn.animateToFirstState(); //play icon: paused
-//          mPlayerExoPlayer.seekTo(0);
-//        } else {
-//          mPlayerExoPlayer.seekTo(0);
-//          mPlayerExoPlayer.start();
-//        }
-//      }
-//    });
-//
-//    mPlayerSongProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-//      @Override
-//      public void onProgressChanged(SeekBar seekBar, int progress, boolean input) {
-//        if (input) {
-//          mPlayerExoPlayer.seekTo(progress - 1);
-//        }
-//        DecimalFormat formatter = new DecimalFormat("00");
-//        String minutes = formatter.format(progress / 1000 / 60);
-//        String seconds = formatter.format(progress / 1000 % 60);
-//        mPlayerSongProgressCurrent.setText(String.format(getResources().getString(R.string.player_progress_text), minutes, seconds));
-//      }
-//
-//      @Override
-//      public void onStartTrackingTouch(SeekBar seekBar) {
-//
-//      }
-//
-//      @Override
-//      public void onStopTrackingTouch(SeekBar seekBar) {
-//
-//      }
-//    });
-//  }
-
+  
   public void loadSong(Song remoteSong) {
     if (mActivity.hasSong(remoteSong.getId())) {
       List<PlayableSong> playlist = mActivity.getSongsForPlaylist(PLAYLIST_DOWNLOADS_ID);
