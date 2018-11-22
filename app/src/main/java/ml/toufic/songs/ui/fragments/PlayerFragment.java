@@ -644,7 +644,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
             break;
         }
 
-        if(!playWhenReady) {
+        if (!playWhenReady) {
           pauseSong();
         }
       }
@@ -918,6 +918,10 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
             mPlayerShuffleBtn.setEnabled(false);
             mPlayerRepeatBtn.setEnabled(false);
         }
+
+        if (!playWhenReady) {
+          pauseSong();
+        }
       }
 
       @Override
@@ -977,12 +981,12 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       }
     });
   }
-  
+
   public void loadSong(Song remoteSong) {
     if (mActivity.hasSong(remoteSong.getId())) {
       List<PlayableSong> playlist = mActivity.getSongsForPlaylist(PLAYLIST_DOWNLOADS_ID);
-      for(int i=0; i<playlist.size(); i++) {
-        if(playlist.get(i).getId().equals(remoteSong.getId())) {
+      for (int i = 0; i < playlist.size(); i++) {
+        if (playlist.get(i).getId().equals(remoteSong.getId())) {
           loadSong(i, PLAYLIST_DOWNLOADS_ID);
         }
       }
