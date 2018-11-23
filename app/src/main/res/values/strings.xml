@@ -19,12 +19,15 @@
     <string name="delete_song">Delete song</string>
     <string name="delete_song_warning">Are you sure you want to delete this song? This action cannot be undone!</string>
     <string name="add">Add</string>
-    <string name="download_failed_error">Oops, we couldn\'t download your song. Please try again later</string>
     <string name="download_started_for_TITLE">Download started for %s</string>
+    <string name="download_cancelled">Download cancelled</string>
+    <string name="download_failed_error">Oops, we couldn\'t download your song. Please try again later</string>
+    <string name="download_finished_for_TITLE">%s has been downloaded! Go to "My Music" to play it</string>
     <string name="favorites">Favorites</string>
     <string name="downloads">Downloads</string>
     <string name="playlist_created_successfully">Playlist created successfully!</string>
     <string name="create">Create</string>
     <string name="playlists">Playlists</string>
     <string name="NUMBER_songs">%d songs</string>
+    <string name="save">Save</string>
 </resources>

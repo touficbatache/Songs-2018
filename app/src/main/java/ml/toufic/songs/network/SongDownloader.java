@@ -10,6 +10,7 @@ import com.downloader.OnProgressListener;
 import com.downloader.OnStartOrResumeListener;
 import com.downloader.PRDownloader;
 import com.downloader.Progress;
+import com.downloader.utils.Utils;
 
 import at.huber.youtubeExtractor.VideoMeta;
 import at.huber.youtubeExtractor.YouTubeExtractor;
@@ -54,7 +55,6 @@ public class SongDownloader {
   }
 
   private static void startDownload(final Context context, final Song song, final String url, final SongDownloaderCallback callback) {
-
     String dirPath = DeviceUtils.getInternalFilesSongsDir(context).getPath();
     final String fileName = SongUtils.getSongFileName(song.getId());
     PRDownloader.download(url, dirPath, fileName)
@@ -62,7 +62,7 @@ public class SongDownloader {
       .setOnStartOrResumeListener(new OnStartOrResumeListener() {
         @Override
         public void onStartOrResume() {
-          callback.onStartOrResume(song.getTitle());
+          callback.onStartOrResume(Utils.getUniqueId(url, dirPath, fileName), song.getTitle());
         }
       })
       .setOnProgressListener(new OnProgressListener() {
@@ -85,13 +85,17 @@ public class SongDownloader {
       });
   }
 
+  public static void cancelDownload(int downloadId) {
+    PRDownloader.cancel(downloadId);
+  }
+
   public interface SongURLFetcherCallback {
     // method called when server's data get fetched
     void onSuccess(YtFile songFile);
   }
 
   public interface SongDownloaderCallback {
-    void onStartOrResume(String songTitle);
+    void onStartOrResume(int downloadId, String songTitle);
 
     void onProgress(Progress progress);
 
