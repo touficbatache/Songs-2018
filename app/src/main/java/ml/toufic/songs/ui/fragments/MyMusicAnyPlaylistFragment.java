@@ -165,7 +165,7 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
     if (mActivity != null) {
       playlistSongs = mActivity.getSongsForPlaylist(playlistId);
 
-      for (Iterator<PlayableSong> playableSongsIterator = playlistSongs.iterator(); playableSongsIterator.hasNext(); ) {
+      for (Iterator<PlayableSong> playableSongsIterator = playlistSongs.iterator(); playableSongsIterator.hasNext();) {
         PlayableSong playableSong = playableSongsIterator.next();
         if (!playableSong.getPath().exists()) {
           playableSongsIterator.remove(); //TODO: Don't remove the song, just tell the user that the song can't be played and ask him if he wants to re-download it.

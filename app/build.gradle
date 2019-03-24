@@ -47,6 +47,8 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.11.2'
     implementation 'com.google.android.exoplayer:exoplayer-core:2.9.1'
     implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.9.1'
+    implementation 'com.squareup.retrofit2:retrofit:2.5.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
 
     // Room components
     implementation 'androidx.room:room-runtime:2.1.0-alpha02'

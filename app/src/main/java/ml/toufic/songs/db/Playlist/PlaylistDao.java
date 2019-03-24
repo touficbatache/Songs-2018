@@ -30,12 +30,6 @@ public interface PlaylistDao {
   @Query("SELECT * FROM playlists ORDER BY creationdate ASC")
   LiveData<List<Playlist>> getAllPlaylistsLive();
 
-  @Query("UPDATE playlists SET lastOpened = 0 WHERE id != :playlistId")
-  void resetAllPlaylistsExcept(String playlistId);
-
-  @Query("SELECT * FROM playlists WHERE lastOpened = 1")
-  Playlist getLastOpenedPlaylist();
-
   @Delete
   void delete(Playlist playlist);
 

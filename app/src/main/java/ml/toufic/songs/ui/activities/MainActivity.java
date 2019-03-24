@@ -28,9 +28,11 @@ import java.util.Date;
 import java.util.List;
 
 import ml.toufic.songs.R;
+import ml.toufic.songs.db.LastPlayed.LastPlayedViewModel;
 import ml.toufic.songs.db.PlaylistSongJoin.PlaylistSongJoinViewModel;
 import ml.toufic.songs.db.Playlist.PlaylistViewModel;
 import ml.toufic.songs.db.Song.SongViewModel;
+import ml.toufic.songs.model.LastPlayed;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.Playlist;
 import ml.toufic.songs.model.PlaylistSongJoin;
@@ -51,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
   private SongViewModel mSongViewModel;
   private PlaylistViewModel mPlaylistViewModel;
   private PlaylistSongJoinViewModel mPlaylistSongJoinViewModel;
+  private LastPlayedViewModel mLastPlayedViewModel;
 
   private ExploreFragment mExploreFragment;
   private MyMusicFragment mMyMusicFragment;
@@ -137,6 +140,8 @@ public class MainActivity extends AppCompatActivity {
       }
     });
 
+    mLastPlayedViewModel = ViewModelProviders.of(this).get(LastPlayedViewModel.class);
+
     insertPlaylist(new Playlist(PLAYLIST_LIKES_ID, getString(R.string.favorites), new Date()));
     insertPlaylist(new Playlist(PLAYLIST_DOWNLOADS_ID, getString(R.string.downloads), new Date()));
   }
@@ -205,14 +210,6 @@ public class MainActivity extends AppCompatActivity {
 
   public List<Playlist> getAllPlaylists() {
     return mPlaylistViewModel.getAllPlaylists();
-  }
-
-  public void setLastOpenedPlaylist(Playlist playlist) {
-    mPlaylistViewModel.updatePlaylistWithResetAll(playlist);
-  }
-
-  public Playlist getLastOpenedPlaylist() {
-    return mPlaylistViewModel.getLastOpenedPlaylist();
   }
 
   public boolean hasPlaylist(String playlistId) {
@@ -299,6 +296,14 @@ public class MainActivity extends AppCompatActivity {
 
   public void removeSongFromPlaylist(String playlistId, String songId) {
     mPlaylistSongJoinViewModel.remove(playlistId, songId);
+  }
+
+  public void setLastPlayed(LastPlayed lastPlayed) {
+    mLastPlayedViewModel.setLastPlayed(lastPlayed);
+  }
+
+  public LastPlayed getLastPlayed() {
+    return mLastPlayedViewModel.getLastPlayed();
   }
 
   @Override

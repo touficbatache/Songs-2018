@@ -45,15 +45,6 @@ public class PlaylistRepository {
     return mAllPlaylists;
   }
 
-  public void updatePlaylistWithResetAll(Playlist playlist, MainActivity.OnLastClickedUpdateCompletion completionCallback) {
-    new resetAllPlaylistsExceptAsyncTask(mPlaylistDao).execute(playlist.getId());
-    new updateAsyncTask(mPlaylistDao, completionCallback).execute(playlist);
-  }
-
-  Playlist getLastOpenedPlaylist() {
-    return mPlaylistDao.getLastOpenedPlaylist();
-  }
-
   public void delete(Playlist playlist) {
     new deleteAsyncTask(mPlaylistDao).execute(playlist);
   }
@@ -107,21 +98,6 @@ public class PlaylistRepository {
       if(completionCallback != null) {
         completionCallback.onCompletion();
       }
-    }
-  }
-
-  private static class resetAllPlaylistsExceptAsyncTask extends AsyncTask<String, Void, Void> {
-
-    private PlaylistDao mAsyncTaskDao;
-
-    resetAllPlaylistsExceptAsyncTask(PlaylistDao dao) {
-      mAsyncTaskDao = dao;
-    }
-
-    @Override
-    protected Void doInBackground(String... params) {
-      mAsyncTaskDao.resetAllPlaylistsExcept(params[0]);
-      return null;
     }
   }
 

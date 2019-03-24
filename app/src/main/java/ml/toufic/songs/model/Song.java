@@ -28,7 +28,7 @@ public class Song {
 
   public Song(@NonNull String id, String title, String artist, String coverArt) {
     this.id = id;
-    this.link = "https://www.youtube.com/watch?v=" + id;
+    this.link = String.format("https://www.youtube.com/watch?v=%s", id);
     this.title = title;
     this.artist = artist;
     this.coverArt = coverArt;

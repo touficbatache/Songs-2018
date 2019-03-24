@@ -1,25 +1,15 @@
 package ml.toufic.songs.ui.activities;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import ml.toufic.songs.R;
-import ml.toufic.songs.network.HTMLDataFetcher;
-import ml.toufic.songs.network.JSONObjectDataFetcher;
-
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.airbnb.epoxy.EpoxyAdapter;
 import com.airbnb.epoxy.EpoxyHolder;
 import com.airbnb.epoxy.EpoxyModelWithHolder;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.jsoup.nodes.Document;
 
 import java.util.ArrayList;
@@ -27,7 +17,19 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static ml.toufic.songs.util.SongUtils.AS_API_KEY;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import ml.toufic.songs.R;
+import ml.toufic.songs.api.LyricsApiClient;
+import ml.toufic.songs.api.LyricsApiInterface;
+import ml.toufic.songs.model.SongLyricsResponse;
+import ml.toufic.songs.network.HTMLDataFetcher;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class LyricsActivity extends AppCompatActivity {
 
@@ -64,62 +66,40 @@ public class LyricsActivity extends AppCompatActivity {
   }
 
   private void fetchSongInfo() {
-    final String searchTitle = removeParenthesis(songTitle).replace("HD", "").replace("-", "");
-    JSONObjectDataFetcher songInfoFetcher = new JSONObjectDataFetcher("http://ws.audioscrobbler.com/2.0/?method=track.search&track=" + searchTitle + "&api_key=" + AS_API_KEY + "&format=json", new JSONObjectDataFetcher.JSONDataFetcherCallback() {
+    Retrofit retrofit = LyricsApiClient.getRetrofitClient();
+    LyricsApiInterface apiInterface = retrofit.create(LyricsApiInterface.class);
+
+    String searchTitle = removeParenthesis(songTitle).replace("HD", "").replace("-", "");
+    Call<SongLyricsResponse> call = apiInterface.getSongInfo(searchTitle);
+    call.enqueue(new Callback<SongLyricsResponse>() {
       @Override
-      public void onSuccess(JSONObject result) {
-        try {
-          JSONArray allTracks = result.getJSONObject("results").getJSONObject("trackmatches").getJSONArray("track");
+      public void onResponse(@NonNull Call<SongLyricsResponse> call, @NonNull Response<SongLyricsResponse> response) {
+        if (response.body() != null) {
+          List<SongLyricsResponse.Track> allTracks = response.body().results.trackMatches.tracks;
+
           List<Double> matches = new ArrayList<>();
-          for(int i=0; i<allTracks.length(); i++) {
-            int nameMatch = findMatchInPercent(searchTitle, allTracks.getJSONObject(i).get("name").toString());
-            int artistMatch = findMatchInPercent(searchTitle, allTracks.getJSONObject(i).get("artist").toString());
+          for (SongLyricsResponse.Track track : allTracks) {
+            int nameMatch = findMatchInPercent(searchTitle, track.name);
+            int artistMatch = findMatchInPercent(searchTitle, track.artist);
             double finalResult = (nameMatch + (artistMatch * 0.5)) / 1.5;
             matches.add(finalResult);
           }
 
-          JSONObject track = allTracks.getJSONObject(matches.indexOf(Collections.max(matches)));
-          final String trackName = removeParenthesis(track.get("name").toString()).split("ft")[0].replace(" " , "_").trim();
-          final String trackArtist = removeParenthesis(track.get("artist").toString()).split("ft")[0].trim().replace(" " , "_").trim(); //.split(" ")[0]
-          fetchLyrics(trackArtist, trackName, new LyricFetcherCallback() {
-            @Override
-            public void onSuccess(String lyrics) {
-              List<String> arrayLyrics = new ArrayList<>(Arrays.asList(lyrics.split("\\n")));
-              for(int i=0; i<arrayLyrics.size(); i++) {
-                mLyricAdapter.addLyricLine(arrayLyrics.get(i));
-              }
-            }
-
-            @Override
-            public void onError(String error) {
-              fetchLyrics(trackName, trackArtist, new LyricFetcherCallback() {
-                @Override
-                public void onSuccess(String lyrics) {
-                  List<String> arrayLyrics = new ArrayList<>(Arrays.asList(lyrics.split("\\n")));
-                  for(int i=0; i<arrayLyrics.size(); i++) {
-                    mLyricAdapter.addLyricLine(arrayLyrics.get(i));
-                  }
-                }
-
-                @Override
-                public void onError(String error) {
-
-                }
-              });
-            }
-          });
-        } catch (JSONException e) {
-          e.printStackTrace();
+          SongLyricsResponse.Track track = allTracks.get(matches.indexOf(Collections.max(matches)));
+          final String trackName = removeParenthesis(track.name).split("ft")[0].replace(" ", "_").trim();
+          final String trackArtist = removeParenthesis(track.artist).split("ft")[0].trim().replace(" ", "_").trim(); //.split(" ")[0]
+          fetchLyrics(trackArtist, trackName);
         }
       }
 
       @Override
-      public void onError() {}
+      public void onFailure(@NonNull Call<SongLyricsResponse> call, @NonNull Throwable t) {
+        Toast.makeText(mContext, "Failed fetching lyrics", Toast.LENGTH_SHORT).show();
+      }
     });
-    songInfoFetcher.execute();
   }
 
-  private void fetchLyrics(String artist, String song, final LyricFetcherCallback lyricFetcherCallback) {
+  private void fetchLyrics(String artist, String song) {
     String url = "http://lyrics.wikia.com/wiki/" + artist + ":" + song;
 
     HTMLDataFetcher lyricsHTMLFetch = new HTMLDataFetcher(mContext, url, new HTMLDataFetcher.HTMLDataFetcherCallback() {
@@ -136,26 +116,23 @@ public class LyricsActivity extends AppCompatActivity {
         // remove all tags
         lyrics = lyrics.replaceAll("<[^>]*>", "");
 
-        if(!lyrics.equals("")){
-          lyricFetcherCallback.onSuccess(lyrics);
-        }
-        else{
-          lyricFetcherCallback.onError("Not found");
+        if (!lyrics.equals("")) {
+          List<String> arrayLyrics = new ArrayList<>(Arrays.asList(lyrics.split("\\n")));
+          for (int i = 0; i < arrayLyrics.size(); i++) {
+            mLyricAdapter.addLyricLine(arrayLyrics.get(i));
+          }
+        } else {
+          Toast.makeText(mContext, "No lyrics found", Toast.LENGTH_SHORT).show();
         }
 
       }
 
       @Override
       public void onError() {
-        lyricFetcherCallback.onError("");
+        Toast.makeText(mContext, "Failed fetching lyrics", Toast.LENGTH_SHORT).show();
       }
     });
     lyricsHTMLFetch.execute();
-  }
-
-  interface LyricFetcherCallback {
-    void onSuccess(String lyrics);
-    void onError(String error);
   }
 
   private String removeParenthesis(String string) {
@@ -209,8 +186,8 @@ public class LyricsActivity extends AppCompatActivity {
     int wordsLength = subject.split("\\s+").length;
 
     List<String> subjectKeywords = new ArrayList<>(Arrays.asList(subject.split("\\s+")));
-    for(int i=0; i<subjectKeywords.size(); i++) {
-      if(source.contains(subjectKeywords.get(i))) {
+    for (int i = 0; i < subjectKeywords.size(); i++) {
+      if (source.contains(subjectKeywords.get(i))) {
         wordsInCommon++;
       }
     }
@@ -230,6 +207,6 @@ public class LyricsActivity extends AppCompatActivity {
 //      }
 //    }
 
-    return wordsInCommon*100/wordsLength;
+    return wordsInCommon * 100 / wordsLength;
   }
 }

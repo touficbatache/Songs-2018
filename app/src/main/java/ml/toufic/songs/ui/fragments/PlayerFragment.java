@@ -56,6 +56,7 @@ import com.google.android.exoplayer2.upstream.FileDataSource;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -64,6 +65,7 @@ import at.huber.youtubeExtractor.YtFile;
 import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 import ml.toufic.songs.R;
 import ml.toufic.songs.db.Song.SongViewModel;
+import ml.toufic.songs.model.LastPlayed;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.PlayerCoverModel;
 import ml.toufic.songs.model.Playlist;
@@ -92,12 +94,13 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   private View mRootView;
 
   private List<PlayableSong> mPlayingQueue = new ArrayList<>();
-  private Playlist mPlayerPlaylist;
+  private int mCurrentSongIndex;
+  private String mCurrentPlaylistId;
   private boolean isPlayerPlaying = false;
-  private List<PlayableSong> mShuffledPlayingQueue = new ArrayList<>();
-  private boolean isPlayingQueueShuffled = false;
 
   private Song mPlayerRemoteSong;
+
+  private LastPlayed mLastPlayed;
 
   private ImageButton mPlayerArrowDown;
   private ImageButton mPlayerSeePlayingQueue;
@@ -147,8 +150,9 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
     /* Initialize player & mini player */
     initializePlayer();
-    if (isLastOpenedPlaylistGood()) {
-      prepareForPlaying(mActivity.getLastOpenedPlaylist().getId());
+    mLastPlayed = mActivity.getLastPlayed();
+    if (isLastPlayedOK()) {
+      prepareForPlaying(mLastPlayed.getPlaylistId());
     }
 
     return mRootView;
@@ -199,35 +203,24 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     snapHelper.attachToRecyclerView(mPlayerRecyclerView);
   }
 
-  private boolean isLastOpenedPlaylistGood() {
-    mPlayerPlaylist = mActivity.getLastOpenedPlaylist();
-
+  private boolean isLastPlayedOK() {
     boolean isPlaylistOK = false;
-    if (mPlayerPlaylist != null) {
+    if (mLastPlayed != null) {
+      mCurrentSongIndex = mLastPlayed.getSongIndex();
+      mCurrentPlaylistId = mLastPlayed.getPlaylistId();
       isPlaylistOK = true;
     }
     return isPlaylistOK;
   }
 
-  private List<PlayableSong> getCurrentPlayingQueue() {
-    List<PlayableSong> mCurrentPlayingQueue;
-    if (!isPlayingQueueShuffled) {
-      mCurrentPlayingQueue = mPlayingQueue;
-    } else {
-      mCurrentPlayingQueue = mShuffledPlayingQueue;
-    }
-    return mCurrentPlayingQueue;
-  }
-
   private void prepareForPlaying(String playlistId) {
-    setPlayingQueue(playlistId);
-    updateExoPlayer(mPlayingQueue);
-    updatePlayer(mPlayerExoPlayer.getCurrentPeriodIndex());
+    initPlayingQueue(playlistId);
+    initExoPlayer(mPlayingQueue);
+    mPlayerExoPlayer.seekTo(mCurrentSongIndex, C.TIME_UNSET);
     updateCoversInRecyclerView();
-    mActivity.setLastOpenedPlaylist(mActivity.getPlaylist(playlistId));
   }
 
-  private void setPlayingQueue(String playlistId) {
+  private void initPlayingQueue(String playlistId) {
     mPlayingQueue = new ArrayList<>();
     List<PlayableSong> playlistSongs = mActivity.getSongsForPlaylist(playlistId);
     for (int i = 0; i < playlistSongs.size(); i++) {
@@ -239,13 +232,14 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     }
   }
 
-  private void updateExoPlayer(List<PlayableSong> playingQueue) {
+  private void initExoPlayer(List<PlayableSong> playingQueue) {
     AudioAttributes audioAttributes = new AudioAttributes.Builder()
       .setUsage(C.USAGE_MEDIA)
       .setContentType(C.CONTENT_TYPE_MOVIE)
       .build();
 
     mPlayerExoPlayer = ExoPlayerFactory.newSimpleInstance(mContext, new DefaultTrackSelector());
+
     MediaSource[] playlist = new MediaSource[playingQueue.size()];
     for (int i = 0; i < playingQueue.size(); i++) {
       Uri uri = Uri.fromFile(playingQueue.get(i).getPath());
@@ -262,7 +256,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
       @Override
       public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
+        mPlayerRecyclerView.smoothScrollToPosition(mPlayerExoPlayer.getCurrentPeriodIndex());
       }
 
       @Override
@@ -279,7 +273,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
             break;
 
           case Player.STATE_READY:
-            updatePlayer(mPlayerExoPlayer.getCurrentPeriodIndex());
+            updatePlayer(mCurrentSongIndex);
             setProgress();
 
             final boolean repeating = mPlayerExoPlayer.getRepeatMode() == Player.REPEAT_MODE_ONE || mPlayerExoPlayer.getRepeatMode() == Player.REPEAT_MODE_ALL;
@@ -301,10 +295,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
             });
             break;
         }
-
-        if (!playWhenReady) {
-          pauseSong();
-        }
       }
 
       @Override
@@ -315,7 +305,23 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
       @Override
       public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+        if(shuffleModeEnabled) {
+          Collections.shuffle(mPlayingQueue);
+        } else {
+          initPlayingQueue(mCurrentPlaylistId);
+        }
 
+        MediaSource[] playlist = new MediaSource[playingQueue.size()];
+        for (int i = 0; i < playingQueue.size(); i++) {
+          Uri uri = Uri.fromFile(playingQueue.get(i).getPath());
+          playlist[i] = new ExtractorMediaSource.Factory(getSongFactory(uri)).setExtractorsFactory(new DefaultExtractorsFactory()).createMediaSource(getSongFactory(uri).createDataSource().getUri());
+        }
+        ConcatenatingMediaSource concatenatingMediaSource = new ConcatenatingMediaSource(playlist);
+        mPlayerExoPlayer.prepare(concatenatingMediaSource);
+
+        mPlayerExoPlayer.seekTo(mCurrentSongIndex, C.TIME_UNSET);
+
+        updateCoversInRecyclerView();
       }
 
       @Override
@@ -326,8 +332,8 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       @Override
       public void onPositionDiscontinuity(int reason) {
         if (reason == Player.DISCONTINUITY_REASON_PERIOD_TRANSITION) {
-          mPlayerRecyclerView.smoothScrollToPosition(mPlayerExoPlayer.getCurrentPeriodIndex());
-          updatePlayer(mPlayerExoPlayer.getCurrentPeriodIndex());
+          mPlayerRecyclerView.smoothScrollToPosition(mCurrentSongIndex);
+          updatePlayer(mCurrentSongIndex);
         }
       }
 
@@ -349,8 +355,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
         if (fromUser) {
           mPlayerExoPlayer.seekTo(progress * 1000);
         }
-        // We're not interested in programmatically generated changes to
-        // the progress bar's position.
       }
 
       @Override
@@ -387,7 +391,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     mPlayerSeePlayingQueue.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(mPlayingQueue, currentSong.getId(), mPlayerPlaylist.getId());
+        PlayingQueueFragment playingQueueFragment = PlayingQueueFragment.newInstance(mPlayingQueue, currentSong.getId(), mCurrentPlaylistId);
         playingQueueFragment.show(mActivity.getSupportFragmentManager(),
           "playing_queue_fragment");
       }
@@ -432,10 +436,10 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
           public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
             mActivity.deleteSong(currentSong);
             if (mActivity.getAllSongsAsync().size() >= 1) {
-              if (mPlayerExoPlayer.getCurrentPeriodIndex() - 1 >= 0) {
-                loadSong(mPlayerExoPlayer.getCurrentPeriodIndex() - 1, mPlayerPlaylist.getId());
+              if (mCurrentSongIndex - 1 >= 0) {
+                loadSong(mCurrentSongIndex - 1, mCurrentPlaylistId);
               } else {
-                loadSong(mPlayerExoPlayer.getCurrentPeriodIndex() + 1, mPlayerPlaylist.getId());
+                loadSong(mCurrentSongIndex + 1, mCurrentPlaylistId);
               }
             } else {
               mActivity.mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
@@ -488,7 +492,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
             }
             if (playlistsIdsToAddTo != null && playlistsIdsToAddTo.length > 0) {
               for (Integer index : playlistsIdsToAddTo) {
-                if (index == playlistsIdsToAddTo.length) {
+                if (index == playlistsIdsToAddTo.length - 1) {
                   MaterialDialog.Builder newPlaylistDialog = new MaterialDialog.Builder(mContext);
                   newPlaylistDialog.title(R.string.new_playlist);
                   newPlaylistDialog.inputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
@@ -535,13 +539,13 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     mPlayerPrevBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        if (mPlayerExoPlayer.getCurrentPeriodIndex() == 0) {
+        if (mCurrentSongIndex == 0) {
           mPlayerExoPlayer.seekTo(0);
         } else {
-          if (mPlayerExoPlayer.getCurrentPosition() / 1000 >= 10) {
+          if (mCurrentSongIndex / 1000 >= 10) {
             mPlayerExoPlayer.seekTo(0);
           } else {
-            int previousSongIndex = mPlayerExoPlayer.getCurrentPeriodIndex() - 1;
+            int previousSongIndex = mCurrentSongIndex - 1;
             mPlayerRecyclerView.smoothScrollToPosition(previousSongIndex);
           }
         }
@@ -565,10 +569,10 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     mPlayerNextBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        if (mPlayerExoPlayer.getCurrentPeriodIndex() == mPlayingQueue.size() - 1) {
+        if (mCurrentSongIndex == mPlayingQueue.size() - 1) {
           mPlayerExoPlayer.seekTo(0);
         } else {
-          int nextSongIndex = mPlayerExoPlayer.getCurrentPeriodIndex() + 1;
+          int nextSongIndex = mCurrentSongIndex + 1;
           mPlayerRecyclerView.smoothScrollToPosition(nextSongIndex);
         }
       }
@@ -577,23 +581,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     mPlayerShuffleBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-//        if (!isPlayingQueueShuffled) {
-//          List<PlayableSong> shuffledPlayingQueue = mPlayingQueue;
-//          Collections.shuffle(shuffledPlayingQueue);
-//          for (PlayableSong currentSongInShuffled : shuffledPlayingQueue) {
-//            if (currentSongInShuffled.getId().equals(currentSong.getId())) {
-//              Collections.swap(shuffledPlayingQueue, mPlayerExoPlayer.getCurrentPeriodIndex(), shuffledPlayingQueue.indexOf(currentSongInShuffled));
-//            }
-//          }
-//          updateShuffledPlayingQueue(shuffledPlayingQueue);
-//          isPlayingQueueShuffled = true;
-//          mPlayerShuffleBtn.setColorFilter(getResources().getColor(R.color.grey_67));
-//        } else {
-//          isPlayingQueueShuffled = false;
-//          mPlayerShuffleBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
-//          updateVisuals();
-//        }
-
         boolean shuffleEnabled = !mPlayerExoPlayer.getShuffleModeEnabled();
         mPlayerExoPlayer.setShuffleModeEnabled(shuffleEnabled);
         if (shuffleEnabled) {
@@ -638,15 +625,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     }
   }
 
-  private void updateShuffledPlayingQueue(List<PlayableSong> playableSongsList) {
-    mShuffledPlayingQueue = new ArrayList<>(playableSongsList);
-  }
-
-  private void updateVisuals() {
-    updatePlayer(mPlayerExoPlayer.getCurrentPeriodIndex());
-    updateCoversInRecyclerView();
-  }
-
   private void updateCoversInRecyclerView() {
     mPlayerAdapter.clear();
     for (PlayableSong playableSong : mPlayingQueue) {
@@ -659,7 +637,10 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
         super.onScrollStateChanged(recyclerView, newState);
         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-          mPlayerExoPlayer.seekTo(((LinearLayoutManager) mPlayerRecyclerView.getLayoutManager()).findFirstVisibleItemPosition(), C.TIME_UNSET);
+          int songIndex = ((LinearLayoutManager) mPlayerRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+          mPlayerExoPlayer.seekTo(songIndex, C.TIME_UNSET);
+          mCurrentSongIndex = songIndex;
+          mActivity.setLastPlayed(new LastPlayed(songIndex, mCurrentPlaylistId));
           playSong();
         }
       }
@@ -673,7 +654,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
         new PlayerCoverModel.PlayerCoverCallback() {
           @Override
           public void onLyricsBtnClick() {
-            PlayableSong currentSong = mPlayingQueue.get(mPlayerExoPlayer.getCurrentPeriodIndex());
+            PlayableSong currentSong = mPlayingQueue.get(mCurrentSongIndex);
             Intent lyricsActivityIntent = new Intent(mActivity, LyricsActivity.class);
             lyricsActivityIntent.putExtra(songTitleKey, currentSong.getTitle());
             startActivity(lyricsActivityIntent);
@@ -702,7 +683,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
         new PlayerCoverModel.PlayerCoverCallback() {
           @Override
           public void onLyricsBtnClick() {
-            PlayableSong mPlayerSong = mPlayingQueue.get(mPlayerExoPlayer.getCurrentPeriodIndex());
+            PlayableSong mPlayerSong = mPlayingQueue.get(mCurrentSongIndex);
             Intent lyricsActivityIntent = new Intent(mActivity, LyricsActivity.class);
             lyricsActivityIntent.putExtra(songTitleKey, mPlayerSong.getTitle());
             startActivity(lyricsActivityIntent);
@@ -749,7 +730,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   }
 
   private void setProgress() {
-    mPlayerRecyclerView.scrollToPosition(mPlayerExoPlayer.getCurrentPeriodIndex());
+    mPlayerRecyclerView.scrollToPosition(mCurrentSongIndex);
 
     mPlayerSongProgress.setMax((int) mPlayerExoPlayer.getDuration() / 1000);
     mPlayerSongProgressCurrent.setText(TextUtils.formatMilliseconds(mContext, (int) mPlayerExoPlayer.getCurrentPosition()));
@@ -776,10 +757,13 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   }
 
   public void loadSong(final int index, final String playlistId) {
-    prepareForPlaying(playlistId);
     mActivity.updateSongWithResetAll(mPlayingQueue.get(index), new MainActivity.OnLastClickedUpdateCompletion() {
       @Override
       public void onCompletion() {
+        mActivity.setLastPlayed(new LastPlayed(index, playlistId));
+        mCurrentSongIndex = index;
+        mCurrentPlaylistId = playlistId;
+        prepareForPlaying(playlistId);
         mPlayerExoPlayer.seekTo(index, C.TIME_UNSET);
         playSong();
       }
@@ -902,7 +886,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     mPlayerAdapter.addCoverArt(mPlayerRemoteSong.getCoverArt());
   }
 
-  private void updateExoPlayer(String songUrl) {
+  private void initExoPlayer(String songUrl) {
     AudioAttributes audioAttributes = new AudioAttributes.Builder()
       .setUsage(C.USAGE_MEDIA)
       .setContentType(C.CONTENT_TYPE_MOVIE)
@@ -973,8 +957,8 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       @Override
       public void onPositionDiscontinuity(int reason) {
         if (reason == Player.DISCONTINUITY_REASON_PERIOD_TRANSITION) {
-          mPlayerRecyclerView.smoothScrollToPosition(mPlayerExoPlayer.getCurrentPeriodIndex());
-          updatePlayer(mPlayerExoPlayer.getCurrentPeriodIndex());
+          mPlayerRecyclerView.smoothScrollToPosition(mCurrentSongIndex);
+          updatePlayer(mCurrentSongIndex);
         }
       }
 
@@ -996,8 +980,6 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
         if (fromUser) {
           mPlayerExoPlayer.seekTo(progress * 1000);
         }
-        // We're not interested in programmatically generated changes to
-        // the progress bar's position.
       }
 
       @Override
@@ -1029,7 +1011,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     SongDownloader.fetchSongURL(mContext, remoteSong, new SongDownloader.SongURLFetcherCallback() {
       @Override
       public void onSuccess(YtFile songFile) {
-        updateExoPlayer(songFile.getUrl());
+        initExoPlayer(songFile.getUrl());
         playSong();
       }
     });

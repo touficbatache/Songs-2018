@@ -42,22 +42,6 @@ public class PlaylistViewModel extends AndroidViewModel {
 
   public LiveData<List<Playlist>> getAllPlaylistsLive() { return mAllPlaylists; }
 
-  public void updatePlaylistWithResetAll(Playlist playlist) {
-    updatePlaylistWithResetAll(playlist, new MainActivity.OnLastClickedUpdateCompletion() {
-      @Override
-      public void onCompletion() {}
-    });
-  }
-
-  public void updatePlaylistWithResetAll(Playlist playlist, MainActivity.OnLastClickedUpdateCompletion completionCallback) {
-    playlist.setLastOpened(true);
-    mRepository.updatePlaylistWithResetAll(playlist, completionCallback);
-  }
-
-  public Playlist getLastOpenedPlaylist() {
-    return mRepository.getLastOpenedPlaylist();
-  }
-
   public void delete(Playlist playlist) {
     mRepository.delete(playlist);
   }
