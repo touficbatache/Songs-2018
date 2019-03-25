@@ -2,11 +2,15 @@ package ml.toufic.songs.ui.activities;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.airbnb.epoxy.EpoxyAdapter;
 import com.airbnb.epoxy.EpoxyHolder;
 import com.airbnb.epoxy.EpoxyModelWithHolder;
@@ -18,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -47,8 +52,7 @@ public class LyricsActivity extends AppCompatActivity {
   private Context mContext;
   private LyricAdapter mLyricAdapter;
   private RecyclerView mLyricsRecyclerView;
-  private ImageButton mSaveButton;
-  private ImageButton mDeleteButton;
+  private ImageButton mSaveButton, mDeleteButton, mAddButton;
 
   private LyricsViewModel mLyricsViewModel;
 
@@ -77,6 +81,7 @@ public class LyricsActivity extends AppCompatActivity {
 
     mSaveButton = findViewById(R.id.save_btn);
     mDeleteButton = findViewById(R.id.delete_btn);
+    mAddButton = findViewById(R.id.add_btn);
     mDeleteButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -130,7 +135,8 @@ public class LyricsActivity extends AppCompatActivity {
 
       @Override
       public void onFailure(@NonNull Call<SongLyricsResponse> call, @NonNull Throwable t) {
-        Toast.makeText(mContext, "Failed fetching lyrics", Toast.LENGTH_SHORT).show();
+        showSnackbar("Failed fetching lyrics");
+        showCustomLyrics();
       }
     });
   }
@@ -168,14 +174,15 @@ public class LyricsActivity extends AppCompatActivity {
             }
           });
         } else {
-          Toast.makeText(mContext, "No lyrics found", Toast.LENGTH_SHORT).show();
+          showSnackbar("No lyrics found");
         }
 
       }
 
       @Override
       public void onError() {
-        Toast.makeText(mContext, "Failed fetching lyrics", Toast.LENGTH_SHORT).show();
+        showSnackbar("Failed fetching lyrics");
+        showCustomLyrics();
       }
     });
     lyricsHTMLFetch.execute();
@@ -258,6 +265,46 @@ public class LyricsActivity extends AppCompatActivity {
 //    }
 
     return wordsInCommon * 100 / wordsLength;
+  }
+
+  private void showCustomLyrics() {
+    mAddButton.setVisibility(View.VISIBLE);
+    mAddButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        MaterialDialog.Builder lyricsAddition = new MaterialDialog.Builder(mContext);
+        lyricsAddition.title("Add your own lyrics");
+        lyricsAddition.inputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        lyricsAddition.alwaysCallInputCallback();
+        lyricsAddition.input("Lyrics", null, false, new MaterialDialog.InputCallback() {
+          @Override
+          public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+            if (Objects.equals(input.toString().trim(), "")) {
+              dialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
+            }
+          }
+        });
+        lyricsAddition.cancelable(true);
+        lyricsAddition.positiveText(R.string.save);
+        lyricsAddition.onPositive(new MaterialDialog.SingleButtonCallback() {
+          @Override
+          public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+            List<String> lyrics = new ArrayList<>(Arrays.asList(dialog.getInputEditText().getText().toString().split("\\n")));
+            for (int i = 0; i < lyrics.size(); i++) {
+              mLyricAdapter.addLyricLine(lyrics.get(i));
+            }
+            insertLyrics(new Lyrics(songId, lyrics));
+            mAddButton.setVisibility(View.GONE);
+            mDeleteButton.setVisibility(View.VISIBLE);
+          }
+        });
+        lyricsAddition.negativeText(R.string.cancel);
+        MaterialDialog lyricsAdditionDialog = lyricsAddition.build();
+        lyricsAdditionDialog.getInputEditText().setSingleLine(false);
+        lyricsAdditionDialog.getInputEditText().setImeOptions(EditorInfo.IME_FLAG_NO_ENTER_ACTION);
+        lyricsAdditionDialog.show();
+      }
+    });
   }
 
   private void showSnackbar(String message) {

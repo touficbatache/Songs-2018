@@ -224,8 +224,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   private void initPlayingQueue(String playlistId) {
     mPlayingQueue = new ArrayList<>();
     List<PlayableSong> playlistSongs = mActivity.getSongsForPlaylist(playlistId);
-    for (int i = 0; i < playlistSongs.size(); i++) {
-      PlayableSong playableSong = playlistSongs.get(i);
+    for (PlayableSong playableSong : playlistSongs) {
       MediaPlayer mp = MediaPlayer.create(mContext, Uri.parse(playableSong.getPath().getPath()));
       playableSong.setDurationInMs(mp.getDuration());
       mp.release();
