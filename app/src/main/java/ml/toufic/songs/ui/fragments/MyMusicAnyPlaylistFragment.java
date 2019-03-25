@@ -242,7 +242,7 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
           for (int i = 0; i < playlistSongs.size(); i++) {
             PlayableSong playableSong = playlistSongs.get(i);
             if (playableSong.getTitle().toLowerCase().contains(newText.trim().toLowerCase()) || playableSong.getArtist().toLowerCase().contains(newText.trim().toLowerCase())) {
-              mAdapter.addSongModel(playableSong, i);
+              mAdapter.addSongModel(i, playableSong);
             }
           }
         } else {
@@ -261,13 +261,13 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
 //    }
     for (int i = 0; i < playlistSongs.size(); i++) {
       PlayableSong playableSong = playlistSongs.get(i);
-      mAdapter.addSongModel(playableSong, i);
+      mAdapter.addSongModel(i, playableSong);
     }
   }
 
   class AnyPlaylistAdapter extends EpoxyAdapter {
-    void addSongModel(PlayableSong playableSong, int index) {
-      addModel(new SongModel(playableSong, index));
+    void addSongModel(int index, PlayableSong playableSong) {
+      addModel(new SongModel(index, playableSong));
     }
 
     void clear() {
@@ -283,7 +283,7 @@ public class MyMusicAnyPlaylistFragment extends Fragment {
 
     private View.OnClickListener onClickListener;
 
-    SongModel(final PlayableSong playableSong, final int index) {
+    SongModel(final int index, final PlayableSong playableSong) {
       song = playableSong;
       songTitle = song.getTitle();
       songArtist = song.getArtist();

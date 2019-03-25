@@ -29,10 +29,12 @@ import java.util.List;
 
 import ml.toufic.songs.R;
 import ml.toufic.songs.db.LastPlayed.LastPlayedViewModel;
+import ml.toufic.songs.db.Lyrics.LyricsViewModel;
 import ml.toufic.songs.db.PlaylistSongJoin.PlaylistSongJoinViewModel;
 import ml.toufic.songs.db.Playlist.PlaylistViewModel;
 import ml.toufic.songs.db.Song.SongViewModel;
 import ml.toufic.songs.model.LastPlayed;
+import ml.toufic.songs.model.Lyrics;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.Playlist;
 import ml.toufic.songs.model.PlaylistSongJoin;
@@ -54,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
   private PlaylistViewModel mPlaylistViewModel;
   private PlaylistSongJoinViewModel mPlaylistSongJoinViewModel;
   private LastPlayedViewModel mLastPlayedViewModel;
+  private LyricsViewModel mLyricsViewModel;
 
   private ExploreFragment mExploreFragment;
   private MyMusicFragment mMyMusicFragment;
@@ -141,6 +144,8 @@ public class MainActivity extends AppCompatActivity {
     });
 
     mLastPlayedViewModel = ViewModelProviders.of(this).get(LastPlayedViewModel.class);
+
+    mLyricsViewModel = ViewModelProviders.of(this).get(LyricsViewModel.class);
 
     insertPlaylist(new Playlist(PLAYLIST_LIKES_ID, getString(R.string.favorites), new Date()));
     insertPlaylist(new Playlist(PLAYLIST_DOWNLOADS_ID, getString(R.string.downloads), new Date()));
@@ -304,6 +309,18 @@ public class MainActivity extends AppCompatActivity {
 
   public LastPlayed getLastPlayed() {
     return mLastPlayedViewModel.getLastPlayed();
+  }
+
+  public void insertLyrics(Lyrics lyrics) {
+    mLyricsViewModel.insert(lyrics);
+  }
+
+  public Lyrics getLyrics(String songId) {
+    return mLyricsViewModel.getLyrics(songId);
+  }
+
+  public void deleteLyrics(String songId) {
+    mLyricsViewModel.delete(songId);
   }
 
   @Override

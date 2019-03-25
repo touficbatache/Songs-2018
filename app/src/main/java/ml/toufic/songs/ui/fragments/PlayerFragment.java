@@ -79,6 +79,7 @@ import ml.toufic.songs.views.IconToggleView;
 import ml.toufic.songs.views.MorphingImageView;
 import ml.toufic.songs.views.RepeatToggleView;
 
+import static ml.toufic.songs.ui.activities.LyricsActivity.songIdKey;
 import static ml.toufic.songs.ui.activities.LyricsActivity.songTitleKey;
 import static ml.toufic.songs.util.SongUtils.PLAYLIST_DOWNLOADS_ID;
 import static ml.toufic.songs.util.SongUtils.PLAYLIST_LIKES_ID;
@@ -256,7 +257,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
       @Override
       public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-        mPlayerRecyclerView.smoothScrollToPosition(mPlayerExoPlayer.getCurrentPeriodIndex());
+
       }
 
       @Override
@@ -657,6 +658,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
             PlayableSong currentSong = mPlayingQueue.get(mCurrentSongIndex);
             Intent lyricsActivityIntent = new Intent(mActivity, LyricsActivity.class);
             lyricsActivityIntent.putExtra(songTitleKey, currentSong.getTitle());
+            lyricsActivityIntent.putExtra(songIdKey, currentSong.getId());
             startActivity(lyricsActivityIntent);
           }
 
@@ -686,6 +688,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
             PlayableSong mPlayerSong = mPlayingQueue.get(mCurrentSongIndex);
             Intent lyricsActivityIntent = new Intent(mActivity, LyricsActivity.class);
             lyricsActivityIntent.putExtra(songTitleKey, mPlayerSong.getTitle());
+            lyricsActivityIntent.putExtra(songIdKey, mPlayerSong.getId());
             startActivity(lyricsActivityIntent);
           }
 
@@ -757,17 +760,11 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   }
 
   public void loadSong(final int index, final String playlistId) {
-    mActivity.updateSongWithResetAll(mPlayingQueue.get(index), new MainActivity.OnLastClickedUpdateCompletion() {
-      @Override
-      public void onCompletion() {
-        mActivity.setLastPlayed(new LastPlayed(index, playlistId));
-        mCurrentSongIndex = index;
-        mCurrentPlaylistId = playlistId;
-        prepareForPlaying(playlistId);
-        mPlayerExoPlayer.seekTo(index, C.TIME_UNSET);
-        playSong();
-      }
-    });
+    mActivity.setLastPlayed(new LastPlayed(index, playlistId));
+    mCurrentSongIndex = index;
+    mCurrentPlaylistId = playlistId;
+    prepareForPlaying(playlistId);
+    playSong();
   }
 
   private void updateRemoteSong(final Song remoteSong) {

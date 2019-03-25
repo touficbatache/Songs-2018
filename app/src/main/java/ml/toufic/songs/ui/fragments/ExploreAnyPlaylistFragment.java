@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.airbnb.epoxy.EpoxyAdapter;
 import com.airbnb.epoxy.EpoxyHolder;
@@ -24,10 +25,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ml.toufic.songs.R;
+import ml.toufic.songs.api.YoutubeApiClient;
+import ml.toufic.songs.api.YoutubeApiInterface;
 import ml.toufic.songs.model.Song;
+import ml.toufic.songs.model.YoutubePlaylistResponse;
 import ml.toufic.songs.network.JSONObjectDataFetcher;
 import ml.toufic.songs.ui.activities.MainActivity;
 import ml.toufic.songs.util.SongUtils;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class ExploreAnyPlaylistFragment extends Fragment {
 
@@ -101,42 +109,40 @@ public class ExploreAnyPlaylistFragment extends Fragment {
 
   private void getExploreSongs() {
 
-    String newThisWeekURL = "https://www.googleapis.com/youtube/v3/playlistItems?part=id, snippet&playlistId=" + playlistId + "&key=" + SongUtils.API_KEY + "&maxResults=" + MAX_RESULTS;
+    Retrofit retrofit = YoutubeApiClient.getRetrofitClient();
+    YoutubeApiInterface apiInterface = retrofit.create(YoutubeApiInterface.class);
 
-    new JSONObjectDataFetcher(newThisWeekURL, new JSONObjectDataFetcher.JSONDataFetcherCallback() {
+    Call<YoutubePlaylistResponse> call = apiInterface.getPlaylist(playlistId, MAX_RESULTS);
+    call.enqueue(new Callback<YoutubePlaylistResponse>() {
       @Override
-      public void onSuccess(JSONObject result) {
-        try {
-          JSONArray playlistItems = result.getJSONArray("items");
-          for (int i = 0; i < playlistItems.length(); i++) {
-            JSONObject snippet = playlistItems.getJSONObject(i).getJSONObject("snippet");
-            JSONObject resourceId = snippet.getJSONObject("resourceId");
-            JSONObject thumbnailObj = null;
-            if(snippet.has("thumbnails")){
-              thumbnailObj = snippet.getJSONObject("thumbnails");
-            }
+      public void onResponse(@NonNull Call<YoutubePlaylistResponse> call, @NonNull Response<YoutubePlaylistResponse> response) {
+        if (response.body() != null) {
+          List<YoutubePlaylistResponse.Item> playlistItems = response.body().items;
 
-            String id = resourceId.getString("videoId");
-            String title = snippet.getString("title");
-            String author = snippet.getString("channelTitle");
-            if(thumbnailObj != null) {
-              String thumbnail = thumbnailObj.getJSONObject("high").getString("url"); // TODO: Add thumbnail size in settings
+          if(getActivity() != null && isAdded()) {
+            for(YoutubePlaylistResponse.Item playlistItem : playlistItems) {
+              YoutubePlaylistResponse.Snippet snippet = playlistItem.snippet;
+              YoutubePlaylistResponse.ResourceId resourceId = snippet.resourceId;
+              YoutubePlaylistResponse.Thumbnails thumbnails = snippet.thumbnails;
+
+              String id = resourceId.videoId;
+              String title = snippet.title;
+              String author = snippet.channelTitle;
+              String thumbnail = thumbnails.thumbnail_high.url; // TODO: Add thumbnail size in settings
 
               playlistSongs.add(new Song(id, title, author, thumbnail));
             }
-          }
 
-          updateRecyclerViewSongs();
-        } catch (JSONException e) {
-          e.printStackTrace();
+            updateRecyclerViewSongs();
+          }
         }
       }
 
       @Override
-      public void onError() {
-
+      public void onFailure(@NonNull Call<YoutubePlaylistResponse> call, @NonNull Throwable t) {
+        Toast.makeText(mContext, "Failed fetching playlist", Toast.LENGTH_SHORT).show();
       }
-    }).execute();
+    });
   }
 
   private void updateRecyclerViewSongs() {

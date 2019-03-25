@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:layout_centerInParent="true"
     android:background="@color/transparent">
 
@@ -18,26 +17,26 @@
         app:layout_constraintStart_toStartOf="@id/player_cover_background_disc"
         app:layout_constraintTop_toTopOf="@id/player_cover_background_disc" />
 
-    <!--70dp-->
+    <!--mar: 46dp-->
     <com.facebook.drawee.view.SimpleDraweeView
         android:id="@+id/player_cover_background_disc"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="46dp"
-        android:layout_marginEnd="46dp"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         fresco:actualImageResource="@drawable/disk_background"
-        fresco:layout_constraintEnd_toEndOf="parent"
-        fresco:layout_constraintStart_toStartOf="parent"
-        fresco:layout_constraintTop_toTopOf="parent"
         fresco:placeholderImageScaleType="fitCenter"
         fresco:viewAspectRatio="1" />
 
+    <!--mar: 120dp-->
     <com.facebook.drawee.view.SimpleDraweeView
         android:id="@+id/player_song_cover_art"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="120dp"
-        android:layout_marginEnd="120dp"
+        android:layout_marginStart="110dp"
+        android:layout_marginEnd="110dp"
         android:background="@color/transparent"
         app:layout_constraintBottom_toBottomOf="@+id/player_cover_background_disc"
         fresco:layout_constraintTop_toTopOf="@+id/player_cover_background_disc"
@@ -45,6 +44,7 @@
         fresco:roundAsCircle="true"
         fresco:viewAspectRatio="1" />
 
+    <!--mar: 20dp-->
     <ImageView
         android:layout_width="20dp"
         android:layout_height="20dp"
@@ -59,28 +59,28 @@
         android:id="@+id/seek_previous"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:alpha="0"
+        android:background="@color/transparent"
+        android:gravity="center"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="@id/player_cover_background_disc"
         app:layout_constraintEnd_toStartOf="@id/seek_next"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/player_cover_background_disc"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:background="@color/transparent"
-        android:alpha="0">
+        app:layout_constraintTop_toTopOf="@id/player_cover_background_disc">
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@color/transparent"
             android:src="@drawable/ic_skip_previous_24dp"
-            android:tint="@color/white"
-            android:background="@color/transparent" />
+            android:tint="@color/white" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@color/transparent"
             android:text="10 seconds"
-            android:textColor="@color/white"
-            android:background="@color/transparent" />
+            android:textColor="@color/white" />
 
     </LinearLayout>
 
@@ -88,28 +88,28 @@
         android:id="@+id/seek_next"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintStart_toEndOf="@id/seek_previous"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/player_cover_background_disc"
-        app:layout_constraintBottom_toBottomOf="@id/player_cover_background_disc"
-        android:orientation="vertical"
-        android:gravity="center"
+        android:alpha="0"
         android:background="@color/transparent"
-        android:alpha="0">
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="@id/player_cover_background_disc"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/seek_previous"
+        app:layout_constraintTop_toTopOf="@id/player_cover_background_disc">
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@color/transparent"
             android:src="@drawable/ic_skip_next_24dp"
-            android:tint="@color/white"
-            android:background="@color/transparent" />
+            android:tint="@color/white" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@color/transparent"
             android:text="10 seconds"
-            android:textColor="@color/white"
-            android:background="@color/transparent" />
+            android:textColor="@color/white" />
 
     </LinearLayout>
 

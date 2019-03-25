@@ -7,16 +7,18 @@ import androidx.room.TypeConverters;
 import android.content.Context;
 
 import ml.toufic.songs.db.LastPlayed.LastPlayedDao;
+import ml.toufic.songs.db.Lyrics.LyricsDao;
 import ml.toufic.songs.db.Playlist.PlaylistDao;
 import ml.toufic.songs.db.PlaylistSongJoin.PlaylistSongJoinDao;
 import ml.toufic.songs.db.Song.SongDao;
 import ml.toufic.songs.model.LastPlayed;
+import ml.toufic.songs.model.Lyrics;
 import ml.toufic.songs.model.Playlist;
 import ml.toufic.songs.model.Song;
 import ml.toufic.songs.model.PlayableSong;
 import ml.toufic.songs.model.PlaylistSongJoin;
 
-@Database(entities = {Playlist.class, Song.class, PlayableSong.class, PlaylistSongJoin.class, LastPlayed.class}, version = 1, exportSchema = false)
+@Database(entities = {Playlist.class, Song.class, PlayableSong.class, PlaylistSongJoin.class, LastPlayed.class, Lyrics.class}, version = 2, exportSchema = false)
 
 @TypeConverters({Converters.class})
 public abstract class SongsDatabase extends RoomDatabase {
@@ -28,6 +30,8 @@ public abstract class SongsDatabase extends RoomDatabase {
   public abstract PlaylistSongJoinDao playlistSongJoinDao();
 
   public abstract LastPlayedDao lastPlayedDao();
+
+  public abstract LyricsDao lyricsDao();
 
   private static SongsDatabase INSTANCE;
 

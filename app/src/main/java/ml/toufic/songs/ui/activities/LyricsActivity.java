@@ -3,12 +3,14 @@ package ml.toufic.songs.ui.activities;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.airbnb.epoxy.EpoxyAdapter;
 import com.airbnb.epoxy.EpoxyHolder;
 import com.airbnb.epoxy.EpoxyModelWithHolder;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.jsoup.nodes.Document;
 
@@ -19,11 +21,14 @@ import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import ml.toufic.songs.R;
 import ml.toufic.songs.api.LyricsApiClient;
 import ml.toufic.songs.api.LyricsApiInterface;
+import ml.toufic.songs.db.Lyrics.LyricsViewModel;
+import ml.toufic.songs.model.Lyrics;
 import ml.toufic.songs.model.SongLyricsResponse;
 import ml.toufic.songs.network.HTMLDataFetcher;
 import retrofit2.Call;
@@ -33,12 +38,19 @@ import retrofit2.Retrofit;
 
 public class LyricsActivity extends AppCompatActivity {
 
+  public static String songIdKey = "songidkey";
   public static String songTitleKey = "songtitlekey";
+
+  private String songId;
+  private String songTitle;
 
   private Context mContext;
   private LyricAdapter mLyricAdapter;
   private RecyclerView mLyricsRecyclerView;
-  private String songTitle;
+  private ImageButton mSaveButton;
+  private ImageButton mDeleteButton;
+
+  private LyricsViewModel mLyricsViewModel;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +59,7 @@ public class LyricsActivity extends AppCompatActivity {
 
     mContext = LyricsActivity.this;
 
+    songId = getIntent().getStringExtra(songIdKey);
     songTitle = getIntent().getStringExtra(songTitleKey);
 
     findViewById(R.id.back_arrow).setOnClickListener(new View.OnClickListener() {
@@ -62,14 +75,37 @@ public class LyricsActivity extends AppCompatActivity {
     mLyricsRecyclerView.setAdapter(mLyricAdapter);
     mLyricsRecyclerView.setLayoutManager(new LinearLayoutManager(mContext, RecyclerView.VERTICAL, false));
 
-    fetchSongInfo();
+    mSaveButton = findViewById(R.id.save_btn);
+    mDeleteButton = findViewById(R.id.delete_btn);
+    mDeleteButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        if (getLyrics(songId) != null) {
+          deleteLyrics(songId);
+          finish();
+        }
+      }
+    });
+
+    mLyricsViewModel = ViewModelProviders.of(this).get(LyricsViewModel.class);
+
+    if (getLyrics(songId) == null) {
+      fetchSongInfo();
+    } else {
+      mSaveButton.setVisibility(View.GONE);
+      mDeleteButton.setVisibility(View.VISIBLE);
+      List<String> lyrics = getLyrics(songId).getLyrics();
+      for (int i = 0; i < lyrics.size(); i++) {
+        mLyricAdapter.addLyricLine(lyrics.get(i));
+      }
+    }
   }
 
   private void fetchSongInfo() {
     Retrofit retrofit = LyricsApiClient.getRetrofitClient();
     LyricsApiInterface apiInterface = retrofit.create(LyricsApiInterface.class);
 
-    String searchTitle = removeParenthesis(songTitle).replace("HD", "").replace("-", "");
+    String searchTitle = removeBrackets(removeParenthesis(songTitle)).replace("HD", "").replace("-", "");
     Call<SongLyricsResponse> call = apiInterface.getSongInfo(searchTitle);
     call.enqueue(new Callback<SongLyricsResponse>() {
       @Override
@@ -121,6 +157,16 @@ public class LyricsActivity extends AppCompatActivity {
           for (int i = 0; i < arrayLyrics.size(); i++) {
             mLyricAdapter.addLyricLine(arrayLyrics.get(i));
           }
+          mSaveButton.setVisibility(View.VISIBLE);
+          mSaveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+              insertLyrics(new Lyrics(songId, arrayLyrics));
+              showSnackbar("Lyrics saved!");
+              mSaveButton.setVisibility(View.GONE);
+              mDeleteButton.setVisibility(View.VISIBLE);
+            }
+          });
         } else {
           Toast.makeText(mContext, "No lyrics found", Toast.LENGTH_SHORT).show();
         }
@@ -137,6 +183,10 @@ public class LyricsActivity extends AppCompatActivity {
 
   private String removeParenthesis(String string) {
     return string.replaceAll("\\(.*\\)", "");
+  }
+
+  private String removeBrackets(String string) {
+    return string.replaceAll("\\[.*\\]", "");
   }
 
   class LyricAdapter extends EpoxyAdapter {
@@ -208,5 +258,21 @@ public class LyricsActivity extends AppCompatActivity {
 //    }
 
     return wordsInCommon * 100 / wordsLength;
+  }
+
+  private void showSnackbar(String message) {
+    Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT).show();
+  }
+
+  public void insertLyrics(Lyrics lyrics) {
+    mLyricsViewModel.insert(lyrics);
+  }
+
+  public Lyrics getLyrics(String songId) {
+    return mLyricsViewModel.getLyrics(songId);
+  }
+
+  public void deleteLyrics(String songId) {
+    mLyricsViewModel.delete(songId);
   }
 }
