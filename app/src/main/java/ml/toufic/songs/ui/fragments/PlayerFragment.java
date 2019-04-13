@@ -1,24 +1,16 @@
 package ml.toufic.songs.ui.fragments;
 
-import androidx.lifecycle.ViewModelProviders;
-
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.RippleDrawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-
-import androidx.annotation.FloatRange;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.PagerSnapHelper;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.SnapHelper;
-
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,8 +51,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
+import androidx.annotation.FloatRange;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.PagerSnapHelper;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SnapHelper;
 import at.huber.youtubeExtractor.YtFile;
 import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 import ml.toufic.songs.R;
@@ -113,6 +113,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   private TextView mPlayerSongTitle;
   private TextView mPlayerSongArtist;
   private IconToggleView mPlayerFavoriteBtn;
+  private MaterialProgressBar mPlayerDownloadProgress;
   private CloudDownloadBorderToFillImageView mPlayerCloudDownloadBtn;
   private IconToggleView mPlayerAddToPlaylistBtn;
   private ImageView mPlayerShareBtn;
@@ -169,6 +170,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     mPlayerSongTitle = mRootView.findViewById(R.id.player_song_title);
     mPlayerSongArtist = mRootView.findViewById(R.id.player_song_artist);
     mPlayerFavoriteBtn = mRootView.findViewById(R.id.player_action_favorite);
+    mPlayerDownloadProgress = mRootView.findViewById(R.id.player_download_progress);
     mPlayerCloudDownloadBtn = mRootView.findViewById(R.id.player_action_cloud_download);
     mPlayerAddToPlaylistBtn = mRootView.findViewById(R.id.player_action_add_to_playlist);
     mPlayerShareBtn = mRootView.findViewById(R.id.player_action_share);
@@ -305,7 +307,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
       @Override
       public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
-        if(shuffleModeEnabled) {
+        if (shuffleModeEnabled) {
           Collections.shuffle(mPlayingQueue);
         } else {
           initPlayingQueue(mCurrentPlaylistId);
@@ -332,6 +334,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       @Override
       public void onPositionDiscontinuity(int reason) {
         if (reason == Player.DISCONTINUITY_REASON_PERIOD_TRANSITION) {
+          mCurrentSongIndex = mPlayerExoPlayer.getCurrentPeriodIndex();
           mPlayerRecyclerView.smoothScrollToPosition(mCurrentSongIndex);
           updatePlayer(mCurrentSongIndex);
         }
@@ -423,9 +426,19 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
     if (mActivity.isSongInPlaylist(PLAYLIST_DOWNLOADS_ID, currentSong.getId())) {
       mPlayerCloudDownloadBtn.showFill();
     }
-    mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
+    mPlayerCloudDownloadBtn.setOnDownloadClickedListener(new CloudDownloadBorderToFillImageView.OnDownloadClickListener() {
       @Override
-      public void onClick(View view) {
+      public void onDownloadStart() {
+
+      }
+
+      @Override
+      public void onDownloadCancel() {
+
+      }
+
+      @Override
+      public void onDownloadDelete() {
         MaterialDialog.Builder songDeletionDialog = new MaterialDialog.Builder(mContext);
         songDeletionDialog.title(R.string.delete_song);
         songDeletionDialog.content(R.string.delete_song_warning);
@@ -450,6 +463,33 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
         songDeletionDialog.show();
       }
     });
+//    mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
+//      @Override
+//      public void onClick(View view) {
+//        MaterialDialog.Builder songDeletionDialog = new MaterialDialog.Builder(mContext);
+//        songDeletionDialog.title(R.string.delete_song);
+//        songDeletionDialog.content(R.string.delete_song_warning);
+//        songDeletionDialog.cancelable(true);
+//        songDeletionDialog.positiveText(R.string.delete);
+//        songDeletionDialog.onPositive(new MaterialDialog.SingleButtonCallback() {
+//          @Override
+//          public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+//            mActivity.deleteSong(currentSong);
+//            if (mActivity.getAllSongsAsync().size() >= 1) {
+//              if (mCurrentSongIndex - 1 >= 0) {
+//                loadSong(mCurrentSongIndex - 1, mCurrentPlaylistId);
+//              } else {
+//                loadSong(mCurrentSongIndex + 1, mCurrentPlaylistId);
+//              }
+//            } else {
+//              mActivity.mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+//            }
+//          }
+//        });
+//        songDeletionDialog.negativeText(R.string.cancel);
+//        songDeletionDialog.show();
+//      }
+//    });
 
     if (!mActivity.isSongInCustomPlaylist(currentSong.getId())) {
       mPlayerAddToPlaylistBtn.showFirstState();
@@ -500,7 +540,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
                   newPlaylistDialog.input(getString(R.string.playlist_name), null, false, new MaterialDialog.InputCallback() {
                     @Override
                     public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                      if (Objects.equals(input.toString().trim(), "")) {
+                      if (input.toString().trim().equals("")) {
                         dialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
                       }
                     }
@@ -649,68 +689,64 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
   }
 
   class PlayerCoversAdapter extends EpoxyAdapter {
+    PlayerCoverModel.PlayerCoverCallback playerCoverCallback = new PlayerCoverModel.PlayerCoverCallback() {
+      @Override
+      public void onLyricsBtnClick() {
+        PlayableSong currentSong = mPlayingQueue.get(mCurrentSongIndex);
+        Intent lyricsActivityIntent = new Intent(mActivity, LyricsActivity.class);
+        lyricsActivityIntent.putExtra(songTitleKey, currentSong.getTitle());
+        lyricsActivityIntent.putExtra(songIdKey, currentSong.getId());
+        startActivity(lyricsActivityIntent);
+      }
+
+      @Override
+      public void onSeekPrevious(LinearLayout view) {
+        int seekTo = Math.max(0, (int) mPlayerExoPlayer.getCurrentPosition() - 10000);
+        mPlayerExoPlayer.seekTo(seekTo);
+        mPlayerSongProgress.setProgress(seekTo);
+        mMiniPlayerSongProgress.setProgress(seekTo);
+        forceRippleAnimation(view);
+      }
+
+      @Override
+      public void onSeekNext(LinearLayout view) {
+        int seekTo = Math.min((int) mPlayerExoPlayer.getCurrentPosition() + 10000, (int) mPlayerExoPlayer.getDuration());
+        mPlayerExoPlayer.seekTo(seekTo);
+        mPlayerSongProgress.setProgress(seekTo);
+        mMiniPlayerSongProgress.setProgress(seekTo);
+        forceRippleAnimation(view);
+      }
+    };
+
     void addCoverArt(PlayableSong playableSong) {
-      addModel(new PlayerCoverModel(mContext, playableSong,
-        new PlayerCoverModel.PlayerCoverCallback() {
-          @Override
-          public void onLyricsBtnClick() {
-            PlayableSong currentSong = mPlayingQueue.get(mCurrentSongIndex);
-            Intent lyricsActivityIntent = new Intent(mActivity, LyricsActivity.class);
-            lyricsActivityIntent.putExtra(songTitleKey, currentSong.getTitle());
-            lyricsActivityIntent.putExtra(songIdKey, currentSong.getId());
-            startActivity(lyricsActivityIntent);
-          }
-
-          @Override
-          public void onSeekPrevious() {
-            int seekTo = (int) mPlayerExoPlayer.getCurrentPosition() - 10000;
-            mPlayerExoPlayer.seekTo(seekTo);
-            mPlayerSongProgress.setProgress(seekTo);
-            mMiniPlayerSongProgress.setProgress(seekTo);
-          }
-
-          @Override
-          public void onSeekNext() {
-            int seekTo = (int) mPlayerExoPlayer.getCurrentPosition() + 10000;
-            mPlayerExoPlayer.seekTo(seekTo);
-            mPlayerSongProgress.setProgress(seekTo);
-            mMiniPlayerSongProgress.setProgress(seekTo);
-          }
-        }));
+      addModel(new PlayerCoverModel(mContext, playableSong, playerCoverCallback));
     }
 
     void addCoverArt(String coverArtUrl) {
-      addModel(new PlayerCoverModel(mContext, coverArtUrl,
-        new PlayerCoverModel.PlayerCoverCallback() {
-          @Override
-          public void onLyricsBtnClick() {
-            PlayableSong mPlayerSong = mPlayingQueue.get(mCurrentSongIndex);
-            Intent lyricsActivityIntent = new Intent(mActivity, LyricsActivity.class);
-            lyricsActivityIntent.putExtra(songTitleKey, mPlayerSong.getTitle());
-            lyricsActivityIntent.putExtra(songIdKey, mPlayerSong.getId());
-            startActivity(lyricsActivityIntent);
-          }
-
-          @Override
-          public void onSeekPrevious() {
-            int seekTo = (int) mPlayerExoPlayer.getCurrentPosition() - 10000;
-            mPlayerExoPlayer.seekTo(seekTo);
-            mPlayerSongProgress.setProgress(seekTo);
-            mMiniPlayerSongProgress.setProgress(seekTo);
-          }
-
-          @Override
-          public void onSeekNext() {
-            int seekTo = (int) mPlayerExoPlayer.getCurrentPosition() + 10000;
-            mPlayerExoPlayer.seekTo(seekTo);
-            mPlayerSongProgress.setProgress(seekTo);
-            mMiniPlayerSongProgress.setProgress(seekTo);
-          }
-        }));
+      addModel(new PlayerCoverModel(mContext, coverArtUrl, playerCoverCallback));
     }
 
     void clear() {
       removeAllModels();
+    }
+  }
+
+  private void forceRippleAnimation(View view) {
+    Drawable foreground = view.getForeground();
+
+    if (Build.VERSION.SDK_INT >= 21 && foreground instanceof RippleDrawable) {
+      final RippleDrawable rippleDrawable = (RippleDrawable) foreground;
+
+      rippleDrawable.setState(new int[]{android.R.attr.state_pressed, android.R.attr.state_enabled});
+
+      Handler handler = new Handler();
+
+      handler.postDelayed(new Runnable() {
+        @Override
+        public void run() {
+          rippleDrawable.setState(new int[]{});
+        }
+      }, 200);
     }
   }
 
@@ -813,40 +849,108 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
 
     mPlayerCloudDownloadBtn.showBorder();
     final int[] downloadIdThis = {-1};
-    mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
+    mPlayerCloudDownloadBtn.setOnDownloadClickedListener(new CloudDownloadBorderToFillImageView.OnDownloadClickListener() {
       @Override
-      public void onClick(View view) {
-        if (mPlayerCloudDownloadBtn.isShowingBorder() && !mPlayerCloudDownloadBtn.isBlinking()) {
-          SongDownloader.downloadSong(mContext, mPlayerRemoteSong, new SongDownloader.SongDownloaderCallback() {
-            @Override
-            public void onStartOrResume(int downloadId, String songTitle) {
-              onSongDownloadStartOrResume(songTitle);
-              downloadIdThis[0] = downloadId;
-            }
+      public void onDownloadStart() {
+        SongDownloader.downloadSong(mContext, mPlayerRemoteSong, new SongDownloader.SongDownloaderCallback() {
+          @Override
+          public void onStartOrResume(int downloadId, String songTitle) {
+            onSongDownloadStartOrResume(songTitle);
+            downloadIdThis[0] = downloadId;
+          }
 
-            @Override
-            public void onProgress(Progress progress) {
+          @Override
+          public void onProgress(Progress progress) {
+            if (mPlayerDownloadProgress.getMax() != progress.totalBytes) {
+              mPlayerDownloadProgress.setMax((int) progress.totalBytes);
             }
+            mPlayerDownloadProgress.setProgress((int) progress.currentBytes);
+            Log.d(TAG, "onProgress: tgblog: " + mPlayerRemoteSong.getTitle() + " is downloading and is at: " + progress.currentBytes + "/" + progress.totalBytes);
+          }
 
-            @Override
-            public void onDownloadComplete(PlayableSong playableSong) {
-              onSongDownloadCompletion(playableSong);
-            }
+          @Override
+          public void onDownloadComplete(PlayableSong playableSong) {
+            onSongDownloadCompletion(playableSong);
+          }
 
+          @Override
+          public void onError(Error error) {
+            Toast.makeText(mContext, R.string.download_failed_error, Toast.LENGTH_LONG).show();
+          }
+        });
+      }
+
+      @Override
+      public void onDownloadCancel() {
+        if (downloadIdThis[0] != -1) {
+          SongDownloader.cancelDownload(downloadIdThis[0]);
+          mPlayerCloudDownloadBtn.showBorder();
+          mPlayerDownloadProgress.setProgress(0);
+          Toast.makeText(mContext, R.string.download_cancelled, Toast.LENGTH_LONG).show();
+        }
+      }
+
+      @Override
+      public void onDownloadDelete() {
+        if (mActivity.getSong(mPlayerRemoteSong.getId()) != null) {
+          MaterialDialog.Builder songDeletionDialog = new MaterialDialog.Builder(mContext);
+          songDeletionDialog.title(R.string.delete_song);
+          songDeletionDialog.content(R.string.delete_song_warning);
+          songDeletionDialog.cancelable(true);
+          songDeletionDialog.positiveText(R.string.delete);
+          songDeletionDialog.onPositive(new MaterialDialog.SingleButtonCallback() {
             @Override
-            public void onError(Error error) {
-              Toast.makeText(mContext, R.string.download_failed_error, Toast.LENGTH_LONG).show();
+            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+              mActivity.deleteSong(mPlayerRemoteSong.getId());
+              mActivity.mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+              mActivity.mSlidingPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
             }
           });
-        } else if (mPlayerCloudDownloadBtn.isBlinking()) {
-          if (downloadIdThis[0] != -1) {
-            SongDownloader.cancelDownload(downloadIdThis[0]);
-            mPlayerCloudDownloadBtn.showBorder();
-            Toast.makeText(mContext, R.string.download_cancelled, Toast.LENGTH_LONG).show();
-          }
+          songDeletionDialog.negativeText(R.string.cancel);
+          songDeletionDialog.show();
         }
       }
     });
+//    mPlayerCloudDownloadBtn.setOnClickListener(new View.OnClickListener() {
+//      @Override
+//      public void onClick(View view) {
+//        if (mPlayerCloudDownloadBtn.isShowingBorder() && !mPlayerCloudDownloadBtn.isBlinking()) {
+//          SongDownloader.downloadSong(mContext, mPlayerRemoteSong, new SongDownloader.SongDownloaderCallback() {
+//            @Override
+//            public void onStartOrResume(int downloadId, String songTitle) {
+//              onSongDownloadStartOrResume(songTitle);
+//              downloadIdThis[0] = downloadId;
+//            }
+//
+//            @Override
+//            public void onProgress(Progress progress) {
+//              if (mPlayerDownloadProgress.getMax() != progress.totalBytes) {
+//                mPlayerDownloadProgress.setMax((int) progress.totalBytes);
+//              }
+//              mPlayerDownloadProgress.setProgress((int) progress.currentBytes);
+//              Log.d(TAG, "onProgress: tgblog: " + mPlayerRemoteSong.getTitle() + " is downloading and is at: " + progress.currentBytes + "/" + progress.totalBytes);
+//            }
+//
+//            @Override
+//            public void onDownloadComplete(PlayableSong playableSong) {
+//              onSongDownloadCompletion(playableSong);
+//            }
+//
+//            @Override
+//            public void onError(Error error) {
+//              Toast.makeText(mContext, R.string.download_failed_error, Toast.LENGTH_LONG).show();
+//            }
+//          });
+//        } else if (mPlayerCloudDownloadBtn.isBlinking()) {
+//          if (downloadIdThis[0] != -1) {
+//            SongDownloader.cancelDownload(downloadIdThis[0]);
+//            mPlayerCloudDownloadBtn.showBorder();
+//            mPlayerDownloadProgress.setProgress(0);
+//            Toast.makeText(mContext, R.string.download_cancelled, Toast.LENGTH_LONG).show();
+//          }
+//        }
+//      }
+//    });
 
     mPlayerAddToPlaylistBtn.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -1039,6 +1143,7 @@ public class PlayerFragment extends Fragment implements SlidingUpPanelLayout.Pan
       if (playableSong.getId().equals(mPlayerRemoteSong.getId())) {
         mPlayerCloudDownloadBtn.showFill();
       }
+      mPlayerDownloadProgress.setProgress(0);
       Toast.makeText(mContext, String.format(getString(R.string.download_finished_for_TITLE), playableSong.getTitle()), Toast.LENGTH_SHORT).show();
     }
   }

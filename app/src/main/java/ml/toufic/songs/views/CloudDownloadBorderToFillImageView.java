@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import androidx.appcompat.widget.AppCompatImageView;
 import android.util.AttributeSet;
+import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
@@ -108,5 +109,26 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
     } else {
       setColorFilter(getResources().getColor(R.color.grey_c0));
     }
+  }
+
+  public void setOnDownloadClickedListener(OnDownloadClickListener onDownloadClickedListener) {
+    setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        if(isShowingBorder() && !isBlinking()) {
+          onDownloadClickedListener.onDownloadStart();
+        } else if (isBlinking()) {
+          onDownloadClickedListener.onDownloadCancel();
+        } else if (isShowingFill()) {
+          onDownloadClickedListener.onDownloadDelete();
+        }
+      }
+    });
+  }
+
+  public interface OnDownloadClickListener {
+    void onDownloadStart();
+    void onDownloadCancel();
+    void onDownloadDelete();
   }
 }

@@ -1,5 +1,6 @@
 package ml.toufic.songs.ui.activities;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
@@ -63,6 +64,10 @@ public class MainActivity extends AppCompatActivity {
   private PlayerFragment mPlayerFragment;
 
   public SlidingUpPanelLayout mSlidingPanelLayout;
+
+  static {
+    AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+  }
 
   private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
     = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -265,6 +270,10 @@ public class MainActivity extends AppCompatActivity {
     if (playableSong.getPath().delete()) {
       mSongViewModel.delete(playableSong);
     }
+  }
+
+  public void deleteSong(String songId) {
+    mSongViewModel.delete(songId);
   }
 
   public void insertSongInPlaylist(String playlistId, String songId, boolean isRemoteSong) {

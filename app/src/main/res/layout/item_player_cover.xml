@@ -11,11 +11,11 @@
         android:id="@+id/lyrics_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_filter_list_24dp"
         android:tint="@color/colorAccent"
         app:backgroundTint="@color/white"
         app:layout_constraintStart_toStartOf="@id/player_cover_background_disc"
-        app:layout_constraintTop_toTopOf="@id/player_cover_background_disc" />
+        app:layout_constraintTop_toTopOf="@id/player_cover_background_disc"
+        app:srcCompat="@drawable/ic_filter_list_24dp" />
 
     <!--mar: 46dp-->
     <com.facebook.drawee.view.SimpleDraweeView
@@ -24,6 +24,7 @@
         android:layout_height="match_parent"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="32dp"
+        android:background="@android:color/transparent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         fresco:actualImageResource="@drawable/disk_background"
@@ -49,20 +50,23 @@
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:background="@color/transparent"
-        android:src="@drawable/circle_grey_grey_e0"
-        fresco:layout_constraintBottom_toBottomOf="parent"
+        app:srcCompat="@drawable/circle_grey_grey_e0"
+        fresco:layout_constraintBottom_toBottomOf="@id/player_song_cover_art"
         fresco:layout_constraintEnd_toEndOf="parent"
         fresco:layout_constraintStart_toStartOf="parent"
-        fresco:layout_constraintTop_toTopOf="parent" />
+        fresco:layout_constraintTop_toTopOf="@id/player_song_cover_art" />
 
     <LinearLayout
         android:id="@+id/seek_previous"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:alpha="0"
-        android:background="@color/transparent"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
         android:gravity="center"
         android:orientation="vertical"
+        android:theme="@style/RippleWhite"
         app:layout_constraintBottom_toBottomOf="@id/player_cover_background_disc"
         app:layout_constraintEnd_toStartOf="@id/seek_next"
         app:layout_constraintStart_toStartOf="parent"
@@ -72,8 +76,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@color/transparent"
-            android:src="@drawable/ic_skip_previous_24dp"
-            android:tint="@color/white" />
+            android:tint="@color/white"
+            app:srcCompat="@drawable/ic_skip_previous_24dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -89,9 +93,12 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:alpha="0"
-        android:background="@color/transparent"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
         android:gravity="center"
         android:orientation="vertical"
+        android:theme="@style/RippleWhite"
         app:layout_constraintBottom_toBottomOf="@id/player_cover_background_disc"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/seek_previous"
@@ -101,8 +108,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@color/transparent"
-            android:src="@drawable/ic_skip_next_24dp"
-            android:tint="@color/white" />
+            android:tint="@color/white"
+            app:srcCompat="@drawable/ic_skip_next_24dp" />
 
         <TextView
             android:layout_width="wrap_content"

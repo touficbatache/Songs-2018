@@ -3,7 +3,12 @@ package ml.toufic.songs.model;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import androidx.annotation.NonNull;
+
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import android.graphics.drawable.RippleDrawable;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,17 +29,15 @@ public class PlayerCoverModel extends EpoxyModelWithHolder<PlayerCoverModel.Play
 
   private PlayerCoverCallback playerCoverCallback;
 
-  private LinearLayout seekPreviousBtn;
-  private LinearLayout seekNextBtn;
+  private LinearLayout seekPreviousBtn, seekNextBtn;
 
-  private boolean isStreaming;
+  private boolean isStreaming = false;
 
   public PlayerCoverModel(Context context, PlayableSong playableSong, PlayerCoverCallback playerCoverCallback) {
     mContext = context;
     id = playableSong.getId();
     coverArtUrl = playableSong.getCoverArt();
     this.playerCoverCallback = playerCoverCallback;
-    isStreaming = false;
   }
 
   public PlayerCoverModel(Context context, String coverArtUrl, PlayerCoverCallback playerCoverCallback) {
@@ -60,14 +63,23 @@ public class PlayerCoverModel extends EpoxyModelWithHolder<PlayerCoverModel.Play
     super.bind(holder);
     ImageLoader.loadImage(mContext, holder.coverArt, new ImageLoader.ImageConfigurations(coverArtUrl, id, ImageLoader.ImageConfigurations.PNG));
 
-    if(isStreaming) {
-      holder.lyricsBtn.setEnabled(false);
-    } else {
-      holder.lyricsBtn.setEnabled(true);
+    if(!isStreaming) {
       holder.lyricsBtn.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View view) {
           playerCoverCallback.onLyricsBtnClick();
+        }
+      });
+    } else {
+      holder.lyricsBtn.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+          MaterialDialog.Builder lyricsNotAvailable = new MaterialDialog.Builder(mContext);
+          lyricsNotAvailable.title("Lyrics not available");
+          lyricsNotAvailable.content("Lyrics are not available un-downloaded songs. Download this song to see its lyrics.");
+          lyricsNotAvailable.cancelable(true);
+          lyricsNotAvailable.positiveText("Ok");
+          lyricsNotAvailable.show();
         }
       });
     }
@@ -79,7 +91,7 @@ public class PlayerCoverModel extends EpoxyModelWithHolder<PlayerCoverModel.Play
       private GestureDetector gestureDetector = new GestureDetector(mContext, new GestureDetector.SimpleOnGestureListener() {
         @Override
         public boolean onDoubleTap(MotionEvent e) {
-          playerCoverCallback.onSeekPrevious();
+          playerCoverCallback.onSeekPrevious(seekPreviousBtn);
           seekPreviousBtn.setAlpha(1);
           new android.os.Handler().postDelayed(
             new Runnable() {
@@ -102,7 +114,7 @@ public class PlayerCoverModel extends EpoxyModelWithHolder<PlayerCoverModel.Play
       private GestureDetector gestureDetector = new GestureDetector(mContext, new GestureDetector.SimpleOnGestureListener() {
         @Override
         public boolean onDoubleTap(MotionEvent e) {
-          playerCoverCallback.onSeekNext();
+          playerCoverCallback.onSeekNext(seekNextBtn);
           seekNextBtn.setAlpha(1);
           new android.os.Handler().postDelayed(
             new Runnable() {
@@ -133,8 +145,7 @@ public class PlayerCoverModel extends EpoxyModelWithHolder<PlayerCoverModel.Play
 
     SimpleDraweeView coverArt;
     FloatingActionButton lyricsBtn;
-    LinearLayout seekPreviousBtn;
-    LinearLayout seekNextBtn;
+    LinearLayout seekPreviousBtn, seekNextBtn;
 
     @Override
     protected void bindView(View itemView) {
@@ -148,8 +159,8 @@ public class PlayerCoverModel extends EpoxyModelWithHolder<PlayerCoverModel.Play
   public interface PlayerCoverCallback {
     void onLyricsBtnClick();
 
-    void onSeekPrevious();
+    void onSeekPrevious(LinearLayout view);
 
-    void onSeekNext();
+    void onSeekNext(LinearLayout view);
   }
 }
