@@ -180,8 +180,8 @@ public class LyricsActivity extends BaseActivity {
 
     if (!song.getLyrics().isEmpty()) {
       setLyrics(song.getLyrics());
-    } else if (!song.getXiamiProperties().getLyricsUrl().isEmpty()) {
-      SongsAPI.getInstance().getXiamiSongLyrics(song.getXiamiProperties().getLyricsUrl(), new SongsAPI.OnXiamiLyricsFetchedListener() {
+    } else if (!song.getLyricsUrl().isEmpty()) {
+      SongsAPI.getInstance().getXiamiSongLyrics(song.getLyricsUrl(), new SongsAPI.OnXiamiLyricsFetchedListener() {
         @Override
         public void onSuccess(String artist, List<Lyric> lyrics) {
           setLyrics(lyrics);

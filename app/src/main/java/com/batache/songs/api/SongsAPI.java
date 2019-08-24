@@ -28,12 +28,9 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -262,7 +259,9 @@ public class SongsAPI {
 
           for (XiamiSearchResponse.Song song : songs) {
             Song xiamiSong = new Song(song.id, song.title, song.artistName, song.albumLogoUrl);
-            xiamiSong.setXiamiProperties(new Song.XiamiProperties(song.url, song.lyricsUrl));
+            xiamiSong.setXiamiSongUrl(song.url);
+            xiamiSong.setLyricsUrl(song.lyricsUrl);
+            xiamiSong.setSongSource(Song.SongSource.xiami);
             fetchedSongs.add(xiamiSong);
           }
 

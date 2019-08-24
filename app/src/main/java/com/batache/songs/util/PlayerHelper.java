@@ -7,6 +7,7 @@ import android.net.Uri;
 import com.batache.songs.db.DatabaseHelper;
 import com.batache.songs.model.LastPlayed;
 import com.batache.songs.model.Song;
+import com.batache.songs.network.SongDownloader;
 import com.batache.songs.util.events.PlayerEvent;
 import com.google.android.exoplayer2.C;
 
@@ -14,6 +15,8 @@ import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import at.huber.youtubeExtractor.YtFile;
 
 public class PlayerHelper {
 
@@ -120,18 +123,26 @@ public class PlayerHelper {
     List<Song> playlistSongs = DatabaseHelper.getInstance(context).getSongsForPlaylist(playlistId);
     if (!playlistSongs.isEmpty()) {
       for (Song song : playlistSongs) {
-        MediaPlayer mp = MediaPlayer.create(context, Uri.parse(song.getPath().getPath()));
-        if (mp != null) {
-          song.setDuration(mp.getDuration());
-          mp.release();
-          playingQueue.add(song);
+        if(song.getPath() != null) {
+          updateSongDuration(context, song, Uri.parse(song.getPath().getPath()));
         } else {
-          DatabaseHelper.getInstance(context).deleteSong(song.getId());
+          SongDownloader.getInstance().fetchSongURL(context, song, songFile -> updateSongDuration(context, song, Uri.parse(songFile.getUrl())));
         }
       }
       return true;
     }
     return false;
+  }
+
+  private void updateSongDuration(Context context, Song song, Uri uri) {
+    MediaPlayer mp = MediaPlayer.create(context, uri);
+    if (mp != null) {
+      song.setDuration(mp.getDuration());
+      mp.release();
+      playingQueue.add(song);
+    } else {
+      DatabaseHelper.getInstance(context).deleteSong(song.getId());
+    }
   }
 
   public List<Song> getPlayingQueue() {

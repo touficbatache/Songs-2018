@@ -203,7 +203,6 @@ public class MyMusicPlaylistFragment extends ListFragment {
       }
       if (!recovered.isEmpty()) {
         for (Song song : recovered) {
-          song.setXiamiProperties(new Song.XiamiProperties(null, null));
           song.setPath(DeviceUtils.getInternalFilesSongsDirFilePath(getContext(), SongUtils.getSongFileName(song.getId(), Song.SongSource.xiami)));
 
           mDatabaseHelper.insertSong(song);

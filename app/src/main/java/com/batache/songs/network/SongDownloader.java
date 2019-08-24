@@ -40,14 +40,9 @@ public class SongDownloader {
 
   public void downloadSong(final Context context, final Song song, final SongDownloaderCallback callback) {
     if (song.getSongSource() == Song.SongSource.youtube) {
-      fetchSongURL(context, song, new SongURLFetcherCallback() {
-        @Override
-        public void onSuccess(YtFile songFile) {
-          startDownload(context, song, songFile.getUrl(), callback);
-        }
-      });
+      fetchSongURL(context, song, songFile -> startDownload(context, song, songFile.getUrl(), callback));
     } else if (song.getSongSource() == Song.SongSource.xiami) {
-      startDownload(context, song, song.getXiamiProperties().getSongUrl(), callback);
+      startDownload(context, song, song.getXiamiSongUrl(), callback);
     }
   }
 
@@ -105,7 +100,7 @@ public class SongDownloader {
                 }
               });
             } else if (song.getSongSource() == Song.SongSource.xiami) {
-              SongsAPI.getInstance().getXiamiSongLyrics(song.getXiamiProperties().getLyricsUrl(), new SongsAPI.OnXiamiLyricsFetchedListener() {
+              SongsAPI.getInstance().getXiamiSongLyrics(song.getLyricsUrl(), new SongsAPI.OnXiamiLyricsFetchedListener() {
                 @Override
                 public void onSuccess(String artist, List<Lyric> lyrics) {
                   if (!CodeUtils.isEmpty(artist)) {
