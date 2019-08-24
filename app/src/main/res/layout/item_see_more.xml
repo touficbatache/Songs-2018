@@ -12,8 +12,10 @@
         android:layout_height="wrap_content"
         android:fontFamily="@string/roboto_medium"
         android:paddingStart="8dp"
+        android:paddingLeft="8dp"
         android:paddingTop="16dp"
         android:paddingEnd="4dp"
+        android:paddingRight="4dp"
         android:paddingBottom="16dp"
         android:text="@string/see_more"
         android:textAllCaps="true"
@@ -23,6 +25,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
         android:rotation="90"
         android:tint="@color/colorPrimary"
         app:srcCompat="@drawable/ic_keyboard_arrow_up_24dp" />

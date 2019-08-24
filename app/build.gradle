@@ -1,15 +1,18 @@
 apply plugin: 'com.android.application'
+apply plugin: "androidx.navigation.safeargs"
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
+    buildToolsVersion = '28.0.3'
     defaultConfig {
-        applicationId "ml.toufic.songs"
+        applicationId "com.batache.songs"
         minSdkVersion 16
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+        multiDexEnabled = true
     }
     buildTypes {
         release {
@@ -21,46 +24,64 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
+    }
 }
 
 ext {
     supportLibVersion = '28.0.0'
-    roomVersion = '1.1.1'
-    archLifecycleVersion = '1.1.1'
+    roomVersion = '2.1.0'
+    archLifecycleVersion = '2.0.0'
+    navVersion = "2.1.0-rc01"
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.0.2'
-    implementation 'com.google.android.material:material:1.1.0-alpha05'
+    implementation 'com.google.android.material:material:1.1.0-alpha09'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.media:media:1.0.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha4'
-    implementation 'com.airbnb.android:epoxy:3.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta2'
+
+    implementation 'com.airbnb.android:epoxy:3.5.1'
+    annotationProcessor 'com.airbnb.android:epoxy-processor:3.5.1'
+
     implementation 'com.miguelcatalan:materialsearchview:1.4.0'
     implementation 'com.github.HaarigerHarald:android-youtubeExtractor:master-SNAPSHOT'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
-    implementation 'com.facebook.fresco:fresco:1.11.0'
+    implementation 'com.facebook.fresco:fresco:1.13.0'
     implementation 'com.mindorks.android:prdownloader:0.4.0'
     implementation 'me.zhanghai.android.materialprogressbar:library:1.6.1'
     implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
-    implementation 'org.jsoup:jsoup:1.11.2'
+    implementation 'org.jsoup:jsoup:1.12.1'
     implementation 'com.google.android.exoplayer:exoplayer-core:2.9.1'
     implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.9.1'
     implementation 'com.squareup.retrofit2:retrofit:2.5.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
+    implementation 'com.squareup.retrofit2:converter-simplexml:2.5.0'
 
     // Room components
-    implementation 'androidx.room:room-runtime:2.1.0-alpha06'
-    annotationProcessor 'androidx.room:room-compiler:2.1.0-alpha06'
-    androidTestImplementation 'androidx.room:room-testing:2.1.0-alpha06'
+    implementation "androidx.room:room-runtime:$roomVersion"
+    annotationProcessor "androidx.room:room-compiler:$roomVersion"
+    androidTestImplementation "androidx.room:room-testing:$roomVersion"
 
     // Lifecycle components
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
-    annotationProcessor 'androidx.lifecycle:lifecycle-compiler:2.0.0'
+    implementation "androidx.lifecycle:lifecycle-extensions:$archLifecycleVersion"
+    annotationProcessor "androidx.lifecycle:lifecycle-compiler:$archLifecycleVersion"
+
+    implementation "androidx.navigation:navigation-fragment:$navVersion" // For Kotlin use navigation-fragment-ktx
+    implementation "androidx.navigation:navigation-ui:$navVersion" // For Kotlin use navigation-ui-ktx
+
+    implementation 'org.apache.commons:commons-text:1.6'
+
+    implementation 'org.greenrobot:eventbus:3.1.1'
 
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
+    androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }

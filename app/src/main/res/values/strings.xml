@@ -30,4 +30,6 @@
     <string name="playlists">Playlists</string>
     <string name="NUMBER_songs">%d songs</string>
     <string name="save">Save</string>
+    <string name="ok">OK</string>
+    <string name="failed_fetching_lyrics">Failed fetching lyrics</string>
 </resources>

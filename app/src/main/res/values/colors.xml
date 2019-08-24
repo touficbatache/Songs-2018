@@ -2,17 +2,17 @@
 <resources>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorSecondary">#FF4081</color>
 
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
-    <color name="transparent">#00000000</color>
     <color name="hint">#808080</color>
     <color name="grey_fa">#fafafa</color>
     <color name="grey_f5">#F5F5F5</color>
     <color name="grey_e0">#e0e0e0</color>
     <color name="grey_c0">#c0c0c0</color>
     <color name="grey_80">#808080</color>
+    <color name="grey_75">#757575</color>
     <color name="grey_67">#676767</color>
     <color name="grey_21">#212121</color>
 

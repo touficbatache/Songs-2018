@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
@@ -9,48 +8,29 @@
     tools:context=".ui.activities.MainActivity">
 
     <com.sothree.slidinguppanel.SlidingUpPanelLayout
-        xmlns:sothree="http://schemas.android.com/apk/res-auto"
         android:id="@+id/sliding_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="bottom"
-        sothree:umanoPanelHeight="@dimen/sliding_layout_height"
-        sothree:umanoShadowHeight="4dp">
+        app:umanoPanelHeight="@dimen/mini_player_height"
+        app:umanoShadowHeight="4dp">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <include
-                layout="@layout/app_bar_search"
-                android:id="@+id/appbar_container"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+            <include layout="@layout/app_bar_search" />
 
-            <FrameLayout
-                android:id="@+id/fragment_container"
+            <fragment
+                android:id="@+id/nav_host_fragment"
+                android:name="androidx.navigation.fragment.NavHostFragment"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                sothree:layout_constraintTop_toBottomOf="@id/appbar_container"
-                sothree:layout_constraintStart_toStartOf="parent"
-                sothree:layout_constraintEnd_toEndOf="parent"
-                sothree:layout_constraintBottom_toBottomOf="parent"/>
+                android:layout_height="match_parent"
+                app:defaultNavHost="true"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior"
+                app:navGraph="@navigation/nav_graph" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!--<FrameLayout-->
-            <!--android:id="@+id/sliding_panel"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent">-->
-
-            <!--<include-->
-                <!--layout="@layout/layout_player" />-->
-
-            <!--<include-->
-                <!--layout="@layout/layout_mini_player" />-->
-
-        <!--</FrameLayout>-->
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
         <FrameLayout
             android:id="@+id/player_fragment_container"
@@ -65,6 +45,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="?android:attr/windowBackground"
-        app:menu="@menu/menu_bottom_navigation"/>
+        app:menu="@menu/menu_bottom_navigation" />
 
 </FrameLayout>

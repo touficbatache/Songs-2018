@@ -48,7 +48,7 @@
 
         </LinearLayout>
 
-        <ml.toufic.songs.views.MorphingImageView
+        <com.batache.songs.views.MorphingImageView
             android:id="@+id/mini_player_play_to_pause_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

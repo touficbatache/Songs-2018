@@ -1,27 +1,20 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-    </style>
-
-    <style name="AppTheme.Translucent" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="shapeAppearanceLargeComponent">@style/AppTheme.ShapeAppearance.LargeComponent</item>
 
         <item name="windowActionBarOverlay">true</item>
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
-    <style name="AppTheme.Toolbar" parent="Theme.AppCompat.Light">
-        <item name="colorPrimary">@color/white</item> <!-- Status Bar color below overlay -->
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.ActionBar">
+        <item name="colorPrimary">@color/white</item> <!-- App bar background color -->
     </style>
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light" />
 
     <style name="PlayerTheme" parent="AppTheme">
         <item name="colorPrimary">@color/player_action_other</item>
@@ -31,19 +24,12 @@
         <item name="android:colorBackground">@color/grey_e0</item>
     </style>
     
-    <style name="ColorAccentWhite">
-        <item name="colorAccent">@color/white</item>
-    </style>
-
-    <style name="Theme1" parent="AppTheme">
-        <!--<item name="backgroundColorPrimary">@color/backgroundColorPrimary1</item>-->
-        <!--<item name="textColorPrimary">@color/textColorPrimary1</item>-->
-        <item name="backgroundColorPrimary">@color/grey_fa</item>
-        <item name="textColorPrimary">@color/colorPrimary</item>
+    <style name="ColorSecondaryWhite">
+        <item name="colorSecondary">@color/white</item>
     </style>
 
     <style name="MaterialSearchViewStyle">
-        <!-- Background for the search bar -->
+        <!-- Background for the searchYoutube bar -->
         <item name="searchBackground">@color/white</item>
 
         <!-- Change icon for the suggestions -->
@@ -64,6 +50,11 @@
 
     <style name="RippleWhite" parent="ThemeOverlay.AppCompat">
         <item name="colorControlHighlight">@color/white</item>
+    </style>
+
+    <style name="AppTheme.ShapeAppearance.LargeComponent" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
     </style>
 
 </resources>

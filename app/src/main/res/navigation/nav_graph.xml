@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/exploreFragment">
+
+    <fragment
+        android:id="@+id/exploreFragment"
+        android:name="com.batache.songs.ui.fragments.ExploreFragment"
+        android:label="@string/app_name">
+
+        <action
+            android:id="@+id/playlist_action"
+            app:destination="@id/explorePlaylistFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/explorePlaylistFragment"
+        android:name="com.batache.songs.ui.fragments.ExplorePlaylistFragment"
+        android:label="{title}">
+
+        <argument
+            android:name="title"
+            app:argType="string" />
+
+        <argument
+            android:name="playlistId"
+            app:argType="string" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/myMusicFragment"
+        android:name="com.batache.songs.ui.fragments.MyMusicFragment"
+        android:label="@string/app_name"
+        tools:layout="@layout/fragment_my_music">
+
+        <action
+            android:id="@+id/playlist_action"
+            app:destination="@id/myMusicPlaylistFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/myMusicPlaylistFragment"
+        android:name="com.batache.songs.ui.fragments.MyMusicPlaylistFragment"
+        android:label="{title}"
+        tools:layout="@layout/fragment_my_music_playlist">
+
+        <argument
+            android:name="title"
+            app:argType="string" />
+
+        <argument
+            android:name="playlistId"
+            app:argType="string" />
+
+    </fragment>
+
+</navigation>
