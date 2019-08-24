@@ -66,8 +66,6 @@ public class ExploreFragment extends ListFragment {
     }
     getExploreSongs();
     updateRecyclerViewSongs();
-
-//    initSearch();
   }
 
   @Override
@@ -76,6 +74,7 @@ public class ExploreFragment extends ListFragment {
 
     MenuItem searchItem = menu.findItem(R.id.action_search);
     SearchView searchView = (SearchView) searchItem.getActionView();
+    searchView.setQueryHint("Search by name, artist or lyrics...");
     searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
       @Override
       public boolean onQueryTextChange(String newText) {
@@ -115,7 +114,7 @@ public class ExploreFragment extends ListFragment {
 
         @Override
         public void onFailure(Throwable t) {
-          Toast.makeText(getContext(), "Failed fetching playlist", Toast.LENGTH_SHORT).show();
+          Toast.makeText(getContext(), R.string.failed_fetching_playlist, Toast.LENGTH_SHORT).show();
         }
       });
     }
@@ -131,7 +130,7 @@ public class ExploreFragment extends ListFragment {
 
         @Override
         public void onFailure(Throwable t) {
-          Toast.makeText(getContext(), "Failed fetching playlist", Toast.LENGTH_SHORT).show();
+          Toast.makeText(getContext(), R.string.failed_fetching_playlist, Toast.LENGTH_SHORT).show();
         }
       });
     }
@@ -139,26 +138,26 @@ public class ExploreFragment extends ListFragment {
 
   private void search() {
     mController.clear();
-    SongsAPI.getInstance().searchYoutube(mSearchQuery, new SongsAPI.OnSongsFetchedListener() {
+    SongsAPI.getInstance().searchXiami(mSearchQuery, new SongsAPI.OnSongsFetchedListener() {
       @Override
       public void onSuccess(List<Song> fetchedSongs) {
-        mController.addTitledSection(getContext(), "YouTube", fetchedSongs);
-        SongsAPI.getInstance().searchXiami(mSearchQuery, new SongsAPI.OnSongsFetchedListener() {
+        mController.addTitledSection(getContext(), getString(R.string.recommended), fetchedSongs);
+        SongsAPI.getInstance().searchYoutube(mSearchQuery, new SongsAPI.OnSongsFetchedListener() {
           @Override
           public void onSuccess(List<Song> fetchedSongs) {
-            mController.addTitledSection(getContext(), "HD", fetchedSongs);
+            mController.addTitledSection(getContext(), getString(R.string.youtube), fetchedSongs);
           }
 
           @Override
           public void onFailure(Throwable t) {
-
+            Toast.makeText(getContext(), R.string.search_failed, Toast.LENGTH_SHORT).show();
           }
         });
       }
 
       @Override
       public void onFailure(Throwable t) {
-        Toast.makeText(getContext(), "Search failed", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), R.string.search_failed, Toast.LENGTH_SHORT).show();
       }
     });
   }

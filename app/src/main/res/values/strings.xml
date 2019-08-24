@@ -32,4 +32,8 @@
     <string name="save">Save</string>
     <string name="ok">OK</string>
     <string name="failed_fetching_lyrics">Failed fetching lyrics</string>
+    <string name="recommended">Recommended</string>
+    <string name="youtube">YouTube</string>
+    <string name="search_failed">Search failed</string>
+    <string name="failed_fetching_playlist">Failed fetching playlist</string>
 </resources>
