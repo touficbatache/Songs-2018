@@ -17,8 +17,8 @@ public class DeviceUtils {
 
   public final static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
-  public static boolean isQ() {//todo fix this when the os becomes live
-    return BuildCompat.isAtLeastQ();
+  public static boolean isQ() {
+    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
   }
 
   public static boolean isPie() {
