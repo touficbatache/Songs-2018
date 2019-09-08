@@ -5,7 +5,7 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.activities.MainActivity">
+    tools:context=".app.MainActivity">
 
     <com.sothree.slidinguppanel.SlidingUpPanelLayout
         android:id="@+id/sliding_layout"
@@ -33,9 +33,22 @@
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
         <FrameLayout
-            android:id="@+id/player_fragment_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent">
+
+            <fragment
+                android:id="@+id/fragment_player"
+                android:name="com.batache.songs.app.player.PlayerFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <fragment
+                android:id="@+id/fragment_mini_player"
+                android:name="com.batache.songs.app.player.MiniPlayerFragment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </FrameLayout>
 
     </com.sothree.slidinguppanel.SlidingUpPanelLayout>
 

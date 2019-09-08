@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.batache.songs.db.SongsDatabase;
-import com.batache.songs.model.LastPlayed;
+import com.batache.songs.model.pojo.LastPlayed;
 
 public class LastPlayedRepository {
 

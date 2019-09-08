@@ -8,10 +8,10 @@ import com.batache.songs.db.LastPlayed.LastPlayedRepository;
 import com.batache.songs.db.Playlist.PlaylistRepository;
 import com.batache.songs.db.PlaylistSongJoin.PlaylistSongJoinRepository;
 import com.batache.songs.db.Song.SongRepository;
-import com.batache.songs.model.LastPlayed;
-import com.batache.songs.model.Playlist;
-import com.batache.songs.model.PlaylistSongJoin;
-import com.batache.songs.model.Song;
+import com.batache.songs.model.pojo.LastPlayed;
+import com.batache.songs.model.pojo.Playlist;
+import com.batache.songs.model.pojo.PlaylistSongJoin;
+import com.batache.songs.model.pojo.Song;
 
 import java.util.List;
 
@@ -61,6 +61,10 @@ public class DatabaseHelper {
 
   public List<Song> getAllSongs() {
     return mSongRepository.getAllSongs();
+  }
+
+  public LiveData<List<Song>> getSongsListener() {
+    return mSongRepository.getAllSongsLive();
   }
 
   public void deleteSong(Song song) {

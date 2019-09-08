@@ -10,7 +10,7 @@ import androidx.room.Update;
 
 import java.util.List;
 
-import com.batache.songs.model.Playlist;
+import com.batache.songs.model.pojo.Playlist;
 
 @Dao
 public interface PlaylistDao {

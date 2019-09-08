@@ -26,7 +26,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_arrow_forward_black_24dp"
-        app:tint="@color/grey_75" />
+        app:srcCompat="@drawable/ic_arrow_forward_default_24dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

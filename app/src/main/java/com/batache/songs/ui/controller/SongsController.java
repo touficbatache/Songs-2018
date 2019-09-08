@@ -5,13 +5,13 @@ import android.content.Context;
 import androidx.navigation.Navigation;
 
 import com.batache.songs.R;
-import com.batache.songs.model.Playlist;
-import com.batache.songs.model.Song;
-import com.batache.songs.ui.base.BaseController;
-import com.batache.songs.ui.fragments.ExploreFragmentDirections;
-import com.batache.songs.ui.model.PlaylistModel_;
-import com.batache.songs.ui.model.SongModel_;
-import com.batache.songs.ui.model.SubheaderModel_;
+import com.batache.songs.app.base.BaseController;
+import com.batache.songs.app.explore.ExploreFragmentDirections;
+import com.batache.songs.model.adapter.PlaylistModel_;
+import com.batache.songs.model.adapter.SongModel_;
+import com.batache.songs.model.adapter.SubheaderModel_;
+import com.batache.songs.model.pojo.Playlist;
+import com.batache.songs.model.pojo.Song;
 
 import java.util.List;
 

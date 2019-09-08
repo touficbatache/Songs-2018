@@ -1,5 +1,7 @@
 package com.batache.songs.util;
 
+import com.batache.songs.util.events.PlayerEvent;
+
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;

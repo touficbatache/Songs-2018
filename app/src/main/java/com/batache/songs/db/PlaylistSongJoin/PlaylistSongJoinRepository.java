@@ -6,9 +6,9 @@ import android.os.AsyncTask;
 import androidx.lifecycle.LiveData;
 
 import com.batache.songs.db.SongsDatabase;
-import com.batache.songs.model.Playlist;
-import com.batache.songs.model.PlaylistSongJoin;
-import com.batache.songs.model.Song;
+import com.batache.songs.model.pojo.Playlist;
+import com.batache.songs.model.pojo.PlaylistSongJoin;
+import com.batache.songs.model.pojo.Song;
 
 import java.util.List;
 

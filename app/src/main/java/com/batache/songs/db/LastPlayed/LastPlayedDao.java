@@ -4,7 +4,7 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
-import com.batache.songs.model.LastPlayed;
+import com.batache.songs.model.pojo.LastPlayed;
 
 @Dao
 public interface LastPlayedDao {

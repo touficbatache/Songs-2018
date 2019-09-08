@@ -13,10 +13,10 @@ import com.batache.songs.db.LastPlayed.LastPlayedDao;
 import com.batache.songs.db.Playlist.PlaylistDao;
 import com.batache.songs.db.PlaylistSongJoin.PlaylistSongJoinDao;
 import com.batache.songs.db.Song.SongDao;
-import com.batache.songs.model.LastPlayed;
-import com.batache.songs.model.Playlist;
-import com.batache.songs.model.Song;
-import com.batache.songs.model.PlaylistSongJoin;
+import com.batache.songs.model.pojo.LastPlayed;
+import com.batache.songs.model.pojo.Playlist;
+import com.batache.songs.model.pojo.Song;
+import com.batache.songs.model.pojo.PlaylistSongJoin;
 
 @Database(entities = {Playlist.class, Song.class, PlaylistSongJoin.class, LastPlayed.class}, version = 1, exportSchema = false)
 

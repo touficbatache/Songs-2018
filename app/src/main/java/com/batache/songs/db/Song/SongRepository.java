@@ -3,19 +3,22 @@ package com.batache.songs.db.Song;
 import android.content.Context;
 import android.os.AsyncTask;
 
+import androidx.lifecycle.LiveData;
+
 import com.batache.songs.db.SongsDatabase;
-import com.batache.songs.model.Song;
-import com.batache.songs.ui.activities.MainActivity;
+import com.batache.songs.model.pojo.Song;
 
 import java.util.List;
 
 public class SongRepository {
 
   private SongDao mSongDao;
+  private LiveData<List<Song>> mAllSongs;
 
   public SongRepository(Context context) {
     SongsDatabase db = SongsDatabase.getDatabase(context);
     mSongDao = db.songDao();
+    mAllSongs = mSongDao.getAllSongsLive();
   }
 
   public void insert(Song song) {
@@ -36,6 +39,10 @@ public class SongRepository {
 
   public List<Song> getAllSongs() {
     return mSongDao.getAllSongs();
+  }
+
+  public LiveData<List<Song>> getAllSongsLive() {
+    return mAllSongs;
   }
 
   public void delete(Song song) {

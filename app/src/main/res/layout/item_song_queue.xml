@@ -28,19 +28,19 @@
         android:singleLine="true"
         tools:text="Song Title" />
 
-    <TextView
-        android:id="@+id/song_duration"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        tools:text="5:05" />
+<!--    <TextView-->
+<!--        android:id="@+id/song_duration"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:padding="16dp"-->
+<!--        tools:text="5:05" />-->
 
     <ImageView
         android:id="@+id/song_now_playing"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="16dp"
-        android:tint="@color/grey_67"
+        android:tint="?attr/colorOnBackground"
         android:visibility="invisible"
         app:srcCompat="@drawable/ic_equalizer_24dp" />
 

@@ -22,7 +22,7 @@
             android:layout_margin="14dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="2dp"
-            android:tint="@color/grey_67"
+            android:tint="?attr/colorOnBackground"
             app:srcCompat="@drawable/ic_arrow_back_24dp" />
 
         <TextView
@@ -43,7 +43,7 @@
             android:layout_marginEnd="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="2dp"
-            android:tint="@color/grey_67"
+            android:tint="?attr/colorOnBackground"
             android:visibility="gone"
             app:srcCompat="@drawable/ic_closed_captions_outlined_black_24dp" />
 
@@ -55,7 +55,7 @@
             android:layout_marginEnd="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="2dp"
-            android:tint="@color/grey_67"
+            android:tint="?attr/colorOnBackground"
             app:srcCompat="@drawable/ic_edit_outlined_black_24dp" />
 
         <ImageButton
@@ -66,7 +66,7 @@
             android:layout_marginEnd="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="2dp"
-            android:tint="@color/grey_67"
+            android:tint="?attr/colorOnBackground"
             android:visibility="gone"
             app:srcCompat="@drawable/ic_delete_outlined_black_24dp" />
 
@@ -87,7 +87,9 @@
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:text="Re-center"
+        android:textColor="@color/white"
         app:icon="@drawable/ic_view_day_outlined_black_24dp"
+        app:iconTint="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

@@ -3,7 +3,7 @@ package com.batache.songs.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.batache.songs.model.Song;
+import com.batache.songs.model.pojo.Song;
 
 public class RestoreSongsUtils {
 

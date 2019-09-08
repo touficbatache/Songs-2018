@@ -3,18 +3,14 @@ package com.batache.songs;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.multidex.MultiDexApplication;
 
-import com.batache.songs.db.DatabaseHelper;
-import com.batache.songs.model.Playlist;
+import com.batache.songs.api.SongDownloader;
+import com.batache.songs.app.player.PlayerManager;
+import com.cyl.musicapi.BaseApiImpl;
 import com.downloader.PRDownloader;
 import com.downloader.PRDownloaderConfig;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.imagepipeline.core.ImagePipelineConfig;
 import com.facebook.imagepipeline.decoder.SimpleProgressiveJpegConfig;
-
-import java.util.Date;
-
-import static com.batache.songs.util.SongUtils.PLAYLIST_DOWNLOADS_ID;
-import static com.batache.songs.util.SongUtils.PLAYLIST_LIKES_ID;
 
 public class SongsApplication extends MultiDexApplication {
 
@@ -36,14 +32,18 @@ public class SongsApplication extends MultiDexApplication {
     PRDownloaderConfig prDownloaderConfig = PRDownloaderConfig.newBuilder()
         .setDatabaseEnabled(true)
         .build();
-    PRDownloader.initialize(getApplicationContext(), prDownloaderConfig);
+    PRDownloader.initialize(this, prDownloaderConfig);
 
-    DatabaseHelper mDatabaseHelper = DatabaseHelper.getInstance(getApplicationContext());
-    if (mDatabaseHelper.getPlaylist(PLAYLIST_LIKES_ID) == null) {
-      mDatabaseHelper.insertPlaylist(new Playlist(PLAYLIST_LIKES_ID, getString(R.string.favorites), new Date()));
-    }
-    if (mDatabaseHelper.getPlaylist(PLAYLIST_DOWNLOADS_ID) == null) {
-      mDatabaseHelper.insertPlaylist(new Playlist(PLAYLIST_DOWNLOADS_ID, getString(R.string.downloads), new Date()));
-    }
+    SongDownloader.initialize(this);
+    PlayerManager.initialize(this);
+
+    BaseApiImpl.INSTANCE.initWebView(this);
+  }
+
+  @Override
+  public void onTerminate() {
+    super.onTerminate();
+    PlayerManager.destroy();
+    SongDownloader.destroy();
   }
 }

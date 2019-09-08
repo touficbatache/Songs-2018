@@ -1,13 +1,21 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.Songs" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorSecondary">@color/colorSecondary</item>
-        <item name="shapeAppearanceLargeComponent">@style/AppTheme.ShapeAppearance.LargeComponent</item>
-
-        <item name="windowActionBarOverlay">true</item>
+        <item name="colorOnBackground">@color/colorOnBackground</item>
+        <!-- System bar attributes -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="M">true</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="O_MR1">true</item>
+        <!-- Shape attributes -->
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Songs.LargeComponent
+        </item>
+        <!-- Widget style attributes -->
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.Songs.BottomSheetDialog</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.ActionBar">
@@ -16,14 +24,20 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light" />
 
-    <style name="PlayerTheme" parent="AppTheme">
+    <style name="Theme.Songs.Player" parent="Theme.Songs">
         <item name="colorPrimary">@color/player_action_other</item>
 
         <item name="android:background">@color/grey_e0</item>
         <item name="android:windowBackground">@color/grey_e0</item>
         <item name="android:colorBackground">@color/grey_e0</item>
     </style>
-    
+
+    <style name="ThemeOverlay.Songs.BottomSheetDialog" parent="ThemeOverlay.MaterialComponents.Light.BottomSheetDialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="O_MR1">true</item>
+    </style>
+
     <style name="ColorSecondaryWhite">
         <item name="colorSecondary">@color/white</item>
     </style>
@@ -52,7 +66,7 @@
         <item name="colorControlHighlight">@color/white</item>
     </style>
 
-    <style name="AppTheme.ShapeAppearance.LargeComponent" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+    <style name="ShapeAppearance.Songs.LargeComponent" parent="ShapeAppearance.MaterialComponents.LargeComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">12dp</item>
     </style>

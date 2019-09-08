@@ -1,37 +1,37 @@
 package com.batache.songs.db;
 
+import android.net.Uri;
+
 import androidx.room.TypeConverter;
 
-import com.batache.songs.model.Lyric;
+import com.batache.songs.model.pojo.Lyric;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import com.batache.songs.model.Playlist;
-import com.batache.songs.model.Song;
+import com.batache.songs.model.pojo.Song;
 
 public class Converters {
   private static Gson gson = new Gson();
 
   @TypeConverter
-  public static File fileFromString(String value) {
+  public static Uri uriFromString(String value) {
     if(value == null) {
       return null;
     }
-    return new File(value);
+    return Uri.parse(value);
   }
   @TypeConverter
-  public static String fromFile(File file) {
-    if(file == null) {
+  public static String fromUri(Uri uri) {
+    if(uri == null) {
       return null;
     }
-    return file.toString();
+    return uri.toString();
   }
 
   @TypeConverter

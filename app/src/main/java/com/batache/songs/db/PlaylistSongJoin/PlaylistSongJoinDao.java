@@ -7,9 +7,9 @@ import androidx.room.Query;
 
 import java.util.List;
 
-import com.batache.songs.model.Playlist;
-import com.batache.songs.model.PlaylistSongJoin;
-import com.batache.songs.model.Song;
+import com.batache.songs.model.pojo.Playlist;
+import com.batache.songs.model.pojo.PlaylistSongJoin;
+import com.batache.songs.model.pojo.Song;
 
 @Dao
 public interface PlaylistSongJoinDao {

@@ -1,5 +1,6 @@
 package com.batache.songs.db.Song;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -9,7 +10,7 @@ import androidx.room.Update;
 
 import java.util.List;
 
-import com.batache.songs.model.Song;
+import com.batache.songs.model.pojo.Song;
 
 @Dao
 public interface SongDao {
@@ -25,6 +26,9 @@ public interface SongDao {
 
   @Query("SELECT * FROM songs")
   List<Song> getAllSongs();
+
+  @Query("SELECT * FROM songs")
+  LiveData<List<Song>> getAllSongsLive();
 
   @Delete
   void delete(Song song);

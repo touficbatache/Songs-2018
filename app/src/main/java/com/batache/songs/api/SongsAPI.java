@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.batache.songs.api.captions.Caption;
 import com.batache.songs.api.captions.CaptionsApiClient;
 import com.batache.songs.api.captions.CaptionsApiInterface;
 import com.batache.songs.api.captions.CaptionsResponse;
@@ -20,9 +21,9 @@ import com.batache.songs.api.youtube.YoutubeCaptionLanguagesResponse;
 import com.batache.songs.api.youtube.YoutubePlaylistResponse;
 import com.batache.songs.api.youtube.YoutubeSearchResponse;
 import com.batache.songs.api.youtube.YoutubeVideosResponse;
-import com.batache.songs.model.Lyric;
-import com.batache.songs.model.Song;
-import com.batache.songs.network.HTMLDataFetcher;
+import com.batache.songs.model.pojo.Lyric;
+import com.batache.songs.model.pojo.Song;
+import com.batache.songs.util.CodeUtils;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.nodes.Document;
@@ -31,7 +32,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.ResponseBody;
@@ -211,11 +215,11 @@ public class SongsAPI {
       public void onResponse(@NonNull Call<YoutubeCaptionLanguagesResponse> call, @NonNull Response<YoutubeCaptionLanguagesResponse> response) {
         if (response.body() != null) {
           List<YoutubeCaptionLanguagesResponse.Item> captions = response.body().items;
-          List<String> captionLanguages = new ArrayList<>();
+          Map<String, String> captionLanguages = new HashMap<>();
 
           for (YoutubeCaptionLanguagesResponse.Item caption : captions) {
             if (!caption.snippet.trackKind.equals("ASR")) {
-              captionLanguages.add(caption.snippet.language);
+              captionLanguages.put(new Locale(caption.snippet.language).getDisplayLanguage(), caption.snippet.language);
             }
           }
 
@@ -236,7 +240,13 @@ public class SongsAPI {
       @Override
       public void onResponse(@NonNull Call<CaptionsResponse> call, @NonNull Response<CaptionsResponse> response) {
         if (response.body() != null) {
-          onCaptionsFetchedListener.onSuccess(response.body().captions);
+          List<Lyric> lyrics = new ArrayList<>();
+          for (Caption caption : response.body().captions) {
+            int seconds = caption.start.split("\\.").length > 0 ? Integer.parseInt(caption.start.split("\\.")[0]) : 0;
+            int millis = caption.start.split("\\.").length > 1 ? Integer.parseInt(caption.start.split("\\.")[1].concat("0")) : 0;
+            lyrics.add(new Lyric((int) TimeUnit.SECONDS.toMillis(seconds) + millis, caption.text));
+          }
+          onCaptionsFetchedListener.onSuccess(lyrics);
         }
       }
 
@@ -259,7 +269,7 @@ public class SongsAPI {
 
           for (XiamiSearchResponse.Song song : songs) {
             Song xiamiSong = new Song(song.id, song.title, song.artistName, song.albumLogoUrl);
-            xiamiSong.setXiamiSongUrl(song.url);
+            xiamiSong.setUrl(song.url);
             xiamiSong.setLyricsUrl(song.lyricsUrl);
             xiamiSong.setSongSource(Song.SongSource.xiami);
             fetchedSongs.add(xiamiSong);
@@ -388,24 +398,34 @@ public class SongsAPI {
           List<Lyric> lyrics = new ArrayList<>();
           try {
             String responseRecieved = response.body().string();
-            artist = responseRecieved.split("\\[ar:")[1].split("]")[0];
+
+            if (responseRecieved.split("\\[ar:").length > 1) {
+              artist = responseRecieved.split("\\[ar:")[1].split("]")[0];
+            }
+
             String lyricsStr = responseRecieved
-                .split("\\[offset:0]")[1]
                 .replaceAll("<[^>]*>", "")
                 .replaceAll("\\[x-trans][^\\r\\n]*\\r\\n", "");
 
-//            String artist = Pattern.compile("(?<=ar:).+?(?=])").matcher(responseRecieved).group();
-//            String lyrics = Pattern.compile("(?<=\\[offset:0\\])([\\s\\S]*)").matcher(responseRecieved).group();
+            if (lyricsStr.split("\\[offset:0]").length > 1) {
+              lyricsStr = lyricsStr.split("\\[offset:0]")[1];
+            }
 
-            for (String lyricLine : new ArrayList<>(Arrays.asList(lyricsStr.split("\\n")))) {
+            List<String> lyricLines = new ArrayList<>(Arrays.asList(lyricsStr.split("\\n")));
+            int index = 0;
+            for (String lyricLine : lyricLines) {
               if (lyricLine.contains("[") && lyricLine.contains("]")) {
                 String timecode = lyricLine.split("\\[")[1].split("]")[0];
                 int minutes = Integer.parseInt(timecode.split("\\.")[0].split(":")[0]);
                 int seconds = Integer.parseInt(timecode.split("\\.")[0].split(":")[1]);
                 int millis = Integer.parseInt(timecode.split("\\.")[1]);
-                String lyricText = lyricLine.split("]")[1];
+                String lyricText = lyricLine.split("]").length > 1 ? lyricLine.split("]")[1] : "";
 
-                lyrics.add(new Lyric((int) TimeUnit.MINUTES.toMillis(minutes) + (int) TimeUnit.SECONDS.toMillis(seconds) + millis, lyricText));
+                if (!CodeUtils.isEmpty(lyricText) || (index != 0 && index != lyricLines.size() - 1)) {
+                  lyrics.add(new Lyric((int) TimeUnit.MINUTES.toMillis(minutes) + (int) TimeUnit.SECONDS.toMillis(seconds) + millis, lyricText));
+                }
+
+                index++;
               }
             }
           } catch (IOException e) {
@@ -420,6 +440,17 @@ public class SongsAPI {
         onLyricsFetchedListener.onFailure(t);
       }
     });
+  }
+
+  public void getGeniusLyrics() {
+//    NOTE: JS working example below: will return a list of lyric links, to be run on a search results page
+//
+//    var links = new Array();
+//    var nodes = document.querySelectorAll("mini-song-card[object='$ctrl.hit.result']");
+//    for(i=0; i<nodes.length; i++) {
+//      links[i] = nodes[i].querySelector("a").getAttribute("ng-href");
+//    }
+//    console.log(links);
   }
 
   public interface BaseApiListener {
@@ -439,6 +470,6 @@ public class SongsAPI {
   }
 
   public interface OnCaptionLanguagesFetchedListener extends BaseApiListener {
-    void onSuccess(List<String> captionLanguages);
+    void onSuccess(Map<String, String> captionLanguages);
   }
 }

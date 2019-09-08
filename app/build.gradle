@@ -6,7 +6,7 @@ android {
     buildToolsVersion = '28.0.3'
     defaultConfig {
         applicationId "com.batache.songs"
-        minSdkVersion 16
+        minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -26,7 +26,7 @@ android {
     }
     lintOptions {
         checkReleaseBuilds false
-        // Or, if you prefer, you can continue to check for errors in release builds,
+        // Or, if you prefer, you can continue to check for errors in close builds,
         // but continue the build even when errors are found:
         abortOnError false
     }
@@ -46,6 +46,7 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.media:media:1.0.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta2'
+    implementation "androidx.preference:preference:1.0.0"
 
     implementation 'com.airbnb.android:epoxy:3.5.1'
     annotationProcessor 'com.airbnb.android:epoxy-processor:3.5.1'
@@ -53,11 +54,10 @@ dependencies {
     implementation 'com.miguelcatalan:materialsearchview:1.4.0'
     implementation 'com.github.HaarigerHarald:android-youtubeExtractor:master-SNAPSHOT'
     implementation 'com.google.code.gson:gson:2.8.5'
-    implementation 'com.sothree.slidinguppanel:library:3.4.0'
+    implementation 'com.github.kabouzeid:AndroidSlidingUpPanel:3.3.3-kmod'
     implementation 'com.facebook.fresco:fresco:1.13.0'
     implementation 'com.mindorks.android:prdownloader:0.4.0'
     implementation 'me.zhanghai.android.materialprogressbar:library:1.6.1'
-    implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
     implementation 'org.jsoup:jsoup:1.12.1'
     implementation 'com.google.android.exoplayer:exoplayer-core:2.9.1'
     implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.9.1'
@@ -80,6 +80,12 @@ dependencies {
     implementation 'org.apache.commons:commons-text:1.6'
 
     implementation 'org.greenrobot:eventbus:3.1.1'
+
+    implementation "androidx.tonyodev.fetch2:xfetch2:3.1.4"
+
+    implementation 'com.android.support:multidex:1.0.3'
+
+    implementation 'com.github.caiyonglong:musicapi:1.0.6'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
