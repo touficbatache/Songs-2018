@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 
 import com.batache.songs.R;
+import com.batache.songs.api.SongDownloader;
 import com.batache.songs.api.SongsAPI;
 import com.batache.songs.app.MainActivity;
 import com.batache.songs.app.base.ListFragment;
@@ -26,7 +27,14 @@ import com.batache.songs.util.CodeUtils;
 import com.batache.songs.util.DeviceUtils;
 import com.batache.songs.util.RestoreSongsUtils;
 import com.batache.songs.util.SongUtils;
+import com.batache.songs.util.events.DownloadEvent;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.tonyodev.fetch2.Download;
+import com.tonyodev.fetch2core.Func;
+
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -60,6 +68,12 @@ public class MyMusicPlaylistFragment extends ListFragment {
 
     StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
     StrictMode.setThreadPolicy(policy);
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    CodeUtils.registerToEventBus(this);
   }
 
   @Override
@@ -207,9 +221,32 @@ public class MyMusicPlaylistFragment extends ListFragment {
   }
 
   private void updateRecyclerViewSongs() {
+    if(PLAYLIST_DOWNLOADS_ID.equals(playlistId)) {
+      SongDownloader.getInstance().getDownloadingAndQueuedSongs(result -> {
+        mController.reset();
+
+        mController.addDownloadingSection(getContext(), result);
+
+        mController.addPlaylistSection(playlistId, playlistSongs);
+      });
+
+      return;
+    }
+
     mController.reset();
 
     mController.addPlaylistSection(playlistId, playlistSongs);
   }
 
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onDownloadEvent(DownloadEvent downloadEvent) {
+    updateRecyclerViewSongs();
+  }
+
+  @Override
+  public void onPause() {
+    super.onPause();
+
+    CodeUtils.unregisterFromEventBus(this);
+  }
 }

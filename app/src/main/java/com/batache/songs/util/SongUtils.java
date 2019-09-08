@@ -1,10 +1,17 @@
 package com.batache.songs.util;
 
+import android.net.Uri;
+
+import com.batache.songs.db.Deserializers;
 import com.batache.songs.model.pojo.Song;
 import com.cyl.musicapi.playlist.ArtistsItem;
 import com.cyl.musicapi.playlist.MusicInfo;
+import com.google.gson.GsonBuilder;
+import com.tonyodev.fetch2.Download;
 
 public class SongUtils {
+
+  public static final String SONG_EXTRA = "SONG_EXTRA";
 
   public static final String PLAYLIST_LIKES_ID = "1";
   public static final String PLAYLIST_DOWNLOADS_ID = "2";
@@ -27,6 +34,20 @@ public class SongUtils {
   private static int PIC_SIZE_SMALL = 0;
   private static int PIC_SIZE_NORMAL = 1;
   private static int PIC_SIZE_BIG = 2;
+
+  public static String toString(Song song) {
+    return new GsonBuilder()
+        .registerTypeAdapter(Uri.class, new Deserializers.UriInOut())
+        .create()
+        .toJson(song);
+  }
+
+  public static Song getSong(Download download) {
+    return new GsonBuilder()
+        .registerTypeAdapter(Uri.class, new Deserializers.UriInOut())
+        .create()
+        .fromJson(download.getExtras().getMap().get(SONG_EXTRA), Song.class);
+  }
 
   public static String getSongFileName(String songId, Song.SongSource songSource) {
     return songId + "-" + songSource.name() + ".m4a";

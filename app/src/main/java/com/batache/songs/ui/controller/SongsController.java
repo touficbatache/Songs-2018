@@ -7,11 +7,13 @@ import androidx.navigation.Navigation;
 import com.batache.songs.R;
 import com.batache.songs.app.base.BaseController;
 import com.batache.songs.app.explore.ExploreFragmentDirections;
+import com.batache.songs.model.adapter.DownloadingSongModel_;
 import com.batache.songs.model.adapter.PlaylistModel_;
 import com.batache.songs.model.adapter.SongModel_;
 import com.batache.songs.model.adapter.SubheaderModel_;
 import com.batache.songs.model.pojo.Playlist;
 import com.batache.songs.model.pojo.Song;
+import com.tonyodev.fetch2.Download;
 
 import java.util.List;
 
@@ -99,6 +101,17 @@ public class SongsController extends BaseController {
           .song(songs.get(i))
           .playlistId(playlistId)
           .index(i)
+      );
+    }
+
+    requestModelBuild();
+  }
+
+  public void addDownloadingSection(Context context, List<Download> downloads) {
+    for (int i = 0; i < downloads.size(); i++) {
+      data.add(new DownloadingSongModel_()
+          .context(context)
+          .download(downloads.get(i))
       );
     }
 

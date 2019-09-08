@@ -36,4 +36,6 @@
     <string name="youtube">YouTube</string>
     <string name="search_failed">Search failed</string>
     <string name="failed_fetching_playlist">Failed fetching playlist</string>
+    <string name="download_status_downloading">Downloading… %d%%</string>
+    <string name="download_status_queued">Waiting for download…</string>
 </resources>

@@ -5,7 +5,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.util.SparseArray;
 
 import androidx.core.app.NotificationCompat;
@@ -13,17 +12,15 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.batache.songs.R;
 import com.batache.songs.SongsService;
+import com.batache.songs.app.player.PlayerManager;
 import com.batache.songs.db.DatabaseHelper;
-import com.batache.songs.db.Deserializers;
 import com.batache.songs.model.pojo.Lyric;
 import com.batache.songs.model.pojo.PlaylistSongJoin;
 import com.batache.songs.model.pojo.Song;
-import com.batache.songs.app.player.PlayerManager;
 import com.batache.songs.util.CodeUtils;
 import com.batache.songs.util.DeviceUtils;
 import com.batache.songs.util.SongUtils;
 import com.batache.songs.util.events.DownloadEvent;
-import com.google.gson.GsonBuilder;
 import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
@@ -41,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -50,6 +49,7 @@ import at.huber.youtubeExtractor.YtFile;
 
 import static com.batache.songs.util.SongUtils.PLAYLIST_DOWNLOADS_ID;
 import static com.batache.songs.util.SongUtils.PLAYLIST_LIKES_ID;
+import static com.batache.songs.util.SongUtils.SONG_EXTRA;
 
 public class SongDownloader implements FetchListener {
 
@@ -67,8 +67,6 @@ public class SongDownloader implements FetchListener {
     }
     return sInstance;
   }
-
-  public static final String SONG_EXTRA = "SONG_EXTRA";
 
   private Context context;
   private Fetch fetch;
@@ -123,7 +121,7 @@ public class SongDownloader implements FetchListener {
     request.setPriority(Priority.HIGH);
     request.setNetworkType(NetworkType.WIFI_ONLY);
     request.setExtras(new Extras(new HashMap<String, String>() {{
-      put(SONG_EXTRA, SongDownloader.this.toString(song));
+      put(SONG_EXTRA, SongUtils.toString(song));
     }}));
 
     fetch.enqueue(request, result -> {
@@ -132,7 +130,7 @@ public class SongDownloader implements FetchListener {
   }
 
   private void showNotification(Download download) {
-    Song song = getSong(download);
+    Song song = SongUtils.getSong(download);
 
     manager = NotificationManagerCompat.from(context);
 
@@ -228,7 +226,7 @@ public class SongDownloader implements FetchListener {
 
   @Override
   public void onCompleted(@NotNull Download download) {
-    Song song = getSong(download);
+    Song song = SongUtils.getSong(download);
 
     song.setPath(new File(download.getFile()));
 
@@ -282,13 +280,13 @@ public class SongDownloader implements FetchListener {
   @Override
   public void onStarted(@NotNull Download download, @NotNull List<? extends DownloadBlock> list, int i) {
     showNotification(download);
-    DownloadEvent.postDownloadStarted(getSong(download));
+    DownloadEvent.postDownloadStarted(SongUtils.getSong(download));
   }
 
   @Override
   public void onProgress(@NotNull Download download, long l, long l1) {
     updateNotification(download.getId(), download.getProgress());
-    DownloadEvent.postDownloadProgressChanged(getSong(download), download.getProgress());
+    DownloadEvent.postDownloadProgressChanged(SongUtils.getSong(download), download.getProgress());
   }
 
   @Override
@@ -303,7 +301,7 @@ public class SongDownloader implements FetchListener {
 
   @Override
   public void onCancelled(@NotNull Download download) {
-    DownloadEvent.postDownloadCancelled(getSong(download));
+    DownloadEvent.postDownloadCancelled(SongUtils.getSong(download));
     manager.cancel(download.getId());
   }
 
@@ -317,24 +315,10 @@ public class SongDownloader implements FetchListener {
 
   }
 
-  private String toString(Song song) {
-    return new GsonBuilder()
-        .registerTypeAdapter(Uri.class, new Deserializers.UriInOut())
-        .create()
-        .toJson(song);
-  }
-
-  private Song getSong(Download download) {
-    return new GsonBuilder()
-        .registerTypeAdapter(Uri.class, new Deserializers.UriInOut())
-        .create()
-        .fromJson(download.getExtras().getMap().get(SONG_EXTRA), Song.class);
-  }
-
   public void getDownloadIdBySongId(String songId, Func<Integer> callback) {
     getDownloadingSongs(result -> {
       for (Download download : result) {
-        if (getSong(download).getId().equals(songId)) {
+        if (SongUtils.getSong(download).getId().equals(songId)) {
           callback.call(download.getId());
         }
       }
@@ -347,6 +331,10 @@ public class SongDownloader implements FetchListener {
 
   public void getQueuedSongs(Func<List<Download>> callback) {
     fetch.getDownloadsWithStatus(Status.QUEUED, callback);
+  }
+
+  public void getDownloadingAndQueuedSongs(Func<List<Download>> callback) {
+    fetch.getDownloadsWithStatus(new ArrayList<>(Arrays.asList(Status.DOWNLOADING, Status.QUEUED)), callback);
   }
 
   public static void destroy() {

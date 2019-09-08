@@ -1,7 +1,7 @@
 package com.batache.songs.model.adapter;
 
-import android.content.Context;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -10,17 +10,13 @@ import com.airbnb.epoxy.EpoxyAttribute;
 import com.airbnb.epoxy.EpoxyHolder;
 import com.airbnb.epoxy.EpoxyModelClass;
 import com.airbnb.epoxy.EpoxyModelWithHolder;
-
 import com.batache.songs.R;
-import com.batache.songs.model.pojo.Song;
 import com.batache.songs.app.player.PlayerManager;
+import com.batache.songs.model.pojo.Song;
 import com.batache.songs.util.CodeUtils;
 
 @EpoxyModelClass(layout = R.layout.item_song)
 public abstract class SongModel extends EpoxyModelWithHolder<SongModel.SongHolder> {
-
-  @EpoxyAttribute
-  Context context;
 
   // Stream song
   @EpoxyAttribute
@@ -40,19 +36,19 @@ public abstract class SongModel extends EpoxyModelWithHolder<SongModel.SongHolde
   public void bind(@NonNull SongHolder holder) {
     super.bind(holder);
 
-    if(CodeUtils.isEmpty(playlistId)) {
+    holder.songTitle.setText(song.getTitle());
+
+    if (showArtist && !CodeUtils.isEmpty(song.getArtist())) {
+      holder.songArtist.setVisibility(View.VISIBLE);
+      holder.songArtist.setText(song.getArtist());
+    } else {
+      holder.songArtist.setVisibility(View.GONE);
+    }
+
+    if (CodeUtils.isEmpty(playlistId)) {
       holder.itemView.setOnClickListener(view -> PlayerManager.getInstance().playSong(song));
     } else {
       holder.itemView.setOnClickListener(view -> PlayerManager.getInstance().playSong(playlistId, index));
-    }
-
-    holder.mSongTitle.setText(song.getTitle());
-
-    if (showArtist && !CodeUtils.isEmpty(song.getArtist())) {
-      holder.mSongArtist.setVisibility(View.VISIBLE);
-      holder.mSongArtist.setText(song.getArtist());
-    } else {
-      holder.mSongArtist.setVisibility(View.GONE);
     }
   }
 
@@ -66,13 +62,15 @@ public abstract class SongModel extends EpoxyModelWithHolder<SongModel.SongHolde
   class SongHolder extends EpoxyHolder {
 
     View itemView;
-    TextView mSongTitle, mSongArtist;
+    ImageView icon;
+    TextView songTitle, songArtist;
 
     @Override
     protected void bindView(@NonNull View itemView) {
       this.itemView = itemView;
-      mSongTitle = itemView.findViewById(R.id.song_title);
-      mSongArtist = itemView.findViewById(R.id.song_artist);
+      icon = itemView.findViewById(R.id.song_icon);
+      songTitle = itemView.findViewById(R.id.song_title);
+      songArtist = itemView.findViewById(R.id.song_artist);
     }
   }
 
