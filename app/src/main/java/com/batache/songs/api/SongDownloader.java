@@ -1,5 +1,6 @@
 package com.batache.songs.api;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,6 +10,7 @@ import android.util.SparseArray;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.preference.PreferenceManager;
 
 import com.batache.songs.R;
 import com.batache.songs.SongsService;
@@ -74,7 +76,7 @@ public class SongDownloader implements FetchListener {
   private NotificationCompat.Builder builder;
   private NotificationManagerCompat manager;
 
-  public SongDownloader(Context ctxt) {
+  private SongDownloader(Context ctxt) {
     // we should always use the application context to avoid memory leaks
     this.context = ctxt.getApplicationContext();
 
@@ -84,9 +86,7 @@ public class SongDownloader implements FetchListener {
 
   public void downloadSong(Song song) {
     if (song.getSongSource() == Song.SongSource.youtube) {
-      fetchSongURL(context, song, songFile -> {
-        download(song, songFile.getUrl());
-      });
+      fetchSongURL(context, song, songFile -> download(song, songFile.getUrl()));
     } else if (song.getSongSource() == Song.SongSource.xiami) {
       download(song, song.getUri().toString());
     }
@@ -119,7 +119,8 @@ public class SongDownloader implements FetchListener {
     String fileName = SongUtils.getSongFileName(song.getId(), song.getSongSource());
     Request request = new Request(url, DeviceUtils.getInternalFilesSongsDirFilePath(context, fileName).getPath());
     request.setPriority(Priority.HIGH);
-    request.setNetworkType(NetworkType.WIFI_ONLY);
+    boolean downloadOverWifiOnly = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("download_over_wifi_only", true);
+    request.setNetworkType(downloadOverWifiOnly ? NetworkType.WIFI_ONLY : NetworkType.ALL);
     request.setExtras(new Extras(new HashMap<String, String>() {{
       put(SONG_EXTRA, SongUtils.toString(song));
     }}));
@@ -134,21 +135,14 @@ public class SongDownloader implements FetchListener {
 
     manager = NotificationManagerCompat.from(context);
 
-    String NOTIFICATION_CHANNEL_ID = "songs_channel_id_1";
-
-    if (DeviceUtils.isOreo()) {
-      NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, "Songs notifications", NotificationManager.IMPORTANCE_DEFAULT);
-      manager.createNotificationChannel(notificationChannel);
-    }
-
-    builder = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID);
-
-    builder.setContentTitle(song.getTitle());
-    builder.setSmallIcon(R.drawable.ic_music_note_outlined_black_24dp);
-    builder.setAutoCancel(false);
-    builder.setProgress(100, 0, false);
-    builder.setWhen(System.currentTimeMillis());
-    builder.setOngoing(true);
+    builder = new NotificationCompat.Builder(context, initChannelId())
+        .setContentTitle(song.getTitle())
+        .setPriority(Notification.PRIORITY_LOW)
+        .setSmallIcon(R.drawable.ic_music_note_outlined_black_24dp)
+        .setAutoCancel(false)
+        .setProgress(100, 0, false)
+        .setWhen(System.currentTimeMillis())
+        .setOngoing(true);
     builder.mActions.clear();
 
     Intent cancelIntent = new Intent(context, SongsService.class);
@@ -158,6 +152,17 @@ public class SongDownloader implements FetchListener {
     builder.addAction(R.drawable.ic_music_note_outlined_black_24dp, "Cancel download", cancelPendingIntent);
 
     manager.notify(download.getId(), builder.build());
+  }
+
+  private String initChannelId() {
+    String id = "songs_downloads_channel";
+
+    if (DeviceUtils.isOreo()) {
+      NotificationChannel notificationChannel = new NotificationChannel(id, "Download notifications", NotificationManager.IMPORTANCE_LOW);
+      manager.createNotificationChannel(notificationChannel);
+    }
+
+    return id;
   }
 
   private void updateNotification(int id, int progress) {

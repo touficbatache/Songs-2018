@@ -1,9 +1,13 @@
 package com.batache.songs.app.my_music;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
@@ -13,6 +17,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.batache.songs.R;
+import com.batache.songs.app.settings.SettingsActivity;
 import com.batache.songs.db.DatabaseHelper;
 import com.batache.songs.model.pojo.Playlist;
 import com.batache.songs.app.base.ListFragment;
@@ -118,4 +123,18 @@ public class MyMusicFragment extends ListFragment {
     mSwipeRefreshLayout.setRefreshing(false);
   }
 
+  @Override
+  public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+    inflater.inflate(R.menu.menu_toolbar_settings, menu);
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    if (item.getItemId() == R.id.action_settings) {
+      startActivity(new Intent(getContext(), SettingsActivity.class));
+      return true;
+    }
+
+    return false;
+  }
 }

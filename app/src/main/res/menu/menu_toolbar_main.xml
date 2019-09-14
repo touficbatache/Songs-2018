@@ -12,4 +12,12 @@
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="ifRoom|collapseActionView" />
 
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@drawable/ic_settings_outlined_default_24dp"
+        android:orderInCategory="300"
+        android:title="@string/settings"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="never" />
+
 </menu>

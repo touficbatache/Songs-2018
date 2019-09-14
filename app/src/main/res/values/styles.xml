@@ -6,6 +6,8 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorSecondary">@color/colorSecondary</item>
         <item name="colorOnBackground">@color/colorOnBackground</item>
+        <item name="actionOverflowButtonStyle">@style/Theme.Songs.OverFlow</item>
+        <item name="homeAsUpIndicator">@drawable/ic_arrow_back_default_24dp</item>
         <!-- System bar attributes -->
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar" tools:targetApi="M">true</item>
@@ -16,6 +18,10 @@
         </item>
         <!-- Widget style attributes -->
         <item name="bottomSheetDialogTheme">@style/ThemeOverlay.Songs.BottomSheetDialog</item>
+    </style>
+
+    <style name="Theme.Songs.OverFlow" parent="Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:src">@drawable/ic_more_vert_default_24dp</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.ActionBar">

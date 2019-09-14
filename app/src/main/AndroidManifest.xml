@@ -35,7 +35,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".app.lyrics.LyricsActivity"></activity>
+        <activity android:name=".app.lyrics.LyricsActivity" />
+        <activity
+            android:name=".app.settings.SettingsActivity"
+            android:label="@string/settings" />
 
         <service
             android:name=".SongsService"

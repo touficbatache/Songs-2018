@@ -1,5 +1,6 @@
 package com.batache.songs.app.explore;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -15,6 +16,7 @@ import androidx.appcompat.widget.SearchView;
 
 import com.batache.songs.R;
 import com.batache.songs.api.SongsAPI;
+import com.batache.songs.app.settings.SettingsActivity;
 import com.batache.songs.model.pojo.Song;
 import com.batache.songs.app.base.ListFragment;
 import com.batache.songs.util.SongUtils;
@@ -105,6 +107,22 @@ public class ExploreFragment extends ListFragment {
         return false;
       }
     });
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    switch (item.getItemId()) {
+      case R.id.action_search:
+        // Not implemented here
+        return false;
+      case R.id.action_settings:
+        startActivity(new Intent(getContext(), SettingsActivity.class));
+        return true;
+      default:
+        break;
+    }
+
+    return false;
   }
 
   private void getExploreSongs() {

@@ -35,18 +35,18 @@ android {
 ext {
     supportLibVersion = '28.0.0'
     roomVersion = '2.1.0'
-    archLifecycleVersion = '2.0.0'
-    navVersion = "2.1.0-rc01"
+    archLifecycleVersion = '2.1.0'
+    navVersion = "2.1.0"
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.0.2'
-    implementation 'com.google.android.material:material:1.1.0-alpha09'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.google.android.material:material:1.1.0-alpha10'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.media:media:1.0.1'
+    implementation 'androidx.media:media:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta2'
-    implementation "androidx.preference:preference:1.0.0"
+    implementation "androidx.preference:preference:1.1.0"
 
     implementation 'com.airbnb.android:epoxy:3.5.1'
     annotationProcessor 'com.airbnb.android:epoxy-processor:3.5.1'

@@ -1,0 +1,29 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/pref_subheader_download">
+
+        <ListPreference
+            app:entries="@array/pref_download_quality_titles"
+            app:entryValues="@array/pref_download_quality_values"
+            app:iconSpaceReserved="false"
+            app:key="download_quality"
+            app:negativeButtonText="@null"
+            app:positiveButtonText="@null"
+            app:title="@string/pref_title_download_quality" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:iconSpaceReserved="false"
+            app:key="download_over_wifi_only"
+            app:title="@string/pref_title_download_over_wifi_only" />
+
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="delete_downloads"
+            app:title="@string/pref_title_delete_all_downloads" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

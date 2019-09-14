@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        app:iconSpaceReserved="false"
+        app:key="general"
+        app:title="@string/pref_header_general" />
+
+    <Preference
+        app:fragment="com.batache.songs.app.settings.DownloadsSettingsFragment"
+        app:iconSpaceReserved="false"
+        app:key="downloads"
+        app:title="@string/pref_header_downloads" />
+
+    <Preference
+        app:iconSpaceReserved="false"
+        app:key="about"
+        app:title="@string/pref_header_about" />
+
+</PreferenceScreen>
