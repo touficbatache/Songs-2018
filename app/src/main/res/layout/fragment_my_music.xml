@@ -10,7 +10,7 @@
         android:layout_height="wrap_content">
 
         <include
-            layout="@layout/fragment_explore_playlist"
+            layout="@layout/fragment_explore"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

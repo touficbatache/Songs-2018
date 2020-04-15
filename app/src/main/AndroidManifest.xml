@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.batache.songs">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:name=".SongsApplication"
@@ -13,7 +15,35 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Songs"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        tools:ignore="GoogleAppIndexingWarning">
+
+        <activity
+            android:name=".app.MainActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".app.lyrics.LyricsActivity" />
+
+        <activity
+            android:name=".app.settings.SettingsActivity"
+            android:label="@string/settings" />
+
+        <service
+            android:name=".SongsService"
+            android:exported="false" />
+        <service
+            android:name=".player.PlayerService"
+            android:exported="true"
+            tools:ignore="ExportedService" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.batache.songs.fileprovider"
@@ -24,25 +54,6 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-        <activity
-            android:name="com.batache.songs.app.MainActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".app.lyrics.LyricsActivity" />
-        <activity
-            android:name=".app.settings.SettingsActivity"
-            android:label="@string/settings" />
-
-        <service
-            android:name=".SongsService"
-            android:exported="false" />
     </application>
 
 </manifest>

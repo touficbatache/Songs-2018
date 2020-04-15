@@ -13,6 +13,16 @@
             app:positiveButtonText="@null"
             app:title="@string/pref_title_download_quality" />
 
+        <ListPreference
+            app:defaultValue="in_app"
+            app:entries="@array/pref_download_location_titles"
+            app:entryValues="@array/pref_download_location_values"
+            app:iconSpaceReserved="false"
+            app:key="download_location"
+            app:negativeButtonText="@null"
+            app:positiveButtonText="@null"
+            app:title="@string/pref_title_download_location" />
+
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:iconSpaceReserved="false"

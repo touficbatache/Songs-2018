@@ -5,8 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.preference.PreferenceManager;
 
-import androidx.core.os.BuildCompat;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -49,16 +47,44 @@ public class DeviceUtils {
     return Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
   }
 
-  public static File getInternalFilesDir(Context context) {
+  private static File getExternalFilesDir(Context context) {
+    return context.getExternalFilesDir(null);
+  }
+
+  private static File getExternalFilesSongsDir(Context context) {
+    return new File(getExternalFilesDir(context), "songs");
+  }
+
+  private static File getExternalFilesSongsDirFilePath(Context context, String filename) {
+    return new File(getExternalFilesSongsDir(context), filename);
+  }
+
+  private static File getInternalFilesDir(Context context) {
     return context.getFilesDir();
   }
 
-  public static File getInternalFilesSongsDir(Context context) {
+  private static File getInternalFilesSongsDir(Context context) {
     return new File(getInternalFilesDir(context), "songs");
   }
 
-  public static File getInternalFilesSongsDirFilePath(Context context, String filename) {
+  private static File getInternalFilesSongsDirFilePath(Context context, String filename) {
     return new File(getInternalFilesSongsDir(context), filename);
+  }
+
+  public static File getDownloadSongsDir(Context context) {
+    String songDownloadDir = PreferenceManager.getDefaultSharedPreferences(context).getString("download_location", "in_app");
+    if ("in_app".equals(songDownloadDir)) {
+      return getInternalFilesSongsDir(context);
+    }
+    return getExternalFilesSongsDir(context);
+  }
+
+  public static File getDownloadSongsDirFilePath(Context context, String fileName) {
+    String songDownloadDir = PreferenceManager.getDefaultSharedPreferences(context).getString("download_location", "in_app");
+    if ("in_app".equals(songDownloadDir)) {
+      return getInternalFilesSongsDirFilePath(context, fileName);
+    }
+    return getExternalFilesSongsDirFilePath(context, fileName);
   }
 
   public static File getInternalCacheDir(Context context) {
@@ -76,13 +102,12 @@ public class DeviceUtils {
       URL url = new URL(file_url);
       URLConnection connection = url.openConnection();
       connection.connect();
-      if(lastModified != 0)
-      {
+      if (lastModified != 0) {
 
         are_the_same = (connection.getLastModified() < lastModified);
 
       }
-    } catch(MalformedURLException e) {
+    } catch (MalformedURLException e) {
       e.printStackTrace();
     }
 

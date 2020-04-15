@@ -19,7 +19,7 @@ import com.batache.songs.api.SongsAPI;
 import com.batache.songs.app.MainActivity;
 import com.batache.songs.app.base.ListFragment;
 import com.batache.songs.app.explore.ExplorePlaylistFragmentArgs;
-import com.batache.songs.app.player.PlayerManager;
+import com.batache.songs.player.PlayerManager;
 import com.batache.songs.db.DatabaseHelper;
 import com.batache.songs.model.pojo.PlaylistSongJoin;
 import com.batache.songs.model.pojo.Song;
@@ -29,12 +29,9 @@ import com.batache.songs.util.RestoreSongsUtils;
 import com.batache.songs.util.SongUtils;
 import com.batache.songs.util.events.DownloadEvent;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.tonyodev.fetch2.Download;
-import com.tonyodev.fetch2core.Func;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -157,7 +154,7 @@ public class MyMusicPlaylistFragment extends ListFragment {
       }
     }
 
-    File downloadDirectory = DeviceUtils.getInternalFilesSongsDir(getContext());
+    File downloadDirectory = DeviceUtils.getDownloadSongsDir(getContext());
     if (!downloadDirectory.exists()) {
       try {
         downloadDirectory.mkdirs();
@@ -191,7 +188,7 @@ public class MyMusicPlaylistFragment extends ListFragment {
               if (restoreSongsUtils.getProgress() == 1) {
                 List<Song> youtubeRecovered = restoreSongsUtils.getSongs();
                 for (Song song : youtubeRecovered) {
-                  song.setPath(DeviceUtils.getInternalFilesSongsDirFilePath(getContext(), SongUtils.getSongFileName(song.getId(), Song.SongSource.youtube)));
+                  song.setPath(DeviceUtils.getDownloadSongsDirFilePath(getContext(), SongUtils.getSongFileName(song.getId(), Song.SongSource.youtube)));
 
                   mDatabaseHelper.insertSong(song);
                   mDatabaseHelper.insertSongInPlaylist(new PlaylistSongJoin(playlistId, song.getId()));
@@ -208,7 +205,7 @@ public class MyMusicPlaylistFragment extends ListFragment {
       }
       if (!recovered.isEmpty()) {
         for (Song song : recovered) {
-          song.setPath(DeviceUtils.getInternalFilesSongsDirFilePath(getContext(), SongUtils.getSongFileName(song.getId(), Song.SongSource.xiami)));
+          song.setPath(DeviceUtils.getDownloadSongsDirFilePath(getContext(), SongUtils.getSongFileName(song.getId(), Song.SongSource.xiami)));
 
           mDatabaseHelper.insertSong(song);
           mDatabaseHelper.insertSongInPlaylist(new PlaylistSongJoin(playlistId, song.getId()));

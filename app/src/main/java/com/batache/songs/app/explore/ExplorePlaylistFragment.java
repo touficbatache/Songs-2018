@@ -19,13 +19,11 @@ public class ExplorePlaylistFragment extends ListFragment {
 
   private final static String MAX_RESULTS = "50";
 
-  private static final String TAG = "ExplorePlaylistFragment : ";
-
   private String playlistId;
 
   @Override
   public int getLayout() {
-    return R.layout.fragment_explore_playlist;
+    return R.layout.fragment_explore;
   }
 
   @Override

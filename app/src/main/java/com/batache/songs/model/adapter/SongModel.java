@@ -11,8 +11,8 @@ import com.airbnb.epoxy.EpoxyHolder;
 import com.airbnb.epoxy.EpoxyModelClass;
 import com.airbnb.epoxy.EpoxyModelWithHolder;
 import com.batache.songs.R;
-import com.batache.songs.app.player.PlayerManager;
 import com.batache.songs.model.pojo.Song;
+import com.batache.songs.player.PlayerManager;
 import com.batache.songs.util.CodeUtils;
 
 @EpoxyModelClass(layout = R.layout.item_song)
@@ -32,6 +32,9 @@ public abstract class SongModel extends EpoxyModelWithHolder<SongModel.SongHolde
   @EpoxyAttribute
   boolean showArtist = true;
 
+  @EpoxyAttribute
+  boolean showYoutubeIcon = false;
+
   @Override
   public void bind(@NonNull SongHolder holder) {
     super.bind(holder);
@@ -50,6 +53,17 @@ public abstract class SongModel extends EpoxyModelWithHolder<SongModel.SongHolde
     } else {
       holder.itemView.setOnClickListener(view -> PlayerManager.getInstance().playSong(playlistId, index));
     }
+
+    holder.songSourceYoutube.setVisibility(View.GONE);
+    holder.songKaraokeAvailable.setVisibility(View.GONE);
+
+    if(showYoutubeIcon && song.getSongSource() == Song.SongSource.youtube) {
+      holder.songSourceYoutube.setVisibility(View.VISIBLE);
+    }
+
+    if(song.getLyricsUrl() != null && !song.getLyricsUrl().equals("")) {
+      holder.songKaraokeAvailable.setVisibility(View.VISIBLE);
+    }
   }
 
   @Override
@@ -64,6 +78,7 @@ public abstract class SongModel extends EpoxyModelWithHolder<SongModel.SongHolde
     View itemView;
     ImageView icon;
     TextView songTitle, songArtist;
+    ImageView songSourceYoutube, songKaraokeAvailable;
 
     @Override
     protected void bindView(@NonNull View itemView) {
@@ -71,6 +86,8 @@ public abstract class SongModel extends EpoxyModelWithHolder<SongModel.SongHolde
       icon = itemView.findViewById(R.id.song_icon);
       songTitle = itemView.findViewById(R.id.song_title);
       songArtist = itemView.findViewById(R.id.song_artist);
+      songSourceYoutube = itemView.findViewById(R.id.song_source_youtube);
+      songKaraokeAvailable = itemView.findViewById(R.id.song_karaoke_available);
     }
   }
 

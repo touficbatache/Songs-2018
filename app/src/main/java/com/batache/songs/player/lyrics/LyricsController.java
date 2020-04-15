@@ -1,4 +1,4 @@
-package com.batache.songs.app.lyrics;
+package com.batache.songs.player.lyrics;
 
 import com.batache.songs.app.base.BaseController;
 import com.batache.songs.model.adapter.LyricModel_;

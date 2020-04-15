@@ -9,9 +9,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.batache.songs.app.MainActivity;
+
 public abstract class BaseFragment extends Fragment {
 
-  protected View mRootView;
+  protected View rootView;
 
   public abstract int getLayout();
 
@@ -20,11 +22,11 @@ public abstract class BaseFragment extends Fragment {
   @Nullable
   @Override
   public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-    mRootView = inflater.inflate(getLayout(), null);
+    rootView = inflater.inflate(getLayout(), null);
 
     onCreateView();
 
-    return mRootView;
+    return rootView;
   }
 
   @Override

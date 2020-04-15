@@ -25,4 +25,6 @@
 
     <color name="backgroundColorPrimary1">#2979FF</color>
     <color name="textColorPrimary1">#FFDE03</color>
+
+    <color name="purple">#8D00F2</color>
 </resources>

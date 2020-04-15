@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <include layout="@layout/app_bar" />
+            <include layout="@layout/floating_search_bar" />
 
             <fragment
                 android:id="@+id/nav_host_fragment"
@@ -30,6 +30,39 @@
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 app:navGraph="@navigation/nav_graph" />
 
+            <androidx.cardview.widget.CardView
+                android:id="@+id/fullpage_search_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clickable="true"
+                android:visibility="gone">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingTop="24dp">
+
+                    <com.batache.songs.ui.view.SearchBar
+                        android:id="@+id/searchbar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <com.airbnb.epoxy.EpoxyRecyclerView
+                        android:id="@+id/search_recyclerview"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/searchbar" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
         <FrameLayout
@@ -38,13 +71,13 @@
 
             <fragment
                 android:id="@+id/fragment_player"
-                android:name="com.batache.songs.app.player.PlayerFragment"
+                android:name="com.batache.songs.player.PlayerFragment"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
             <fragment
                 android:id="@+id/fragment_mini_player"
-                android:name="com.batache.songs.app.player.MiniPlayerFragment"
+                android:name="com.batache.songs.player.MiniPlayerFragment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 

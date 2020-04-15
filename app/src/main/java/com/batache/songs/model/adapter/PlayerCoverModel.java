@@ -3,6 +3,7 @@ package com.batache.songs.model.adapter;
 import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Handler;
 import android.view.GestureDetector;
 import android.view.MotionEvent;

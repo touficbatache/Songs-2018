@@ -54,10 +54,10 @@ public class MyMusicFragment extends ListFragment {
 
   @Override
   public void onCreateView() {
-    mSwipeRefreshLayout = mRootView.findViewById(R.id.swipe_refresh_layout);
+    mSwipeRefreshLayout = rootView.findViewById(R.id.swipe_refresh_layout);
     mSwipeRefreshLayout.setOnRefreshListener(() -> loadMyMusicPlaylists());
 
-    mNewPlaylistBtn = mRootView.findViewById(R.id.new_playlist_btn);
+    mNewPlaylistBtn = rootView.findViewById(R.id.new_playlist_btn);
   }
 
   private String dialogPlaylistName;
@@ -71,45 +71,42 @@ public class MyMusicFragment extends ListFragment {
       loadMyMusicPlaylists();
     });
 
-    mNewPlaylistBtn.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View view) {
+    mNewPlaylistBtn.setOnClickListener(view1 -> {
 
-        AlertDialog dialog = new MaterialAlertDialogBuilder(getActivity())
-            .setTitle(R.string.new_playlist)
-            .setView(R.layout.layout_outlined_text_field)
-            .setCancelable(false)
-            .setPositiveButton(R.string.create, (dialogInterface, which) -> {
-              List<Playlist> playlists = mDatabaseHelper.getAllPlaylists();
-              mDatabaseHelper.insertPlaylist(new Playlist(String.valueOf(Integer.valueOf(playlists.get(playlists.size() - 1).getId()) + 1), dialogPlaylistName, new Date()));
-              Toast.makeText(getContext(), R.string.playlist_created_successfully, Toast.LENGTH_SHORT).show();
-            })
-            .setNegativeButton(R.string.cancel, null)
-            .show();
+      AlertDialog dialog = new MaterialAlertDialogBuilder(getActivity())
+          .setTitle(R.string.create_new_playlist)
+          .setView(R.layout.layout_outlined_text_field)
+          .setCancelable(false)
+          .setPositiveButton(R.string.create, (dialogInterface, which) -> {
+            List<Playlist> playlists = mDatabaseHelper.getAllPlaylists();
+            mDatabaseHelper.insertPlaylist(new Playlist(String.valueOf(Integer.valueOf(playlists.get(playlists.size() - 1).getId()) + 1), dialogPlaylistName, new Date()));
+            Toast.makeText(getContext(), R.string.playlist_created_successfully, Toast.LENGTH_SHORT).show();
+          })
+          .setNegativeButton(R.string.cancel, null)
+          .show();
 
-        TextInputLayout playlistNameHint = dialog.findViewById(R.id.input_layout);
-        playlistNameHint.setHint(getResources().getString(R.string.playlist_name));
-        TextInputEditText playlistNameEt = dialog.findViewById(R.id.edit_text);
-        playlistNameEt.addTextChangedListener(new TextWatcher() {
-          @Override
-          public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+      TextInputLayout playlistNameHint = dialog.findViewById(R.id.input_layout);
+      playlistNameHint.setHint(getResources().getString(R.string.title));
+      TextInputEditText playlistNameEt = dialog.findViewById(R.id.edit_text);
+      playlistNameEt.addTextChangedListener(new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+          dialogPlaylistName = charSequence.toString().trim();
+          if (dialogPlaylistName.equals("")) {
+            dialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(false);
           }
+        }
 
-          @Override
-          public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            dialogPlaylistName = charSequence.toString().trim();
-            if (dialogPlaylistName.equals("")) {
-              dialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(false);
-            }
-          }
+        @Override
+        public void afterTextChanged(Editable editable) {
 
-          @Override
-          public void afterTextChanged(Editable editable) {
-
-          }
-        });
-      }
+        }
+      });
     });
 
     loadMyMusicPlaylists();

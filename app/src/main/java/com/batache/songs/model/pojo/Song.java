@@ -58,8 +58,17 @@ public class Song {
   public Song(@NonNull String id, String title, String artist, String coverArt) {
     this.id = id;
     this.link = String.format("https://www.youtube.com/watch?v=%s", id);
-    this.title = title;
-    this.artist = artist;
+    this.title = title != null ? title.trim() : "Unknown song";
+    this.artist = artist != null ? artist.trim() : "Unknown artist";
+    this.coverArt = coverArt;
+    creationDate = new Date();
+  }
+
+  public Song(@NonNull String id, String link, String title, String artist, String coverArt) {
+    this.id = id;
+    this.link = link;
+    this.title = title != null ? title.trim() : "Unknown song";
+    this.artist = artist != null ? artist.trim() : "Unknown artist";
     this.coverArt = coverArt;
     creationDate = new Date();
   }
@@ -134,10 +143,11 @@ public class Song {
 
   public void setUrl(String url) {
     this.uri = Uri.parse(url);
+    this.link = url;
   }
 
   public boolean isLocallyStored() {
-    return uri != null && uri.getPath() != null && !uri.toString().contains("http://");
+    return uri != null && uri.getPath() != null && !uri.toString().contains("http://") && !uri.toString().contains("https://");
   }
 
   public void setLyricsUrl(String lyricsUrl) {
@@ -178,7 +188,8 @@ public class Song {
 
   public enum SongSource {
     youtube(0),
-    xiami(1);
+    xiami(1),
+    dndnha(2);
 
     private int code;
 

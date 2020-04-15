@@ -3,7 +3,7 @@ apply plugin: "androidx.navigation.safeargs"
 
 android {
     compileSdkVersion 29
-    buildToolsVersion = '28.0.3'
+    buildToolsVersion = '29.0.0'
     defaultConfig {
         applicationId "com.batache.songs"
         minSdkVersion 21
@@ -34,18 +34,18 @@ android {
 
 ext {
     supportLibVersion = '28.0.0'
-    roomVersion = '2.1.0'
-    archLifecycleVersion = '2.1.0'
-    navVersion = "2.1.0"
+    roomVersion = '2.2.5'
+    archLifecycleVersion = '2.2.0'
+    navVersion = "2.2.1"
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'com.google.android.material:material:1.1.0-alpha10'
+    implementation 'com.google.android.material:material:1.2.0-alpha05'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.media:media:1.1.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta4'
     implementation "androidx.preference:preference:1.1.0"
 
     implementation 'com.airbnb.android:epoxy:3.5.1'
@@ -55,12 +55,14 @@ dependencies {
     implementation 'com.github.HaarigerHarald:android-youtubeExtractor:master-SNAPSHOT'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'com.github.kabouzeid:AndroidSlidingUpPanel:3.3.3-kmod'
-    implementation 'com.facebook.fresco:fresco:1.13.0'
+    implementation 'com.facebook.fresco:fresco:2.1.0'
     implementation 'com.mindorks.android:prdownloader:0.4.0'
     implementation 'me.zhanghai.android.materialprogressbar:library:1.6.1'
-    implementation 'org.jsoup:jsoup:1.12.1'
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.9.1'
-    implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.9.1'
+    implementation 'org.jsoup:jsoup:1.13.1'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.10.5'
+    implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.10.5'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.10.5'
+    implementation 'com.google.android.exoplayer:extension-mediasession:2.10.5'
     implementation 'com.squareup.retrofit2:retrofit:2.5.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
     implementation 'com.squareup.retrofit2:converter-simplexml:2.5.0'
@@ -74,8 +76,10 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-extensions:$archLifecycleVersion"
     annotationProcessor "androidx.lifecycle:lifecycle-compiler:$archLifecycleVersion"
 
-    implementation "androidx.navigation:navigation-fragment:$navVersion" // For Kotlin use navigation-fragment-ktx
-    implementation "androidx.navigation:navigation-ui:$navVersion" // For Kotlin use navigation-ui-ktx
+    implementation "androidx.navigation:navigation-fragment:$navVersion"
+    // For Kotlin use navigation-fragment-ktx
+    implementation "androidx.navigation:navigation-ui:$navVersion"
+    // For Kotlin use navigation-ui-ktx
 
     implementation 'org.apache.commons:commons-text:1.6'
 
@@ -87,7 +91,10 @@ dependencies {
 
     implementation 'com.github.caiyonglong:musicapi:1.0.6'
 
+    implementation 'com.github.slashrootv200:retrofit-html-converter:0.0.2'
+
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation 'androidx.palette:palette:1.0.0'
 }

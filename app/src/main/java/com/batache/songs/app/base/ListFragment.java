@@ -20,16 +20,16 @@ public abstract class ListFragment extends BaseFragment {
   @Nullable
   @Override
   public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-    mRootView = inflater.inflate(getLayout(), null);
+    rootView = inflater.inflate(getLayout(), null);
 
     mController = new SongsController();
-    EpoxyRecyclerView mRecyclerView = mRootView.findViewById(R.id.recyclerview);
-    mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-    mRecyclerView.setController(mController);
+    EpoxyRecyclerView recyclerView = rootView.findViewById(R.id.recyclerview);
+    recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+    recyclerView.setController(mController);
 
     onCreateView();
 
-    return mRootView;
+    return rootView;
   }
 
   @Override

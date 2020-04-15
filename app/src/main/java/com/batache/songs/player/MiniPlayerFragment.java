@@ -1,4 +1,4 @@
-package com.batache.songs.app.player;
+package com.batache.songs.player;
 
 import android.view.View;
 import android.widget.TextView;
@@ -25,10 +25,10 @@ public class MiniPlayerFragment extends BasePlayerFragment {
 
   @Override
   public void initViews() {
-    titleTv = mRootView.findViewById(R.id.mini_player_song_title);
+    titleTv = rootView.findViewById(R.id.mini_player_song_title);
 
-    progressBar = mRootView.findViewById(R.id.mini_player_song_progress);
-    playPauseBtn = mRootView.findViewById(R.id.mini_player_play_to_pause_btn);
+    progressBar = rootView.findViewById(R.id.mini_player_song_progress);
+    playPauseBtn = rootView.findViewById(R.id.mini_player_play_to_pause_btn);
   }
 
   @Override
@@ -62,8 +62,8 @@ public class MiniPlayerFragment extends BasePlayerFragment {
   }
 
   public void updateVisibility(float alpha) {
-    mRootView.setAlpha(alpha);
-    mRootView.setVisibility(alpha == 0 ? View.GONE : View.VISIBLE);
+    rootView.setAlpha(alpha);
+    rootView.setVisibility(alpha == 0 ? View.GONE : View.VISIBLE);
   }
 
   @Override
@@ -93,7 +93,8 @@ public class MiniPlayerFragment extends BasePlayerFragment {
   public void onProgressChanged() {
     progressBar.setMax((int) playerManager.getSongDuration() / 1000);
     progressBar.setProgress((int) playerManager.getCurrentPosition() / 1000);
-    progressBar.setSecondaryProgress((int) playerManager.getSongBufferedPosition() / 1000);
+    int bufferedPosition = playerManager.getSongBufferedPosition() != -1 ? (int) playerManager.getSongBufferedPosition() : (int) playerManager.getSongDuration();
+    progressBar.setSecondaryProgress(bufferedPosition / 1000);
   }
 
   @Override

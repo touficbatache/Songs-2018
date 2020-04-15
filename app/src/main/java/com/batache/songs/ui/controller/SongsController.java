@@ -32,14 +32,24 @@ public class SongsController extends BaseController {
     requestModelBuild();
   }
 
-  public void addTitledSection(Context context, String subheaderTitle, List<Song> songs) {
+  public void addExploreSearchResultsSection(Context context, List<Song> songs) {
     data.add(new SubheaderModel_()
         .context(context)
-        .title(subheaderTitle));
+        .title("Top result"));
+
+    data.add(new SongModel_()
+        .song(songs.get(0))
+        .showYoutubeIcon(true)
+    );
+
+    data.add(new SubheaderModel_()
+        .context(context)
+        .title("Songs"));
 
     for (Song song : songs) {
       data.add(new SongModel_()
           .song(song)
+          .showYoutubeIcon(true)
       );
     }
 

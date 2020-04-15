@@ -76,12 +76,14 @@ public class SongUtils {
 //      song.high = it.high
 //    }
     if (musicInfo.getArtists() != null) {
-      StringBuilder artistIds = new StringBuilder();
-      StringBuilder artistNames = new StringBuilder();
-      for (ArtistsItem artist : musicInfo.getArtists()) {
-        artistIds.append(", ").append(artist.getId());
-        artistNames.append(", ").append(artist.getName());
+      StringBuilder artistIds = new StringBuilder(musicInfo.getArtists().get(0).getId());
+      StringBuilder artistNames = new StringBuilder(musicInfo.getArtists().get(0).getName());
+
+      for (int i = 1; i < musicInfo.getArtists().size(); i++) {
+        artistIds.append(", ").append(musicInfo.getArtists().get(i).getId());
+        artistNames.append(", ").append(musicInfo.getArtists().get(i).getName());
       }
+
       song.setArtist(artistNames.toString());
 //      song.artistId = artistIds.toString()
     }

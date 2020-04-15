@@ -13,12 +13,13 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.preference.PreferenceManager;
 
 import com.batache.songs.R;
+import com.batache.songs.SongsApplication;
 import com.batache.songs.SongsService;
-import com.batache.songs.app.player.PlayerManager;
 import com.batache.songs.db.DatabaseHelper;
 import com.batache.songs.model.pojo.Lyric;
 import com.batache.songs.model.pojo.PlaylistSongJoin;
 import com.batache.songs.model.pojo.Song;
+import com.batache.songs.player.PlayerManager;
 import com.batache.songs.util.CodeUtils;
 import com.batache.songs.util.DeviceUtils;
 import com.batache.songs.util.SongUtils;
@@ -36,8 +37,10 @@ import com.tonyodev.fetch2core.DownloadBlock;
 import com.tonyodev.fetch2core.Extras;
 import com.tonyodev.fetch2core.Func;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.nodes.Document;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,9 +60,9 @@ public class SongDownloader implements FetchListener {
 
   private static SongDownloader sInstance;
 
-  public static void initialize(Context context) {
+  public static void initialize() {
     if (sInstance == null) {
-      sInstance = new SongDownloader(context);
+      sInstance = new SongDownloader(SongsApplication.get());
     }
   }
 
@@ -70,29 +73,71 @@ public class SongDownloader implements FetchListener {
     return sInstance;
   }
 
-  private Context context;
+  private SongsApplication context;
   private Fetch fetch;
 
   private NotificationCompat.Builder builder;
   private NotificationManagerCompat manager;
 
-  private SongDownloader(Context ctxt) {
+  private SongDownloader(SongsApplication songsApplication) {
     // we should always use the application context to avoid memory leaks
-    this.context = ctxt.getApplicationContext();
+    context = songsApplication;
 
     fetch = Fetch.Impl.getInstance(new FetchConfiguration.Builder(context).build());
     fetch.addListener(this);
   }
 
   public void downloadSong(Song song) {
-    if (song.getSongSource() == Song.SongSource.youtube) {
-      fetchSongURL(context, song, songFile -> download(song, songFile.getUrl()));
+    if (song.getSongSource() == Song.SongSource.youtube || song.getSongSource() == Song.SongSource.dndnha) {
+      fetchSongURL(context, song, playableUrl -> download(song, playableUrl));
     } else if (song.getSongSource() == Song.SongSource.xiami) {
       download(song, song.getUri().toString());
     }
   }
 
   public void fetchSongURL(final Context context, final Song song, final SongURLFetcherCallback callback) {
+    if(song.getSongSource() == Song.SongSource.youtube) {
+      new YouTubeExtractor(context) {
+        @Override
+        public void onExtractionComplete(SparseArray<YtFile> ytFiles, final VideoMeta vMeta) {
+          if (ytFiles != null) {
+            for (int i = 0, itag; i < ytFiles.size(); i++) {
+              itag = ytFiles.keyAt(i);
+              final YtFile ytFile = ytFiles.get(itag);
+
+              // We only want audio: height == -1 :)
+              if (ytFile.getFormat().getHeight() == -1) {
+                callback.onSuccess(ytFile.getUrl());
+              }
+            }
+          }
+        }
+      }.extract(song.getLink(), true, false);
+    } else if(song.getSongSource() == Song.SongSource.dndnha) {
+      String url = song.getLink();
+
+      HTMLDataFetcher lyricsHTMLFetch = new HTMLDataFetcher(context, url, new HTMLDataFetcher.HTMLDataFetcherCallback() {
+        @Override
+        public void onSuccess(Document result) {
+          // unescape html: replace characters like &amp; with &
+          String songUrl = StringEscapeUtils.unescapeHtml4(
+              result.select("audio").attr("src")
+          );
+
+          if (!songUrl.equals("")) {
+            callback.onSuccess(songUrl);
+          }
+        }
+
+        @Override
+        public void onFailure() {
+        }
+      });
+      lyricsHTMLFetch.execute();
+    }
+  }
+
+  public void fetchSongURLByUrl(final Context context, final String url, final SongURLFetcherCallback callback) {
     new YouTubeExtractor(context) {
       @Override
       public void onExtractionComplete(SparseArray<YtFile> ytFiles, final VideoMeta vMeta) {
@@ -103,21 +148,21 @@ public class SongDownloader implements FetchListener {
 
             // We only want audio: height == -1 :)
             if (ytFile.getFormat().getHeight() == -1) {
-              callback.onSuccess(ytFile);
+              callback.onSuccess(ytFile.getUrl());
             }
           }
         }
       }
-    }.extract(song.getLink(), true, false);
+    }.extract(url, true, false);
   }
 
   public interface SongURLFetcherCallback {
-    void onSuccess(YtFile songFile);
+    void onSuccess(String playableUrl);
   }
 
   private void download(Song song, String url) {
     String fileName = SongUtils.getSongFileName(song.getId(), song.getSongSource());
-    Request request = new Request(url, DeviceUtils.getInternalFilesSongsDirFilePath(context, fileName).getPath());
+    Request request = new Request(url, DeviceUtils.getDownloadSongsDirFilePath(context, fileName).getPath());
     request.setPriority(Priority.HIGH);
     boolean downloadOverWifiOnly = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("download_over_wifi_only", true);
     request.setNetworkType(downloadOverWifiOnly ? NetworkType.WIFI_ONLY : NetworkType.ALL);
@@ -175,17 +220,8 @@ public class SongDownloader implements FetchListener {
     manager.notify(id, builder.build());
   }
 
-  private void updateNotification(int id, String contentText) {
-    if (builder == null) {
-      return;
-    }
-
-    builder.setContentText(contentText);
-    builder.setProgress(0, 0, false);
-    builder.setOngoing(false);
-    builder.mActions.clear();
-
-    manager.notify(id, builder.build());
+  private void cancelNotification(int id) {
+    manager.cancel(id);
   }
 
   public void cancelDownload(String songId) {
@@ -209,7 +245,7 @@ public class SongDownloader implements FetchListener {
       }
     }
 
-    updateNotification(download.getId(), "Download complete");
+    cancelNotification(download.getId());
 
     DownloadEvent.postDownloadComplete(song);
   }
@@ -235,8 +271,8 @@ public class SongDownloader implements FetchListener {
 
     song.setPath(new File(download.getFile()));
 
-    if (song.getSongSource() == Song.SongSource.youtube) {
-      SongsAPI.getInstance().getSongLyrics(context, song.getTitle(), new SongsAPI.OnLyricsFetchedListener() {
+    if (song.getSongSource() == Song.SongSource.youtube || song.getSongSource() == Song.SongSource.dndnha) {
+      SongsAPI.getInstance().getSongLyrics(context, song.getTitle(), song.getArtist(), new SongsAPI.OnLyricsFetchedListener() {
         @Override
         public void onSuccess(List<Lyric> lyrics) {
           song.setLyrics(lyrics);

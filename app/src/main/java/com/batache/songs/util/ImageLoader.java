@@ -5,8 +5,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.provider.MediaStore;
 
+import com.batache.songs.player.PlayerNotificationManager;
 import com.facebook.drawee.view.SimpleDraweeView;
+import com.google.android.exoplayer2.Player;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -17,21 +20,20 @@ import java.net.URL;
 
 public class ImageLoader {
 
+  public static void fetchImage(Context context, ImageConfigurations imageConfigurations, FetchImageCallback downloadImageCallback) {
+    new DownloadImageAsyncTask(context, downloadImageCallback).execute(imageConfigurations);
+  }
+
   public static void loadImage(Context context, final SimpleDraweeView imageContainer, ImageConfigurations imageConfigurations) {
-    new DownloadImageAsyncTask(context, new DownloadImageCallback() {
-      @Override
-      public void onCompletion(Uri imageFileUri) {
-        imageContainer.setImageURI(imageFileUri);
-      }
-    }).execute(imageConfigurations);
+    new DownloadImageAsyncTask(context, imageContainer::setImageURI).execute(imageConfigurations);
   }
 
   private static class DownloadImageAsyncTask extends AsyncTask<ImageConfigurations, Void, Uri> {
 
     private WeakReference<Context> mContext;
-    private DownloadImageCallback completionCallback;
+    private FetchImageCallback completionCallback;
 
-    DownloadImageAsyncTask(Context context, DownloadImageCallback completionCallback) {
+    DownloadImageAsyncTask(Context context, FetchImageCallback completionCallback) {
       mContext = new WeakReference<>(context);
       this.completionCallback = completionCallback;
     }
@@ -78,7 +80,7 @@ public class ImageLoader {
     }
   }
 
-  private interface DownloadImageCallback {
+  public interface FetchImageCallback {
     void onCompletion(Uri imageFileUri);
   }
 
@@ -100,5 +102,23 @@ public class ImageLoader {
     public String getImageFileName() {
       return imageFileName;
     }
+  }
+
+  public static void getBitmap(Context context, String songId, String coverImageUrl, FetchBitmapCallback callback) {
+    String imageName = CodeUtils.isEmpty(songId) ? "temp" : songId;
+
+    ImageLoader.fetchImage(context, new ImageLoader.ImageConfigurations(coverImageUrl, imageName, ImageLoader.ImageConfigurations.PNG), imageFileUri -> {
+      Bitmap bitmap;
+      try {
+        bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), imageFileUri);
+        callback.onCompletion(bitmap);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    });
+  }
+
+  public interface FetchBitmapCallback {
+    void onCompletion(Bitmap bitmap);
   }
 }

@@ -22,7 +22,8 @@ import com.batache.songs.db.DatabaseHelper;
 import com.batache.songs.model.pojo.Lyric;
 import com.batache.songs.model.pojo.Song;
 import com.batache.songs.app.base.BaseActivity;
-import com.batache.songs.app.player.PlayerManager;
+import com.batache.songs.player.PlayerManager;
+import com.batache.songs.player.lyrics.LyricsController;
 import com.batache.songs.util.CodeUtils;
 import com.batache.songs.util.DimensionUtils;
 import com.batache.songs.util.events.PlayerEvent;
@@ -195,7 +196,7 @@ public class LyricsActivity extends BaseActivity {
         }
       });
     } else {
-      SongsAPI.getInstance().getSongLyrics(getContext(), song.getTitle(), new SongsAPI.OnLyricsFetchedListener() {
+      SongsAPI.getInstance().getSongLyrics(getContext(), song.getTitle(), song.getArtist(), new SongsAPI.OnLyricsFetchedListener() {
         @Override
         public void onSuccess(List<Lyric> lyrics) {
           setLyrics(lyrics, false);
@@ -306,5 +307,6 @@ public class LyricsActivity extends BaseActivity {
     super.onDestroy();
 
     CodeUtils.unregisterFromEventBus(this);
+    captionsButton.setOnClickListener(null);
   }
 }

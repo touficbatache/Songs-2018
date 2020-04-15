@@ -1,7 +1,9 @@
-package com.batache.songs.app.player;
+package com.batache.songs.player;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
 import android.os.Build;
@@ -19,6 +21,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,19 +30,20 @@ import androidx.recyclerview.widget.SnapHelper;
 import com.airbnb.epoxy.EpoxyRecyclerView;
 import com.batache.songs.R;
 import com.batache.songs.api.SongDownloader;
+import com.batache.songs.app.MainActivity;
+import com.batache.songs.app.lyrics.LyricsActivity;
+import com.batache.songs.app.playingqueue.PlayingQueueFragment;
 import com.batache.songs.model.adapter.PlayerCoverModel;
 import com.batache.songs.model.pojo.Playlist;
 import com.batache.songs.model.pojo.Song;
-import com.batache.songs.app.lyrics.LyricsActivity;
-import com.batache.songs.app.MainActivity;
-import com.batache.songs.app.playqueue.PlayingQueueFragment;
-import com.batache.songs.util.CodeUtils;
-import com.batache.songs.util.DimensionUtils;
-import com.batache.songs.util.TextUtils;
 import com.batache.songs.ui.view.CloudDownloadBorderToFillImageView;
 import com.batache.songs.ui.view.IconToggleView;
 import com.batache.songs.ui.view.MorphingImageView;
 import com.batache.songs.ui.view.RepeatToggleView;
+import com.batache.songs.util.CodeUtils;
+import com.batache.songs.util.DimensionUtils;
+import com.batache.songs.util.ImageLoader;
+import com.batache.songs.util.TextUtils;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -54,6 +58,8 @@ import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 public class PlayerFragment extends BasePlayerFragment {
 
   private MainActivity activity;
+
+  private boolean isPlayerLoading = false;
 
   private ImageButton arrowDownBtn;
   private ImageButton playingQueueBtn;
@@ -96,10 +102,10 @@ public class PlayerFragment extends BasePlayerFragment {
 
   @Override
   public void initViews() {
-    arrowDownBtn = mRootView.findViewById(R.id.player_arrow_down);
-    playingQueueBtn = mRootView.findViewById(R.id.player_see_playing_queue);
+    arrowDownBtn = rootView.findViewById(R.id.player_arrow_down);
+    playingQueueBtn = rootView.findViewById(R.id.player_see_playing_queue);
 
-    recyclerView = mRootView.findViewById(R.id.player_cover_arts_recyclerview);
+    recyclerView = rootView.findViewById(R.id.player_cover_arts_recyclerview);
     recyclerViewScrollListener = new RecyclerView.OnScrollListener() {
       @Override
       public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -111,25 +117,25 @@ public class PlayerFragment extends BasePlayerFragment {
       }
     };
 
-    titleTv = mRootView.findViewById(R.id.player_song_title);
-    artistTv = mRootView.findViewById(R.id.player_song_artist);
+    titleTv = rootView.findViewById(R.id.player_song_title);
+    artistTv = rootView.findViewById(R.id.player_song_artist);
 
-    favoriteBtn = mRootView.findViewById(R.id.player_action_favorite);
-    downloadProgress = mRootView.findViewById(R.id.player_download_progress);
+    favoriteBtn = rootView.findViewById(R.id.player_action_favorite);
+    downloadProgress = rootView.findViewById(R.id.player_download_progress);
     downloadProgress.setMax(100);
-    cloudDownloadBtn = mRootView.findViewById(R.id.player_action_cloud_download);
-    addToPlaylistBtn = mRootView.findViewById(R.id.player_action_add_to_playlist);
-    shareBtn = mRootView.findViewById(R.id.player_action_share);
+    cloudDownloadBtn = rootView.findViewById(R.id.player_action_cloud_download);
+    addToPlaylistBtn = rootView.findViewById(R.id.player_action_add_to_playlist);
+    shareBtn = rootView.findViewById(R.id.player_action_share);
 
-    progressBar = mRootView.findViewById(R.id.player_song_progress);
-    progressCurrentTv = mRootView.findViewById(R.id.player_progress_current);
-    progressTotalTv = mRootView.findViewById(R.id.player_progress_total);
+    progressBar = rootView.findViewById(R.id.player_song_progress);
+    progressCurrentTv = rootView.findViewById(R.id.player_progress_current);
+    progressTotalTv = rootView.findViewById(R.id.player_progress_total);
 
-    repeatBtn = mRootView.findViewById(R.id.player_repeat_btn);
-    prevBtn = mRootView.findViewById(R.id.player_prev_btn);
-    playPauseBtn = mRootView.findViewById(R.id.player_play_to_pause_btn);
-    nextBtn = mRootView.findViewById(R.id.player_next_btn);
-    shuffleBtn = mRootView.findViewById(R.id.player_shuffle_btn);
+    repeatBtn = rootView.findViewById(R.id.player_repeat_btn);
+    prevBtn = rootView.findViewById(R.id.player_prev_btn);
+    playPauseBtn = rootView.findViewById(R.id.player_play_to_pause_btn);
+    nextBtn = rootView.findViewById(R.id.player_next_btn);
+    shuffleBtn = rootView.findViewById(R.id.player_shuffle_btn);
   }
 
   @Override
@@ -175,7 +181,7 @@ public class PlayerFragment extends BasePlayerFragment {
                   if (checkedPlaylists.get(i)) {
                     if (i == 0) {
                       AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                          .setTitle(R.string.new_playlist)
+                          .setTitle(R.string.create_new_playlist)
                           .setView(R.layout.layout_outlined_text_field)
                           .setCancelable(false)
                           .setPositiveButton(R.string.create, (dialogInterface1, which1) -> playerManager.createPlaylistAndInsertCurrentSong(dialogPlaylistName))
@@ -183,7 +189,7 @@ public class PlayerFragment extends BasePlayerFragment {
                           .show();
 
                       TextInputLayout playlistNameHint = dialog.findViewById(R.id.input_layout);
-                      playlistNameHint.setHint(getResources().getString(R.string.playlist_name));
+                      playlistNameHint.setHint(getResources().getString(R.string.title));
                       TextInputEditText playlistNameEt = dialog.findViewById(R.id.edit_text);
                       playlistNameEt.addTextChangedListener(new TextWatcher() {
                         @Override
@@ -206,7 +212,7 @@ public class PlayerFragment extends BasePlayerFragment {
                       });
                     } else {
                       int playlistIndex = i - 1;
-                      playerManager.insertCurrentSongInPlaylist(customPlaylists.get(playlistIndex).getId());
+                      playerManager.addToPlaylist(customPlaylists.get(playlistIndex).getId());
                     }
                   }
                 }
@@ -215,7 +221,7 @@ public class PlayerFragment extends BasePlayerFragment {
             .setNegativeButton(R.string.cancel, null)
             .show();
       } else if (shareBtn == view) {
-        playerManager.shareCurrentSong();
+        playerManager.shareCurrentSong(activity);
       } else if (repeatBtn == view) {
         playerManager.toggleRepeat();
       } else if (prevBtn == view) {
@@ -242,7 +248,7 @@ public class PlayerFragment extends BasePlayerFragment {
       } else {
         new MaterialAlertDialogBuilder(activity)
             .setTitle("Lyrics not available")
-            .setMessage("Lyrics are not available for un-downloaded songs. Download this song to see its lyrics.")
+            .setMessage("Lyrics are not available for songs that you haven't downloaded. Download this song to see its lyrics.")
             .setCancelable(true)
             .setPositiveButton("Ok", null)
             .show();
@@ -365,11 +371,11 @@ public class PlayerFragment extends BasePlayerFragment {
 
   @Override
   public void onApplyAllWindowInsets() {
-    mRootView.setPadding(0, DimensionUtils.TOP_INSET, 0, DimensionUtils.BOTTOM_INSET);
+    rootView.setPadding(0, DimensionUtils.TOP_INSET, 0, DimensionUtils.BOTTOM_INSET);
   }
 
   public void setClickable(boolean clickable) {
-    mRootView.setClickable(clickable);
+    rootView.setClickable(clickable);
   }
 
   @Override
@@ -391,6 +397,8 @@ public class PlayerFragment extends BasePlayerFragment {
   }
 
   private void setPlayerLoading(boolean loading) {
+    isPlayerLoading = loading;
+
     playingQueueBtn.setEnabled(!loading);
     setColorEnabled(playingQueueBtn, !loading);
     favoriteBtn.setEnabled(!loading);
@@ -416,9 +424,26 @@ public class PlayerFragment extends BasePlayerFragment {
 
   @Override
   public void onSongChanged() {
+    if(playerManager.getCurrentSong() == null) {
+      return;
+    }
+
     recyclerView.smoothScrollToPosition(playerManager.getCurrentSongIndex());
 
+    ImageLoader.getBitmap(context, playerManager.getCurrentSong().getId(), playerManager.getCurrentSong().getCoverArt(), new ImageLoader.FetchBitmapCallback() {
+      @Override
+      public void onCompletion(Bitmap bitmap) {
+        Palette palette = Palette.from(bitmap).generate();
+        int dominantColorRGB = (palette.getLightVibrantSwatch() != null ? palette.getLightVibrantSwatch() :
+            (palette.getVibrantSwatch() != null ? palette.getVibrantSwatch() : (palette.getDarkVibrantSwatch() != null ? palette.getDarkVibrantSwatch() : palette.getDominantSwatch()))).getRgb();
+        int dominantColor = dominantColorRGB != -1 ? dominantColorRGB : Color.WHITE;
+        updatePlayerBackgroundColor(dominantColor);
+      }
+    });
+
+
     titleTv.setText(playerManager.getCurrentSongTitle());
+    titleTv.setSelected(true);
     artistTv.setText(playerManager.getCurrentSongArtist());
 
     onFavoriteChanged();
@@ -428,9 +453,27 @@ public class PlayerFragment extends BasePlayerFragment {
     if (playerManager.isStreaming()) {
       disableDownloadedSongButtons();
     } else {
-      enableDownloadedSongButtons();
+      if (!isPlayerLoading) {
+        enableDownloadedSongButtons();
+      }
     }
   }
+
+  private void updatePlayerBackgroundColor(int newColor) {
+//    int oldColor = rootView.getBackground() instanceof ColorDrawable ? ((ColorDrawable) rootView.getBackground()).getColor() : getResources().getColor(R.color.grey_e0);
+//    ValueAnimator valueAnimator = ObjectAnimator.ofInt(rootView, "backgroundColor", oldColor, newColor);
+//    valueAnimator.setDuration(200);
+//    valueAnimator.setEvaluator(new ArgbEvaluator());
+//    valueAnimator.start();
+  }
+
+//  private void getClosestMaterialColor() {
+//    String[] readableMaterialColors = {
+//        "#EF5350", "#E53935", "#D32F2F", "#C62828", "#B71C1C", "#FF5252", "#FF1744", "#D50000",
+//        "#EC407A", "#D81B60", "#C2185B", "#AD1457", "#880E4F", "#FF4081", "#F50057", "#C51162",
+//        "#BA68C8", "#AB47BC", "#9C27B0", "#8E24AA", "#7B1FA2", "#6A1B9A", "#4A148C", "#E040FB", "#D500F9"
+//    };
+//  }
 
   private void disableDownloadedSongButtons() {
     playingQueueBtn.setEnabled(false);
@@ -458,7 +501,8 @@ public class PlayerFragment extends BasePlayerFragment {
   public void onProgressChanged() {
     progressBar.setMax((int) playerManager.getSongDuration() / 1000);
     progressBar.setProgress((int) playerManager.getCurrentPosition() / 1000);
-    progressBar.setSecondaryProgress((int) playerManager.getSongBufferedPosition() / 1000);
+    int bufferedPosition = playerManager.getSongBufferedPosition() != -1 ? (int) playerManager.getSongBufferedPosition() : (int) playerManager.getSongDuration();
+    progressBar.setSecondaryProgress(bufferedPosition / 1000);
 
     progressCurrentTv.setText(TextUtils.formatMilliseconds(context, (int) playerManager.getCurrentPosition()));
     progressTotalTv.setText(TextUtils.formatMilliseconds(context, (int) playerManager.getSongDuration()));

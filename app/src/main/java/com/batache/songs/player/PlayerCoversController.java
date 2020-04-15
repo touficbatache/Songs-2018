@@ -1,4 +1,4 @@
-package com.batache.songs.app.player;
+package com.batache.songs.player;
 
 import android.content.Context;
 

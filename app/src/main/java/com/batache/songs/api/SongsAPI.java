@@ -5,13 +5,16 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.batache.songs.R;
 import com.batache.songs.api.captions.Caption;
 import com.batache.songs.api.captions.CaptionsApiClient;
 import com.batache.songs.api.captions.CaptionsApiInterface;
 import com.batache.songs.api.captions.CaptionsResponse;
-import com.batache.songs.api.song_info.SongInfoApiClient;
-import com.batache.songs.api.song_info.SongInfoApiInterface;
-import com.batache.songs.api.song_info.SongInfoResponse;
+import com.batache.songs.api.cse.CSEApiClient;
+import com.batache.songs.api.cse.CSEApiInterface;
+import com.batache.songs.api.cse.CSESearchResponse;
+import com.batache.songs.api.genius.GeniusApiClient;
+import com.batache.songs.api.genius.GeniusApiInterface;
 import com.batache.songs.api.xiami.XiamiApiClient;
 import com.batache.songs.api.xiami.XiamiApiInterface;
 import com.batache.songs.api.xiami.XiamiSearchResponse;
@@ -31,12 +34,13 @@ import org.jsoup.nodes.Document;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -50,6 +54,7 @@ import static com.batache.songs.util.TextUtils.removeParenthesis;
 public class SongsAPI {
 
   private static SongsAPI sInstance;
+  public static final String TAG = "SongsAPI";
 
   private Retrofit youtubeApiRetrofit;
   private YoutubeApiInterface youtubeApiInterface;
@@ -60,8 +65,11 @@ public class SongsAPI {
   private Retrofit xiamiApiRetrofit;
   private XiamiApiInterface xiamiApiInterface;
 
-  private Retrofit songInfoApiRetrofit;
-  private SongInfoApiInterface songInfoApiInterface;
+  private Retrofit cseApiRetrofit;
+  private CSEApiInterface cseApiInterface;
+
+  private Retrofit geniusApiRetrofit;
+  private GeniusApiInterface geniusApiInterface;
 
   public static SongsAPI getInstance() {
     if (sInstance == null) {
@@ -77,8 +85,10 @@ public class SongsAPI {
     captionsApiInterface = captionsApiRetrofit.create(CaptionsApiInterface.class);
     xiamiApiRetrofit = XiamiApiClient.getRetrofitClient();
     xiamiApiInterface = xiamiApiRetrofit.create(XiamiApiInterface.class);
-    songInfoApiRetrofit = SongInfoApiClient.getRetrofitClient();
-    songInfoApiInterface = songInfoApiRetrofit.create(SongInfoApiInterface.class);
+    cseApiRetrofit = CSEApiClient.getRetrofitClient();
+    cseApiInterface = cseApiRetrofit.create(CSEApiInterface.class);
+    geniusApiRetrofit = GeniusApiClient.getRetrofitClient();
+    geniusApiInterface = geniusApiRetrofit.create(GeniusApiInterface.class);
   }
 
   public void getSongsFromPlaylist(String playlistId, String maxResults, OnSongsFetchedListener onSongsFetchedListener) {
@@ -174,13 +184,19 @@ public class SongsAPI {
     return fetchedSongs;
   }
 
-  public void searchYoutube(String searchQuery, OnSongsFetchedListener onSongsFetchedListener) {
-    Call<YoutubeSearchResponse> call = youtubeApiInterface.search(searchQuery);
+  public void searchYoutube(Context context, String searchQuery, OnSongsFetchedListener onSongsFetchedListener) {
+    Call<YoutubeSearchResponse> call = youtubeApiInterface.search(searchQuery + "- Topic");
     call.enqueue(new Callback<YoutubeSearchResponse>() {
       @Override
       public void onResponse(@NonNull Call<YoutubeSearchResponse> call, @NonNull Response<YoutubeSearchResponse> response) {
         if (response.body() != null) {
           List<YoutubeSearchResponse.Item> playlistItems = response.body().items;
+
+          if (CodeUtils.isEmpty(playlistItems)) {
+            onSongsFetchedListener.onFailure(new Throwable(context.getString(R.string.search_failed)));
+            return;
+          }
+
           List<Song> fetchedSongs = new ArrayList<>();
 
           for (YoutubeSearchResponse.Item playlistItem : playlistItems) {
@@ -191,7 +207,7 @@ public class SongsAPI {
             String id = vidId.videoId;
             // unescape html: replace characters like &amp; with &
             String title = StringEscapeUtils.unescapeHtml4(snippet.title);
-            String author = snippet.channelTitle;
+            String author = (snippet.channelTitle.toLowerCase().contains("- topic")) ? snippet.channelTitle.replaceAll("- (?i)Topic", "").trim() : snippet.channelTitle;
             String thumbnail = thumbnails.thumbnail_high.url; // TODO: Add thumbnail size in settings
 
             fetchedSongs.add(new Song(id, title, author, thumbnail));
@@ -257,26 +273,35 @@ public class SongsAPI {
     });
   }
 
-  public void searchXiami(String searchQuery, OnSongsFetchedListener onSongsFetchedListener) {
+  public void searchXiami(Context context, String searchQuery, OnSongsFetchedListener onSongsFetchedListener) {
     Call<XiamiSearchResponse> call = xiamiApiInterface.search(searchQuery);
     call.enqueue(new Callback<XiamiSearchResponse>() {
       @Override
       public void onResponse(@NonNull Call<XiamiSearchResponse> call, @NonNull Response<XiamiSearchResponse> response) {
-        if (response.body() != null) {
-          XiamiSearchResponse.Data data = response.body().data;
-          List<XiamiSearchResponse.Song> songs = data.songs;
-          List<Song> fetchedSongs = new ArrayList<>();
-
-          for (XiamiSearchResponse.Song song : songs) {
-            Song xiamiSong = new Song(song.id, song.title, song.artistName, song.albumLogoUrl);
-            xiamiSong.setUrl(song.url);
-            xiamiSong.setLyricsUrl(song.lyricsUrl);
-            xiamiSong.setSongSource(Song.SongSource.xiami);
-            fetchedSongs.add(xiamiSong);
-          }
-
-          onSongsFetchedListener.onSuccess(fetchedSongs);
+        if (response.body() == null) {
+          onSongsFetchedListener.onFailure(new Throwable(context.getString(R.string.search_failed)));
+          return;
         }
+
+        XiamiSearchResponse.Data data = response.body().data;
+        List<XiamiSearchResponse.Song> songs = data.songs;
+
+        if (CodeUtils.isEmpty(songs)) {
+          onSongsFetchedListener.onFailure(new Throwable(context.getString(R.string.search_failed)));
+          return;
+        }
+
+        List<Song> fetchedSongs = new ArrayList<>();
+
+        for (XiamiSearchResponse.Song song : songs) {
+          Song xiamiSong = new Song(song.id, song.title, song.artistName, song.albumLogoUrl);
+          xiamiSong.setUrl(song.url);
+          xiamiSong.setLyricsUrl(song.lyricsUrl);
+          xiamiSong.setSongSource(Song.SongSource.xiami);
+          fetchedSongs.add(xiamiSong);
+        }
+
+        onSongsFetchedListener.onSuccess(fetchedSongs);
       }
 
       @Override
@@ -286,106 +311,65 @@ public class SongsAPI {
     });
   }
 
-  public void getSongLyrics(Context context, String songTitle, OnLyricsFetchedListener onLyricsFetchedListener) {
+  public void getSongLyrics(Context context, String songTitle, String songArtist, OnLyricsFetchedListener onLyricsFetchedListener) {
     String searchTitle = removeBrackets(removeParenthesis(songTitle)).replace("HD", "").replace("-", "");
-    Call<SongInfoResponse> call = songInfoApiInterface.getSongInfo(searchTitle);
-    call.enqueue(new Callback<SongInfoResponse>() {
+
+    String searchQuery = searchTitle + " " + songArtist;
+
+    Call<CSESearchResponse> call = cseApiInterface.searchGenius(searchQuery);
+    call.enqueue(new Callback<CSESearchResponse>() {
       @Override
-      public void onResponse(@NonNull Call<SongInfoResponse> call, @NonNull Response<SongInfoResponse> response) {
-        if (response.body() != null) {
-          List<SongInfoResponse.Track> allTracks = response.body().results.trackMatches.tracks;
-
-          if (allTracks.isEmpty()) {
-            onLyricsFetchedListener.onFailure(new Throwable("No lyrics found"));
-            return;
-          }
-
-          List<Double> matches = new ArrayList<>();
-          for (SongInfoResponse.Track track : allTracks) {
-            int nameMatch = findMatchInPercent(searchTitle, track.name);
-            int artistMatch = findMatchInPercent(searchTitle, track.artist);
-            double finalResult = (nameMatch + (artistMatch * 0.5)) / 1.5;
-            matches.add(finalResult);
-          }
-
-          SongInfoResponse.Track track = allTracks.get(matches.indexOf(Collections.max(matches)));
-          final String trackName = removeParenthesis(track.name).split("ft")[0].replace(" ", "_").trim();
-          final String trackArtist = removeParenthesis(track.artist).split("ft")[0].trim().replace(" ", "_").trim(); //.split(" ")[0]
-
-          String url = "http://lyrics.wikia.com/wiki/" + trackArtist + ":" + trackName;
-
-          HTMLDataFetcher lyricsHTMLFetch = new HTMLDataFetcher(context, url, new HTMLDataFetcher.HTMLDataFetcherCallback() {
-            @Override
-            public void onSuccess(Document result) {
-              // unescape html: replace characters like &amp; with &
-              String lyricsStr = StringEscapeUtils.unescapeHtml4(
-                  result.select(".lyricbox").html()
-                      // remove everything between brackets
-                      .replaceAll("\\[[^\\]]*\\]", "")
-                      // remove html comments
-                      .replaceAll("(<!--)[^-]*-->", "")
-                      // replace newlines
-                      .replaceAll("<br>", "\n")
-                      // replace two lines with one
-                      .replaceAll("\n\n", "\n")
-                      // remove all tags
-                      .replaceAll("<[^>]*>", "")
-              );
-
-              if (!lyricsStr.equals("")) {
-                List<Lyric> lyrics = new ArrayList<>();
-                for (String lyricLine : new ArrayList<>(Arrays.asList(lyricsStr.split("\\n")))) {
-                  lyrics.add(new Lyric(lyricLine));
-                }
-                onLyricsFetchedListener.onSuccess(lyrics);
-              } else {
-                onLyricsFetchedListener.onFailure(null);
-              }
-            }
-
-            @Override
-            public void onFailure() {
-              onLyricsFetchedListener.onFailure(null);
-            }
-          });
-          lyricsHTMLFetch.execute();
+      public void onResponse(Call<CSESearchResponse> call, Response<CSESearchResponse> response) {
+        if(response.body() == null || response.body().items == null || response.body().items.size() <= 0) {
+          onLyricsFetchedListener.onFailure(null);
+          return;
         }
+
+        String path = response.body().items.get(0).link
+            .split("\\b(genius.com/)\\b")[1];
+
+        Call<Document> call2 = geniusApiInterface.getLyrics(path);
+        call2.enqueue(new Callback<Document>() {
+          @Override
+          public void onResponse(Call<Document> call, Response<Document> response) {
+            String lyricsStr = StringEscapeUtils.unescapeHtml4(
+                response.body().select(".lyrics p").html()
+                    // remove everything between brackets
+                    .replaceAll("\\[[^\\]]*\\]", "")
+                    // remove html comments
+                    .replaceAll("(<!--)[^-]*-->", "")
+                    // replace newlines
+                    .replaceAll("<br>", "\n")
+                    // replace two lines with one
+                    .replaceAll("\n\n", "\n")
+                    // remove all tags
+                    .replaceAll("<[^>]*>", "")
+            );
+
+            if (lyricsStr.equals("")) {
+              onLyricsFetchedListener.onFailure(null);
+              return;
+            }
+
+            List<Lyric> lyrics = new ArrayList<>();
+            for (String lyricLine : new ArrayList<>(Arrays.asList(lyricsStr.split("\\n")))) {
+              lyrics.add(new Lyric(lyricLine));
+            }
+            onLyricsFetchedListener.onSuccess(lyrics);
+          }
+
+          @Override
+          public void onFailure(Call<Document> call, Throwable t) {
+            onLyricsFetchedListener.onFailure(t);
+          }
+        });
       }
 
       @Override
-      public void onFailure(@NonNull Call<SongInfoResponse> call, @NonNull Throwable t) {
+      public void onFailure(Call<CSESearchResponse> call, Throwable t) {
         onLyricsFetchedListener.onFailure(t);
       }
     });
-  }
-
-  private int findMatchInPercent(String source, String subject) {
-    int wordsInCommon = 0;
-    int wordsLength = subject.split("\\s+").length;
-
-    List<String> subjectKeywords = new ArrayList<>(Arrays.asList(subject.split("\\s+")));
-    for (int i = 0; i < subjectKeywords.size(); i++) {
-      if (source.contains(subjectKeywords.get(i))) {
-        wordsInCommon++;
-      }
-    }
-
-//    Old algo
-//    int wordsLength = source.split("\\s+").length;
-//    List<String> sourceKeywords = new ArrayList<>(Arrays.asList(source.split("\\s+")));
-//    for(int i=0; i<sourceKeywords.size(); i++) {
-//      if(subject.contains(sourceKeywords.get(i))) {
-//        wordsInCommon++;
-//      }
-//    }
-//    List<String> subjectKeywords = new ArrayList<>(Arrays.asList(subject.split("\\s+")));
-//    for(int i=0; i<subjectKeywords.size(); i++) {
-//      if(!source.contains(subjectKeywords.get(i))) {
-//        wordsLength++;
-//      }
-//    }
-
-    return wordsInCommon * 100 / wordsLength;
   }
 
   public void getXiamiSongLyrics(String lyricsUrl, OnXiamiLyricsFetchedListener onLyricsFetchedListener) {
@@ -414,7 +398,9 @@ public class SongsAPI {
             List<String> lyricLines = new ArrayList<>(Arrays.asList(lyricsStr.split("\\n")));
             int index = 0;
             for (String lyricLine : lyricLines) {
-              if (lyricLine.contains("[") && lyricLine.contains("]")) {
+              Pattern numberPat = Pattern.compile("\\d+");
+              Matcher matcher = numberPat.matcher(lyricLine);
+              if (lyricLine.contains("[") && lyricLine.contains("]") && matcher.find()) {
                 String timecode = lyricLine.split("\\[")[1].split("]")[0];
                 int minutes = Integer.parseInt(timecode.split("\\.")[0].split(":")[0]);
                 int seconds = Integer.parseInt(timecode.split("\\.")[0].split(":")[1]);
@@ -442,15 +428,39 @@ public class SongsAPI {
     });
   }
 
-  public void getGeniusLyrics() {
-//    NOTE: JS working example below: will return a list of lyric links, to be run on a search results page
-//
-//    var links = new Array();
-//    var nodes = document.querySelectorAll("mini-song-card[object='$ctrl.hit.result']");
-//    for(i=0; i<nodes.length; i++) {
-//      links[i] = nodes[i].querySelector("a").getAttribute("ng-href");
-//    }
-//    console.log(links);
+  public void searchDndnha(String searchStr, OnSongsFetchedListener onSongsFetchedListener) {
+    String searchStringNoSpaces = searchStr.replace(" ", "+");
+
+    Call<CSESearchResponse> call = cseApiInterface.searchDndnha(searchStringNoSpaces);
+    call.enqueue(new Callback<CSESearchResponse>() {
+      @Override
+      public void onResponse(Call<CSESearchResponse> call, Response<CSESearchResponse> response) {
+        CSESearchResponse dndnhaSearchResult = response.body();
+
+        if (dndnhaSearchResult == null || CodeUtils.isEmpty(dndnhaSearchResult.items)) {
+          onSongsFetchedListener.onFailure(null);
+          return;
+        }
+
+        List<Song> songsResult = new ArrayList<>();
+        for (int i = 0; i < Math.min(dndnhaSearchResult.items.size(), 5); i++) {
+          CSESearchResponse.Item item = dndnhaSearchResult.items.get(i);
+          if (item.link.contains("listen")) {
+//          String artist = item.pagemap.people != null && !item.pagemap.people.isEmpty() ? item.pagemap.people.get(0).name : "Unknown artist";
+            Song song = new Song(item.link.split("listen_")[1].split("_")[0], item.link, item.title.split("-")[1].split("-")[0], item.title.split("-")[0].split("-")[0], item.pagemap.cseImages.get(0).src);
+            song.setSongSource(Song.SongSource.dndnha);
+            songsResult.add(song);
+          }
+        }
+
+        onSongsFetchedListener.onSuccess(songsResult);
+      }
+
+      @Override
+      public void onFailure(Call<CSESearchResponse> call, Throwable t) {
+        onSongsFetchedListener.onFailure(t);
+      }
+    });
   }
 
   public interface BaseApiListener {
