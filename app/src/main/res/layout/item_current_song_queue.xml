@@ -14,7 +14,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="16dp"
-        android:textColor="?android:attr/textColorPrimary"
         tools:text="00" />
 
     <TextView
@@ -27,7 +26,6 @@
         android:padding="16dp"
         android:scrollHorizontally="true"
         android:singleLine="true"
-        android:textColor="?android:attr/textColorPrimary"
         tools:text="Song Title" />
 
     <ImageView
@@ -35,7 +33,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="16dp"
-        android:tint="?attr/colorOnBackground"
+        android:tint="@color/colorOnBackgroundHighEmphasis"
         app:srcCompat="@drawable/ic_equalizer_24dp" />
 
 </LinearLayout>

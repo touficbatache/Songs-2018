@@ -6,13 +6,14 @@ import android.net.NetworkInfo;
 
 public class NetworkUtils {
 
-  private static boolean IS_ONLINE = false;
-
-  public static boolean isOnline(Context context) {
+  public static boolean isNetworkAvailable(Context context) {
     ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-    NetworkInfo networkInfo = manager.getActiveNetworkInfo();
-    IS_ONLINE = networkInfo != null && networkInfo.isConnected();
-    return IS_ONLINE;
+    NetworkInfo activeNetworkInfo = manager.getActiveNetworkInfo();
+    return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+  }
+
+  public static boolean isNetworkAvailable(NetworkInfo activeNetworkInfo) {
+    return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
 
 }

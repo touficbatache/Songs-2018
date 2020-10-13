@@ -1,12 +1,12 @@
 package com.batache.songs;
 
-import android.content.Intent;
-
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.multidex.MultiDexApplication;
 
 import com.batache.songs.api.SongDownloader;
 import com.batache.songs.player.PlayerManager;
+import com.batache.songs.util.PlaylistImporter;
+import com.batache.songs.util.PrefUtils;
 import com.cyl.musicapi.BaseApiImpl;
 import com.downloader.PRDownloader;
 import com.downloader.PRDownloaderConfig;
@@ -27,6 +27,8 @@ public class SongsApplication extends MultiDexApplication {
   public void onCreate() {
     super.onCreate();
     instance = this;
+
+    PrefUtils.initialize();
 
     ImagePipelineConfig.Builder builder = ImagePipelineConfig.newBuilder(this)
         .setProgressiveJpegConfig(new SimpleProgressiveJpegConfig())
@@ -54,6 +56,8 @@ public class SongsApplication extends MultiDexApplication {
     PlayerManager.initialize();
 
     BaseApiImpl.INSTANCE.initWebView(this);
+
+    PlaylistImporter.initialize();
   }
 
   public static SongsApplication get() {
@@ -68,5 +72,7 @@ public class SongsApplication extends MultiDexApplication {
     super.onTerminate();
     PlayerManager.destroy();
     SongDownloader.destroy();
+    PrefUtils.destroy();
+    PlaylistImporter.destroy();
   }
 }

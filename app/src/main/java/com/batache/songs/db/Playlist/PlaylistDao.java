@@ -27,6 +27,9 @@ public interface PlaylistDao {
   @Query("SELECT * FROM playlists ORDER BY creationdate ASC")
   List<Playlist> getAllPlaylists();
 
+  @Query("SELECT * FROM playlists ORDER BY creationdate DESC")
+  List<Playlist> getAllPlaylistsDesc();
+
   @Query("SELECT * FROM playlists ORDER BY creationdate ASC")
   LiveData<List<Playlist>> getAllPlaylistsLive();
 

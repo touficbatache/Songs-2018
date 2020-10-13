@@ -39,8 +39,8 @@ public class IconToggleView extends AppCompatImageView {
     mFirstIcon = ta.getResourceId(R.styleable.IconToggleView_firstIcon, R.drawable.ic_favorite_outlined_black_24dp);
     mSecondIcon = ta.getResourceId(R.styleable.IconToggleView_secondIcon, R.drawable.ic_favorite_24dp);
 
-    mFirstIconColor = ta.getColor(R.styleable.IconToggleView_firstIconColor, getResources().getColor(R.color.colorOnBackground));
-    mSecondIconColor = ta.getColor(R.styleable.IconToggleView_secondIconColor, getResources().getColor(R.color.colorOnBackground));
+    mFirstIconColor = ta.getColor(R.styleable.IconToggleView_firstIconColor, getResources().getColor(R.color.colorOnBackgroundHighEmphasis));
+    mSecondIconColor = ta.getColor(R.styleable.IconToggleView_secondIconColor, getResources().getColor(R.color.colorOnBackgroundHighEmphasis));
 
     applyFillColor(mFirstIconColor);
 
@@ -85,7 +85,7 @@ public class IconToggleView extends AppCompatImageView {
     if(isEnabled()) {
       setColorFilter(mCurrentFillColor);
     } else {
-      setColorFilter(getResources().getColor(R.color.grey_c0));
+      setColorFilter(getResources().getColor(R.color.colorOnBackgroundLowEmphasis));
     }
   }
 }

@@ -7,9 +7,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
 
-import com.batache.songs.player.PlayerNotificationManager;
 import com.facebook.drawee.view.SimpleDraweeView;
-import com.google.android.exoplayer2.Player;
 
 import java.io.File;
 import java.io.FileOutputStream;

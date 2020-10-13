@@ -13,15 +13,13 @@ import java.util.List;
 
 public class PlayingQueueController extends BaseController {
 
-  private List<Song> songs = new ArrayList<>();
-
   public void addSongs(List<Song> songs, String currentSongId, View.OnClickListener dismissListener) {
-    this.songs = songs;
     for (int i = 0; i < songs.size(); i++) {
       Song song = songs.get(i);
       if (song.getId().equals(currentSongId)) {
         data.add(
             new PlayingQueueCurrentSongModel_()
+                .id(song.getId())
                 .songIndex(i)
                 .songTitle(song.getTitle())
         );
@@ -29,6 +27,7 @@ public class PlayingQueueController extends BaseController {
         int finalI = i;
         data.add(
             new PlayingQueueSongModel_()
+                .id(song.getId())
                 .songIndex(i)
                 .songTitle(song.getTitle())
                 .onClickListener(view -> {

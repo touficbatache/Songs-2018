@@ -23,23 +23,13 @@ public class PlayerCoversController extends BaseController {
     for (Song song : songs) {
       data.add(
           new PlayerCoverModel_()
+              .id(song.getId())
               .context(context)
               .songId(song.getId())
               .coverArtUrl(song.getCoverArt())
               .callback(playerCoverCallback)
       );
     }
-
-    requestModelBuild();
-  }
-
-  public void addCoverArt(String coverArtUrl) {
-    data.add(
-        new PlayerCoverModel_()
-            .context(context)
-            .coverArtUrl(coverArtUrl)
-            .callback(playerCoverCallback)
-    );
 
     requestModelBuild();
   }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">@color/colorPrimaryModeDark</color>
+    <color name="colorBackground">@color/colorBackgroundDark</color>
+    <color name="colorOnBackground">@color/colorOnBackgroundDark</color>
+    <color name="colorOnBackgroundHighEmphasis">@color/colorOnBackgroundHighEmphasisDark</color>
+    <color name="colorOnBackgroundMediumEmphasis">@color/colorOnBackgroundMediumEmphasisDark</color>
+    <color name="colorOnBackgroundLowEmphasis">@color/colorOnBackgroundLowEmphasisDark</color>
+    <color name="colorSurface">@color/colorSurfaceDark</color>
+    <color name="colorPlayerBackground">@color/colorPlayerBackgroundDark</color>
+    <color name="colorFloatingSearchBarBackground">@color/colorFloatingSearchBarBackgroundDark</color>
+    <color name="colorMiniPlayerBackground">@color/colorMiniPlayerBackgroundDark</color>
+    <color name="colorMiniPlayerProgress">@color/colorMiniPlayerProgressDark</color>
+</resources>

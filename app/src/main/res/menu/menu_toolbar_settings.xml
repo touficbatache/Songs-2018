@@ -5,8 +5,8 @@
     tools:context=".app.MainActivity">
 
     <item
-        android:id="@+id/action_settings"
-        android:icon="@drawable/ic_settings_outlined_default_24dp"
+        android:id="@+id/settingsBtn"
+        android:icon="@drawable/ic_settings_outlined_24dp"
         android:orderInCategory="300"
         android:title="@string/settings"
         app:actionViewClass="androidx.appcompat.widget.SearchView"

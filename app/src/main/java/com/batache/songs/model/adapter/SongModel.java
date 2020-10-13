@@ -1,5 +1,6 @@
 package com.batache.songs.model.adapter;
 
+import android.net.Uri;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -14,6 +15,7 @@ import com.batache.songs.R;
 import com.batache.songs.model.pojo.Song;
 import com.batache.songs.player.PlayerManager;
 import com.batache.songs.util.CodeUtils;
+import com.facebook.drawee.view.SimpleDraweeView;
 
 @EpoxyModelClass(layout = R.layout.item_song)
 public abstract class SongModel extends EpoxyModelWithHolder<SongModel.SongHolder> {
@@ -38,6 +40,8 @@ public abstract class SongModel extends EpoxyModelWithHolder<SongModel.SongHolde
   @Override
   public void bind(@NonNull SongHolder holder) {
     super.bind(holder);
+
+    holder.cover.setImageURI(Uri.parse(song.getCoverArt()));
 
     holder.songTitle.setText(song.getTitle());
 
@@ -76,14 +80,14 @@ public abstract class SongModel extends EpoxyModelWithHolder<SongModel.SongHolde
   class SongHolder extends EpoxyHolder {
 
     View itemView;
-    ImageView icon;
+    SimpleDraweeView cover;
     TextView songTitle, songArtist;
     ImageView songSourceYoutube, songKaraokeAvailable;
 
     @Override
     protected void bindView(@NonNull View itemView) {
       this.itemView = itemView;
-      icon = itemView.findViewById(R.id.song_icon);
+      cover = itemView.findViewById(R.id.iv_cover);
       songTitle = itemView.findViewById(R.id.song_title);
       songArtist = itemView.findViewById(R.id.song_artist);
       songSourceYoutube = itemView.findViewById(R.id.song_source_youtube);

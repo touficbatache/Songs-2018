@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">@color/colorPrimaryModeLight</color>
+    <color name="colorBackground">@color/colorBackgroundLight</color>
+    <color name="colorOnBackground">@color/colorOnBackgroundLight</color>
+    <color name="colorOnBackgroundHighEmphasis">@color/colorOnBackgroundHighEmphasisLight</color>
+    <color name="colorOnBackgroundMediumEmphasis">@color/colorOnBackgroundMediumEmphasisLight</color>
+    <color name="colorOnBackgroundLowEmphasis">@color/colorOnBackgroundLowEmphasisLight</color>
+    <color name="colorSurface">@color/colorSurfaceLight</color>
+    <color name="colorPlayerBackground">@color/colorPlayerBackgroundLight</color>
+    <color name="colorFloatingSearchBarBackground">@color/colorFloatingSearchBarBackgroundLight</color>
+    <color name="colorMiniPlayerBackground">@color/colorMiniPlayerBackgroundLight</color>
+    <color name="colorMiniPlayerProgress">@color/colorMiniPlayerProgressLight</color>
+</resources>

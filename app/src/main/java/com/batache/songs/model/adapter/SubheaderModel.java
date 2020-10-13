@@ -1,6 +1,5 @@
 package com.batache.songs.model.adapter;
 
-import android.content.Context;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.ImageView;
@@ -18,9 +17,6 @@ import com.batache.songs.R;
 public abstract class SubheaderModel extends EpoxyModelWithHolder<SubheaderModel.SubheaderHolder> {
 
   @EpoxyAttribute
-  Context context;
-
-  @EpoxyAttribute
   String title;
 
   @EpoxyAttribute
@@ -32,7 +28,7 @@ public abstract class SubheaderModel extends EpoxyModelWithHolder<SubheaderModel
 
     if (onClickListener != null) {
       TypedValue outValue = new TypedValue();
-      context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+      holder.itemView.getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
       holder.itemView.setBackgroundResource(outValue.resourceId);
       holder.itemView.setOnClickListener(onClickListener);
       holder.more.setVisibility(View.VISIBLE);

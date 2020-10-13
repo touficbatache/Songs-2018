@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fresco="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -9,28 +10,27 @@
     android:gravity="center_vertical"
     android:padding="16dp">
 
-    <ImageView
-        android:id="@+id/song_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:tint="@color/colorPrimary"
-        app:srcCompat="@drawable/ic_music_note_outlined_black_24dp" />
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/iv_cover"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        fresco:placeholderImage="@drawable/ph_song"
+        fresco:roundedCornerRadius="8dp" />
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginLeft="16dp"
         android:layout_weight="1"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/song_title"
-            style="@style/TextAppearance.AppCompat.Subhead"
+            style="@style/TextAppearance.MaterialComponents.Subtitle1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="2"
-            android:textColor="?android:attr/textColorPrimary"
+            android:textColor="?attr/colorOnBackground"
             tools:text="Song title" />
 
         <TextView
@@ -38,6 +38,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="1"
+            android:textColor="@color/colorOnBackgroundHighEmphasis"
             tools:text="Song artist" />
 
     </LinearLayout>

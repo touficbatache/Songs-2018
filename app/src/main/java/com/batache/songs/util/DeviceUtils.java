@@ -1,9 +1,10 @@
 package com.batache.songs.util;
 
+import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Build;
-import android.preference.PreferenceManager;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +73,7 @@ public class DeviceUtils {
   }
 
   public static File getDownloadSongsDir(Context context) {
-    String songDownloadDir = PreferenceManager.getDefaultSharedPreferences(context).getString("download_location", "in_app");
+    String songDownloadDir = PrefUtils.getInstance().getString(PrefUtils.SETTINGS_DOWNLOAD_LOCATION_PREF, PrefUtils.SETTINGS_DOWNLOAD_LOCATION_DEFAULT_VALUE);
     if ("in_app".equals(songDownloadDir)) {
       return getInternalFilesSongsDir(context);
     }
@@ -80,7 +81,7 @@ public class DeviceUtils {
   }
 
   public static File getDownloadSongsDirFilePath(Context context, String fileName) {
-    String songDownloadDir = PreferenceManager.getDefaultSharedPreferences(context).getString("download_location", "in_app");
+    String songDownloadDir = PrefUtils.getInstance().getString(PrefUtils.SETTINGS_DOWNLOAD_LOCATION_PREF, PrefUtils.SETTINGS_DOWNLOAD_LOCATION_DEFAULT_VALUE);
     if ("in_app".equals(songDownloadDir)) {
       return getInternalFilesSongsDirFilePath(context, fileName);
     }
@@ -114,16 +115,24 @@ public class DeviceUtils {
     return are_the_same;
   }
 
-  public static void cacheData(Context context, String sharedPreferencesKey, String cache) {
-    SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-    SharedPreferences.Editor prefsEditor = mPrefs.edit();
-    prefsEditor.putString(sharedPreferencesKey, cache);
-    prefsEditor.apply();
+  public static void hideKeyboard(Activity activity) {
+    InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+    //Find the currently focused view, so we can grab the correct window token from it.
+    View view = activity.getCurrentFocus();
+    //If no view currently has focus, create a new one, just so we can grab a window token from it
+    if (view == null) {
+      view = new View(activity);
+    }
+    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
   }
 
-  public static String getCachedData(Context context, String sharedPreferencesName) {
-    SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-    return mPrefs.getString(sharedPreferencesName, null);
+  public static void showKeyboardOn(Context context, View view) {
+    InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+    imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
   }
 
+  public static void hideKeyboardFrom(Context context, View view) {
+    InputMethodManager imm = (InputMethodManager) context.getSystemService(Activity.INPUT_METHOD_SERVICE);
+    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+  }
 }

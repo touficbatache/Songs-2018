@@ -33,6 +33,7 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector;
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator;
+import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -54,6 +55,19 @@ public class PlayerService extends Service {
   private Context context;
   private PlayerNotificationManager playerNotificationManager;
 
+  private String currentSongId = "";
+  private Bitmap currentBitmap;
+
+  public static void startUpdate(Context context) {
+    if (isRunning) {
+      PlayerControllerEvent.postUpdatePlayerControllers();
+      return;
+    }
+    Intent intent = new Intent(context, PlayerService.class)
+        .setAction(PlayerActions.ACTION_START);
+    startService(context, intent);
+  }
+
   @Override
   public void onCreate() {
     super.onCreate();
@@ -73,13 +87,13 @@ public class PlayerService extends Service {
 
       if (action != null) {
         switch (action) {
+          case PlayerActions.ACTION_START:
+            showPlayerNotification();
+            return START_STICKY;
           case PlayerActions.ACTION_STOP:
             smartStopForeground(false);
             stopSelf();
             return START_NOT_STICKY;
-          case PlayerActions.ACTION_START:
-            showPlayerNotification();
-            return START_STICKY;
           default:
             return super.onStartCommand(intent, flags, startId);
         }
@@ -118,7 +132,20 @@ public class PlayerService extends Service {
           @Nullable
           @Override
           public Bitmap getCurrentLargeIcon(Player player, PlayerNotificationManager.BitmapCallback callback) {
-            ImageLoader.getBitmap(context, getPlayingSong(player).getId(), getPlayingSong(player).getCoverArt(), callback::onBitmap);
+            String songId = getPlayingSong(player).getId();
+            if (currentSongId.equals(songId)) {
+              return currentBitmap;
+            }
+
+            currentSongId = songId;
+            currentBitmap = null;
+            ImageLoader.getBitmap(context, getPlayingSong(player).getId(), getPlayingSong(player).getCoverArt(), new ImageLoader.FetchBitmapCallback() {
+              @Override
+              public void onCompletion(Bitmap bitmap) {
+                currentBitmap = bitmap;
+                callback.onBitmap(bitmap);
+              }
+            });
             return null;
           }
         },
@@ -267,16 +294,6 @@ public class PlayerService extends Service {
 
     notificationManager.createNotificationChannel(channel);
     return channelId;
-  }
-
-  public static void startUpdate(Context context) {
-    if (isRunning) {
-      PlayerControllerEvent.postUpdatePlayerControllers();
-      return;
-    }
-    Intent intent = new Intent(context, PlayerService.class)
-        .setAction(PlayerActions.ACTION_START);
-    startService(context, intent);
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)

@@ -35,7 +35,7 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
         android.R.attr.tint, // index 0
       };
       TypedArray a = context.obtainStyledAttributes(attrs, set);
-      applyFillColor(a.getColor(0, getResources().getColor(R.color.colorOnBackground)));
+      applyFillColor(a.getColor(0, getResources().getColor(R.color.colorOnBackgroundHighEmphasis)));
       a.recycle();
     }
   }
@@ -72,7 +72,7 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
     // fill -> border. It's now showing border
     mIsShowingFill = false;
 
-    applyFillColor(getResources().getColor(R.color.colorOnBackground));
+    applyFillColor(getResources().getColor(R.color.colorOnBackgroundHighEmphasis));
   }
 
   public void showBlinkingAnimation() {
@@ -125,7 +125,7 @@ public class CloudDownloadBorderToFillImageView extends AppCompatImageView {
     if(isEnabled()) {
       setColorFilter(mCurrentFillColor);
     } else {
-      setColorFilter(getResources().getColor(R.color.grey_c0));
+      setColorFilter(getResources().getColor(R.color.colorOnBackgroundLowEmphasis));
     }
   }
 }

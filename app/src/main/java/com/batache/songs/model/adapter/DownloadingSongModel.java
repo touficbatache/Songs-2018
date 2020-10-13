@@ -20,9 +20,6 @@ import com.tonyodev.fetch2.Status;
 public abstract class DownloadingSongModel extends EpoxyModelWithHolder<DownloadingSongModel.DownloadingSongHolder> {
 
   @EpoxyAttribute
-  Context context;
-
-  @EpoxyAttribute
   Download download;
 
   @Override
@@ -31,10 +28,12 @@ public abstract class DownloadingSongModel extends EpoxyModelWithHolder<Download
 
     Song song = SongUtils.getSong(download);
     holder.songTitle.setText(song.getTitle());
+
+    Context context = holder.downloadStatus.getContext();
     if (download.getStatus() == Status.DOWNLOADING) {
       holder.downloadStatus.setText(String.format(context.getString(R.string.download_status_downloading), download.getProgress()));
     } else {
-      holder.downloadStatus.setText(R.string.download_status_queued);
+      holder.downloadStatus.setText(context.getString(R.string.download_status_queued));
     }
   }
 

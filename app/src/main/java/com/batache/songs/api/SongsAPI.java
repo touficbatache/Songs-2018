@@ -1,11 +1,12 @@
 package com.batache.songs.api;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.batache.songs.R;
+import com.batache.songs.SongsApplication;
+import com.batache.songs.api.autocomplete.AutocompleteApiClient;
+import com.batache.songs.api.autocomplete.AutocompleteApiInterface;
 import com.batache.songs.api.captions.Caption;
 import com.batache.songs.api.captions.CaptionsApiClient;
 import com.batache.songs.api.captions.CaptionsApiInterface;
@@ -27,6 +28,8 @@ import com.batache.songs.api.youtube.YoutubeVideosResponse;
 import com.batache.songs.model.pojo.Lyric;
 import com.batache.songs.model.pojo.Song;
 import com.batache.songs.util.CodeUtils;
+import com.batache.songs.util.PrefUtils;
+import com.batache.songs.util.SongUtils;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.nodes.Document;
@@ -46,7 +49,6 @@ import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 import static com.batache.songs.util.TextUtils.removeBrackets;
 import static com.batache.songs.util.TextUtils.removeParenthesis;
@@ -54,41 +56,33 @@ import static com.batache.songs.util.TextUtils.removeParenthesis;
 public class SongsAPI {
 
   private static SongsAPI sInstance;
-  public static final String TAG = "SongsAPI";
-
-  private Retrofit youtubeApiRetrofit;
-  private YoutubeApiInterface youtubeApiInterface;
-
-  private Retrofit captionsApiRetrofit;
-  private CaptionsApiInterface captionsApiInterface;
-
-  private Retrofit xiamiApiRetrofit;
-  private XiamiApiInterface xiamiApiInterface;
-
-  private Retrofit cseApiRetrofit;
-  private CSEApiInterface cseApiInterface;
-
-  private Retrofit geniusApiRetrofit;
-  private GeniusApiInterface geniusApiInterface;
 
   public static SongsAPI getInstance() {
     if (sInstance == null) {
-      sInstance = new SongsAPI();
+      sInstance = new SongsAPI(SongsApplication.get());
     }
     return sInstance;
   }
 
-  private SongsAPI() {
-    youtubeApiRetrofit = YoutubeApiClient.getRetrofitClient();
-    youtubeApiInterface = youtubeApiRetrofit.create(YoutubeApiInterface.class);
-    captionsApiRetrofit = CaptionsApiClient.getRetrofitClient();
-    captionsApiInterface = captionsApiRetrofit.create(CaptionsApiInterface.class);
-    xiamiApiRetrofit = XiamiApiClient.getRetrofitClient();
-    xiamiApiInterface = xiamiApiRetrofit.create(XiamiApiInterface.class);
-    cseApiRetrofit = CSEApiClient.getRetrofitClient();
-    cseApiInterface = cseApiRetrofit.create(CSEApiInterface.class);
-    geniusApiRetrofit = GeniusApiClient.getRetrofitClient();
-    geniusApiInterface = geniusApiRetrofit.create(GeniusApiInterface.class);
+  private SongsApplication context;
+
+  private YoutubeApiInterface youtubeApiInterface;
+  private CaptionsApiInterface captionsApiInterface;
+  private XiamiApiInterface xiamiApiInterface;
+  private CSEApiInterface cseApiInterface;
+  private GeniusApiInterface geniusApiInterface;
+  private AutocompleteApiInterface autocompleteApiInterface;
+
+  private SongsAPI(SongsApplication songsApplication) {
+    // we should always use the application context to avoid memory leaks
+    context = songsApplication;
+
+    youtubeApiInterface = YoutubeApiClient.getRetrofitClient().create(YoutubeApiInterface.class);
+    captionsApiInterface = CaptionsApiClient.getRetrofitClient().create(CaptionsApiInterface.class);
+    xiamiApiInterface = XiamiApiClient.getRetrofitClient().create(XiamiApiInterface.class);
+    cseApiInterface = CSEApiClient.getRetrofitClient().create(CSEApiInterface.class);
+    geniusApiInterface = GeniusApiClient.getRetrofitClient().create(GeniusApiInterface.class);
+    autocompleteApiInterface = AutocompleteApiClient.getRetrofitClient().create(AutocompleteApiInterface.class);
   }
 
   public void getSongsFromPlaylist(String playlistId, String maxResults, OnSongsFetchedListener onSongsFetchedListener) {
@@ -108,7 +102,7 @@ public class SongsAPI {
             String id = resourceId.videoId;
             String title = snippet.title;
             String author = snippet.channelTitle;
-            String thumbnail = thumbnails.thumbnail_high.url; // TODO: Add thumbnail size in settings
+            String thumbnail = SongUtils.getThumbnail(thumbnails); // TODO: Add thumbnail size in settings
 
             fetchedSongs.add(new Song(id, title, author, thumbnail));
           }
@@ -184,8 +178,11 @@ public class SongsAPI {
     return fetchedSongs;
   }
 
-  public void searchYoutube(Context context, String searchQuery, OnSongsFetchedListener onSongsFetchedListener) {
-    Call<YoutubeSearchResponse> call = youtubeApiInterface.search(searchQuery + "- Topic");
+  public void searchYoutube(String searchQuery, OnSongsFetchedListener onSongsFetchedListener) {
+    Call<YoutubeSearchResponse> call =
+        PrefUtils.getInstance().getBoolean(PrefUtils.SEARCH_SHOW_MUSIC_ONLY_PREF, PrefUtils.SEARCH_SHOW_MUSIC_ONLY_DEFAULT_VALUE)
+            ? youtubeApiInterface.searchMusicOnly(searchQuery + "- Topic")
+            : youtubeApiInterface.search(searchQuery);
     call.enqueue(new Callback<YoutubeSearchResponse>() {
       @Override
       public void onResponse(@NonNull Call<YoutubeSearchResponse> call, @NonNull Response<YoutubeSearchResponse> response) {
@@ -273,7 +270,7 @@ public class SongsAPI {
     });
   }
 
-  public void searchXiami(Context context, String searchQuery, OnSongsFetchedListener onSongsFetchedListener) {
+  public void searchXiami(String searchQuery, OnSongsFetchedListener onSongsFetchedListener) {
     Call<XiamiSearchResponse> call = xiamiApiInterface.search(searchQuery);
     call.enqueue(new Callback<XiamiSearchResponse>() {
       @Override
@@ -311,7 +308,7 @@ public class SongsAPI {
     });
   }
 
-  public void getSongLyrics(Context context, String songTitle, String songArtist, OnLyricsFetchedListener onLyricsFetchedListener) {
+  public void getSongLyrics(String songTitle, String songArtist, OnLyricsFetchedListener onLyricsFetchedListener) {
     String searchTitle = removeBrackets(removeParenthesis(songTitle)).replace("HD", "").replace("-", "");
 
     String searchQuery = searchTitle + " " + songArtist;
@@ -320,7 +317,7 @@ public class SongsAPI {
     call.enqueue(new Callback<CSESearchResponse>() {
       @Override
       public void onResponse(Call<CSESearchResponse> call, Response<CSESearchResponse> response) {
-        if(response.body() == null || response.body().items == null || response.body().items.size() <= 0) {
+        if (response.body() == null || response.body().items == null || response.body().items.size() <= 0) {
           onLyricsFetchedListener.onFailure(null);
           return;
         }
@@ -463,6 +460,30 @@ public class SongsAPI {
     });
   }
 
+  public void getAutocomplete(String query, OnAutocompleteFetchedListener onAutocompleteFetchedListener) {
+    Call<List<Object>> call = autocompleteApiInterface.getAutocomplete(query);
+    call.enqueue(new Callback<List<Object>>() {
+      @Override
+      public void onResponse(Call<List<Object>> call, Response<List<Object>> response) {
+        List<Object> responseArray = response.body();
+
+        if (responseArray.size() <= 1) {
+          onAutocompleteFetchedListener.onFailure(new Throwable("Response size too small"));
+          return;
+        }
+
+        List<String> suggestedQueries = new ArrayList<>(Arrays.asList(responseArray.get(1).toString().replace("[", "").replace("]", "").split(",")));
+
+        onAutocompleteFetchedListener.onSuccess(suggestedQueries);
+      }
+
+      @Override
+      public void onFailure(Call<List<Object>> call, Throwable t) {
+        onAutocompleteFetchedListener.onFailure(t);
+      }
+    });
+  }
+
   public interface BaseApiListener {
     void onFailure(@Nullable Throwable t);
   }
@@ -481,5 +502,9 @@ public class SongsAPI {
 
   public interface OnCaptionLanguagesFetchedListener extends BaseApiListener {
     void onSuccess(Map<String, String> captionLanguages);
+  }
+
+  public interface OnAutocompleteFetchedListener extends BaseApiListener {
+    void onSuccess(List<String> suggestedQueries);
   }
 }

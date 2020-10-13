@@ -1,20 +1,21 @@
 package com.batache.songs.ui.controller;
 
-import android.content.Context;
-
-import androidx.navigation.Navigation;
-
+import com.airbnb.epoxy.EpoxyModelWithHolder;
 import com.batache.songs.R;
 import com.batache.songs.app.base.BaseController;
-import com.batache.songs.app.explore.ExploreFragmentDirections;
+import com.batache.songs.model.adapter.AutocompleteQueryModel_;
 import com.batache.songs.model.adapter.DownloadingSongModel_;
+import com.batache.songs.model.adapter.ImportingPlaylistModel_;
 import com.batache.songs.model.adapter.PlaylistModel_;
 import com.batache.songs.model.adapter.SongModel_;
 import com.batache.songs.model.adapter.SubheaderModel_;
 import com.batache.songs.model.pojo.Playlist;
 import com.batache.songs.model.pojo.Song;
+import com.batache.songs.util.SongUtils;
+import com.batache.songs.util.events.ImportEvent;
 import com.tonyodev.fetch2.Download;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.batache.songs.util.SongUtils.PLAYLIST_DOWNLOADS_ID;
@@ -25,6 +26,7 @@ public class SongsController extends BaseController {
   public void addSection(List<Song> songs) {
     for (Song song : songs) {
       data.add(new SongModel_()
+          .id(song.getId())
           .song(song)
       );
     }
@@ -32,22 +34,24 @@ public class SongsController extends BaseController {
     requestModelBuild();
   }
 
-  public void addExploreSearchResultsSection(Context context, List<Song> songs) {
+  public void addExploreSearchResultsSection(List<Song> songs) {
     data.add(new SubheaderModel_()
-        .context(context)
+        .id("subheader_top_result")
         .title("Top result"));
 
     data.add(new SongModel_()
+        .id(songs.get(0).getId())
         .song(songs.get(0))
         .showYoutubeIcon(true)
     );
 
     data.add(new SubheaderModel_()
-        .context(context)
+        .id("subheader_songs")
         .title("Songs"));
 
     for (Song song : songs) {
       data.add(new SongModel_()
+          .id(song.getId())
           .song(song)
           .showYoutubeIcon(true)
       );
@@ -56,51 +60,49 @@ public class SongsController extends BaseController {
     requestModelBuild();
   }
 
-  public void addSeeMoreSection(Context context, String title, List<Song> songs, String playlistId, boolean showArtist) {
+  public void addPlaylistsSection(String subheaderTitle, List<Playlist> playlists, List<SongUtils.ExportedPlaylist> importingPlaylists, ImportEvent importEvent) {
     data.add(new SubheaderModel_()
-        .context(context)
-        .title(title)
-        .onClickListener(view -> {
-          ExploreFragmentDirections.PlaylistAction action = ExploreFragmentDirections.playlistAction(title, playlistId);
-          Navigation.findNavController(view).navigate(action);
-        })
-    );
-
-    for (Song song : songs) {
-      data.add(new SongModel_()
-          .song(song)
-          .showArtist(showArtist)
-      );
-    }
-
-    requestModelBuild();
-  }
-
-  public void addPlaylistsSection(Context context, String subheaderTitle, List<Playlist> playlists) {
-    data.add(new SubheaderModel_()
-        .context(context)
+        .id("subheader_playlists")
         .title(subheaderTitle));
+
+    List<EpoxyModelWithHolder> userCreatedPlaylists = new ArrayList<>();
 
     for (Playlist playlist : playlists) {
       if (playlist.getId().equals(PLAYLIST_LIKES_ID)) {
         data.add(new PlaylistModel_()
-            .context(context)
+            .id(playlist.getId())
             .icon(R.drawable.ic_favorite_outlined_black_24dp)
             .playlist(playlist)
         );
-      } else if (playlist.getId().equals(PLAYLIST_DOWNLOADS_ID)) {
+        continue;
+      }
+
+      if (playlist.getId().equals(PLAYLIST_DOWNLOADS_ID)) {
         data.add(new PlaylistModel_()
-            .context(context)
+            .id(playlist.getId())
             .icon(R.drawable.ic_cloud_download_outlined_black_24dp)
             .playlist(playlist)
         );
-      } else {
-        data.add(new PlaylistModel_()
-            .context(context)
-            .playlist(playlist)
-        );
+        continue;
       }
+
+      userCreatedPlaylists.add(new PlaylistModel_()
+          .id(playlist.getId())
+          .playlist(playlist)
+      );
     }
+
+    for (int i = 0; i < importingPlaylists.size(); i++) {
+      SongUtils.ExportedPlaylist playlist = importingPlaylists.get(i);
+
+      data.add(new ImportingPlaylistModel_()
+          .id("importing_playlist_" + playlist.getTitle())
+          .playlistTitle(playlist.getTitle())
+          .importEvent(i == 0 ? importEvent : null)
+      );
+    }
+
+    data.addAll(userCreatedPlaylists);
 
     requestModelBuild();
   }
@@ -108,6 +110,7 @@ public class SongsController extends BaseController {
   public void addPlaylistSection(String playlistId, List<Song> songs) {
     for (int i = 0; i < songs.size(); i++) {
       data.add(new SongModel_()
+          .id(songs.get(i).getId())
           .song(songs.get(i))
           .playlistId(playlistId)
           .index(i)
@@ -117,10 +120,10 @@ public class SongsController extends BaseController {
     requestModelBuild();
   }
 
-  public void addDownloadingSection(Context context, List<Download> downloads) {
+  public void addDownloadingSection(List<Download> downloads) {
     for (int i = 0; i < downloads.size(); i++) {
       data.add(new DownloadingSongModel_()
-          .context(context)
+          .id(downloads.get(i).getId())
           .download(downloads.get(i))
       );
     }
@@ -134,6 +137,7 @@ public class SongsController extends BaseController {
       if (song.getTitle().toLowerCase().contains(query.toLowerCase()) ||
           song.getArtist().toLowerCase().contains(query.toLowerCase())) {
         data.add(new SongModel_()
+            .id(song.getId())
             .song(songs.get(i))
             .playlistId(playlistId)
             .index(i)

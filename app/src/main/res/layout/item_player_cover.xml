@@ -7,53 +7,21 @@
     android:background="@android:color/transparent"
     android:clipChildren="false"
     android:clipToPadding="false"
-    android:paddingStart="45dp"
-    android:paddingLeft="45dp"
-    android:paddingEnd="45dp"
-    android:paddingRight="45dp">
-
-    <!--mar: 46dp-->
-    <com.facebook.drawee.view.SimpleDraweeView
-        android:id="@+id/player_cover_background_disc"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:background="@android:color/transparent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        fresco:actualImageResource="@drawable/disk_background"
-        fresco:placeholderImageScaleType="fitCenter"
-        fresco:viewAspectRatio="1" />
+    android:paddingStart="36dp"
+    android:paddingEnd="36dp">
 
     <!--mar: 120dp-->
     <com.facebook.drawee.view.SimpleDraweeView
         android:id="@+id/player_song_cover_art"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
-        android:layout_marginLeft="80dp"
-        android:layout_marginEnd="80dp"
-        android:layout_marginRight="80dp"
         android:background="@android:color/transparent"
-        app:layout_constraintBottom_toBottomOf="@+id/player_cover_background_disc"
-        app:layout_constraintEnd_toEndOf="@id/player_cover_background_disc"
-        app:layout_constraintStart_toStartOf="@id/player_cover_background_disc"
-        fresco:layout_constraintTop_toTopOf="@+id/player_cover_background_disc"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        fresco:layout_constraintTop_toTopOf="parent"
         fresco:placeholderImageScaleType="fitCenter"
-        fresco:roundAsCircle="true"
+        fresco:roundedCornerRadius="12dp"
         fresco:viewAspectRatio="1" />
-
-    <!--mar: 20dp-->
-    <ImageView
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:background="@android:color/transparent"
-        app:srcCompat="@drawable/circle_grey_grey_e0"
-        fresco:layout_constraintBottom_toBottomOf="@id/player_song_cover_art"
-        fresco:layout_constraintEnd_toEndOf="parent"
-        fresco:layout_constraintStart_toStartOf="parent"
-        fresco:layout_constraintTop_toTopOf="@id/player_song_cover_art" />
 
     <Space
         android:id="@+id/left_negative_margin"
@@ -84,10 +52,10 @@
         android:gravity="center_vertical|end"
         android:orientation="vertical"
         android:theme="@style/RippleWhite"
-        app:layout_constraintBottom_toBottomOf="@id/player_cover_background_disc"
+        app:layout_constraintBottom_toBottomOf="@id/player_song_cover_art"
         app:layout_constraintEnd_toStartOf="@id/seek_next"
         app:layout_constraintStart_toStartOf="@id/left_negative_margin"
-        app:layout_constraintTop_toTopOf="@id/player_cover_background_disc">
+        app:layout_constraintTop_toTopOf="@id/player_song_cover_art">
 
         <LinearLayout
             android:id="@+id/seek_previous_text"
@@ -101,7 +69,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
-                android:tint="@color/white"
+                app:tint="@color/white"
                 app:srcCompat="@drawable/ic_skip_previous_24dp" />
 
             <TextView
@@ -128,10 +96,10 @@
         android:gravity="center_vertical|start"
         android:orientation="vertical"
         android:theme="@style/RippleWhite"
-        app:layout_constraintBottom_toBottomOf="@id/player_cover_background_disc"
+        app:layout_constraintBottom_toBottomOf="@id/player_song_cover_art"
         app:layout_constraintEnd_toEndOf="@id/right_negative_margin"
         app:layout_constraintStart_toEndOf="@id/seek_previous"
-        app:layout_constraintTop_toTopOf="@id/player_cover_background_disc">
+        app:layout_constraintTop_toTopOf="@id/player_song_cover_art">
 
         <LinearLayout
             android:id="@+id/seek_next_text"
@@ -166,8 +134,8 @@
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         app:backgroundTint="@color/white"
-        app:layout_constraintStart_toStartOf="@id/player_cover_background_disc"
-        app:layout_constraintTop_toTopOf="@id/player_cover_background_disc"
+        app:layout_constraintStart_toStartOf="@id/player_song_cover_art"
+        app:layout_constraintTop_toTopOf="@id/player_song_cover_art"
         app:srcCompat="@drawable/ic_filter_list_24dp"
         app:tint="@color/colorSecondary" />
 

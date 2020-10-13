@@ -22,10 +22,7 @@ public abstract class BaseController extends EpoxyController {
 
   @Override
   protected void buildModels() {
-    long i = 0;
-
     for (EpoxyModel model : data) {
-      model.id(i++);
       model.addTo(this);
     }
   }

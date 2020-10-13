@@ -101,6 +101,10 @@ public class DatabaseHelper {
     return mPlaylistRepository.getAllPlaylists();
   }
 
+  public List<Playlist> getAllPlaylistsDesc() {
+    return mPlaylistRepository.getAllPlaylistsDesc();
+  }
+
   public LiveData<List<Playlist>> getPlaylistsListener() {
     return mPlaylistRepository.getAllPlaylistsLive();
   }

@@ -1,25 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.appbar.AppBarLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/app_bar"
+    android:id="@+id/appBar"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:theme="@style/AppTheme.AppBarOverlay"
-    app:elevation="0dp">
+    android:background="@null"
+    app:liftOnScroll="true">
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/floating_search_bar"
+        android:id="@+id/floatingSearchBar"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="8dp"
+        app:cardBackgroundColor="@color/colorFloatingSearchBarBackground"
         app:cardCornerRadius="8dp"
-        app:cardElevation="3dp">
+        app:cardElevation="3dp"
+        app:layout_scrollFlags="scroll|enterAlways">
 
         <LinearLayout
-            android:id="@+id/floating_search_bar_content"
+            android:id="@+id/floatingSearchBarContent"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?attr/selectableItemBackground"
@@ -27,35 +29,43 @@
             android:gravity="center_vertical">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_weight="1"
                 android:text="@string/hint_search"
+                android:textColor="@color/colorOnBackgroundHighEmphasis"
                 android:textSize="17sp" />
 
             <ImageView
-                android:id="@+id/action_settings"
+                android:id="@+id/settingsBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="14dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:padding="2dp"
-                android:src="@drawable/ic_settings_outlined_default_24dp" />
+                android:src="@drawable/ic_settings_outlined_24dp" />
 
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
 
-    <androidx.appcompat.widget.Toolbar
+    <!--    <androidx.appcompat.widget.Toolbar-->
+    <!--        android:id="@+id/toolbar"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="?attr/actionBarSize"-->
+    <!--        android:elevation="4dp"-->
+    <!--        android:gravity="center_horizontal"-->
+    <!--        android:theme="@style/AppTheme.PopupOverlay"-->
+    <!--        android:visibility="gone"-->
+    <!--        app:popupTheme="@style/AppTheme.PopupOverlay" />-->
+
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
+        style="@style/Widget.MaterialComponents.Toolbar.Background"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:elevation="4dp"
-        android:gravity="center_horizontal"
-        android:theme="@style/AppTheme.PopupOverlay"
-        android:visibility="gone"
-        app:popupTheme="@style/AppTheme.PopupOverlay" />
+        android:visibility="gone" />
 
 </com.google.android.material.appbar.AppBarLayout>

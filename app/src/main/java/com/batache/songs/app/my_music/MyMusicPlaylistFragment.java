@@ -1,6 +1,9 @@
 package com.batache.songs.app.my_music;
 
+import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.StrictMode;
 import android.text.TextUtils;
 import android.util.Log;
@@ -8,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,10 +23,11 @@ import com.batache.songs.api.SongsAPI;
 import com.batache.songs.app.MainActivity;
 import com.batache.songs.app.base.ListFragment;
 import com.batache.songs.app.explore.ExplorePlaylistFragmentArgs;
-import com.batache.songs.player.PlayerManager;
 import com.batache.songs.db.DatabaseHelper;
 import com.batache.songs.model.pojo.PlaylistSongJoin;
 import com.batache.songs.model.pojo.Song;
+import com.batache.songs.player.PlayerManager;
+import com.batache.songs.ui.controller.SongsController;
 import com.batache.songs.util.CodeUtils;
 import com.batache.songs.util.DeviceUtils;
 import com.batache.songs.util.RestoreSongsUtils;
@@ -34,28 +39,30 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.batache.songs.util.DeviceUtils.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE;
 import static com.batache.songs.util.SongUtils.PLAYLIST_DOWNLOADS_ID;
 import static com.batache.songs.util.SongUtils.PLAYLIST_LIKES_ID;
 
-public class MyMusicPlaylistFragment extends ListFragment {
-
-  private final static String MAX_RESULTS = "50";
-
+public class MyMusicPlaylistFragment extends ListFragment<SongsController> {
   private static final String TAG = "MyMusicPlaylistFragm : ";
 
   private DatabaseHelper mDatabaseHelper;
 
+  private String playlistTitle;
   private String playlistId;
   private List<Song> playlistSongs = new ArrayList<>();
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    
     setHasOptionsMenu(true);
 
     mDatabaseHelper = DatabaseHelper.getInstance(getContext());
@@ -82,7 +89,13 @@ public class MyMusicPlaylistFragment extends ListFragment {
   public void onCreateView() {
     if (getArguments() != null) {
       playlistId = ExplorePlaylistFragmentArgs.fromBundle(getArguments()).getPlaylistId();
+      playlistTitle = ExplorePlaylistFragmentArgs.fromBundle(getArguments()).getTitle();
     }
+  }
+
+  @Override
+  public SongsController getController() {
+    return new SongsController();
   }
 
   @Override
@@ -126,19 +139,59 @@ public class MyMusicPlaylistFragment extends ListFragment {
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
+      case R.id.action_export:
+        new MaterialAlertDialogBuilder(requireActivity())
+            .setMessage(getString(R.string.export_message))
+            .setCancelable(true)
+            .setPositiveButton(getString(R.string.export), (dialog, id) -> {
+              exportPlaylist();
+            })
+            .setNegativeButton(getString(android.R.string.cancel), (dialog, id) -> dialog.cancel())
+            .show();
+        return true;
       case R.id.action_delete:
-        new MaterialAlertDialogBuilder(getActivity())
+        new MaterialAlertDialogBuilder(requireActivity())
             .setMessage(getString(R.string.delete_song_warning))
             .setCancelable(true)
-            .setPositiveButton("Yes", (dialog, id) -> {
+            .setPositiveButton(getString(R.string.yes), (dialog, id) -> {
               PlayerManager.getInstance().deletePlaylistAndSongs(playlistId);
               ((MainActivity) getActivity()).onSupportNavigateUp();
             })
-            .setNegativeButton("No", (dialog, id) -> dialog.cancel())
+            .setNegativeButton(getString(android.R.string.no), (dialog, id) -> dialog.cancel())
             .show();
         return true;
       default:
         return super.onOptionsItemSelected(item);
+    }
+  }
+
+  private void exportPlaylist() {
+    AsyncTask.execute(() -> {
+      File phoneStorage = Environment.getExternalStorageDirectory();
+      File dir = new File(phoneStorage.getAbsolutePath() + "/");
+
+      File exportFile = new File(dir, String.format("%s.songsplaylist", playlistTitle));
+      try {
+        if (exportFile.createNewFile()) {
+          FileWriter writer = new FileWriter(exportFile, true);
+          writer.write(SongUtils.generateExportedPlaylist(playlistTitle, playlistSongs));
+          writer.flush();
+          writer.close();
+          requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), getString(R.string.export_success), Toast.LENGTH_LONG).show());
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    });
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    if (requestCode == MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
+      if (grantResults.length > 0
+          && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        exportPlaylist();
+      }
     }
   }
 
@@ -218,19 +271,25 @@ public class MyMusicPlaylistFragment extends ListFragment {
   }
 
   private void updateRecyclerViewSongs() {
-    if(PLAYLIST_DOWNLOADS_ID.equals(playlistId)) {
-      SongDownloader.getInstance().getDownloadingAndQueuedSongs(result -> {
-        mController.reset();
-
-        mController.addDownloadingSection(getContext(), result);
-
-        mController.addPlaylistSection(playlistId, playlistSongs);
-      });
-
-      return;
-    }
+//    if (PLAYLIST_DOWNLOADS_ID.equals(playlistId)) {
+//      SongDownloader.getInstance().getDownloadingAndQueuedSongs(result -> {
+//        mController.reset();
+//
+//        mController.addDownloadingSection(getContext(), result);
+//
+//        mController.addPlaylistSection(playlistId, playlistSongs);
+//      });
+//
+//      return;
+//    }
 
     mController.reset();
+
+    if (PLAYLIST_DOWNLOADS_ID.equals(playlistId)) {
+      SongDownloader.getInstance().getDownloadingAndQueuedSongs(result -> {
+        mController.addDownloadingSection(result);
+      });
+    }
 
     mController.addPlaylistSection(playlistId, playlistSongs);
   }

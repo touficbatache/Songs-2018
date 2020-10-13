@@ -21,6 +21,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
@@ -30,9 +31,9 @@ import androidx.recyclerview.widget.SnapHelper;
 import com.airbnb.epoxy.EpoxyRecyclerView;
 import com.batache.songs.R;
 import com.batache.songs.api.SongDownloader;
-import com.batache.songs.app.MainActivity;
+import com.batache.songs.app.MainActivity3;
 import com.batache.songs.app.lyrics.LyricsActivity;
-import com.batache.songs.app.playingqueue.PlayingQueueFragment;
+import com.batache.songs.player.playqueue.PlayingQueueFragment;
 import com.batache.songs.model.adapter.PlayerCoverModel;
 import com.batache.songs.model.pojo.Playlist;
 import com.batache.songs.model.pojo.Song;
@@ -44,6 +45,7 @@ import com.batache.songs.util.CodeUtils;
 import com.batache.songs.util.DimensionUtils;
 import com.batache.songs.util.ImageLoader;
 import com.batache.songs.util.TextUtils;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -57,12 +59,9 @@ import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 
 public class PlayerFragment extends BasePlayerFragment {
 
-  private MainActivity activity;
+  private MainActivity3 activity;
 
   private boolean isPlayerLoading = false;
-
-  private ImageButton arrowDownBtn;
-  private ImageButton playingQueueBtn;
 
   private EpoxyRecyclerView recyclerView;
   private RecyclerView.OnScrollListener recyclerViewScrollListener;
@@ -71,21 +70,22 @@ public class PlayerFragment extends BasePlayerFragment {
   private TextView titleTv;
   private TextView artistTv;
 
-  private IconToggleView favoriteBtn;
-  private MaterialProgressBar downloadProgress;
-  private CloudDownloadBorderToFillImageView cloudDownloadBtn;
-  private IconToggleView addToPlaylistBtn;
-  private ImageView shareBtn;
-
-  private SeekBar progressBar;
-  private TextView progressCurrentTv;
-  private TextView progressTotalTv;
-
   private RepeatToggleView repeatBtn;
   private ImageButton prevBtn;
   private MorphingImageView playPauseBtn;
   private ImageButton nextBtn;
   private ImageButton shuffleBtn;
+
+  private AppCompatSeekBar progressBar;
+  private TextView progressCurrentTv;
+  private TextView progressTotalTv;
+
+  private ImageButton playingQueueBtn;
+  private IconToggleView favoriteBtn;
+  private MaterialProgressBar downloadProgress;
+  private CloudDownloadBorderToFillImageView cloudDownloadBtn;
+  private IconToggleView addToPlaylistBtn;
+  private ImageView shareBtn;
 
   private PlayerComponentListener componentListener;
 
@@ -97,14 +97,11 @@ public class PlayerFragment extends BasePlayerFragment {
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    activity = (MainActivity) getActivity();
+    activity = (MainActivity3) getActivity();
   }
 
   @Override
   public void initViews() {
-    arrowDownBtn = rootView.findViewById(R.id.player_arrow_down);
-    playingQueueBtn = rootView.findViewById(R.id.player_see_playing_queue);
-
     recyclerView = rootView.findViewById(R.id.player_cover_arts_recyclerview);
     recyclerViewScrollListener = new RecyclerView.OnScrollListener() {
       @Override
@@ -112,7 +109,7 @@ public class PlayerFragment extends BasePlayerFragment {
         super.onScrollStateChanged(recyclerView, newState);
         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
           int songIndex = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-          playerManager.play(songIndex);
+          playerManager.safePlay(songIndex);
         }
       }
     };
@@ -120,22 +117,23 @@ public class PlayerFragment extends BasePlayerFragment {
     titleTv = rootView.findViewById(R.id.player_song_title);
     artistTv = rootView.findViewById(R.id.player_song_artist);
 
+    repeatBtn = rootView.findViewById(R.id.player_repeat_btn);
+    prevBtn = rootView.findViewById(R.id.player_prev_btn);
+    playPauseBtn = rootView.findViewById(R.id.player_play_to_pause_btn);
+    nextBtn = rootView.findViewById(R.id.player_next_btn);
+    shuffleBtn = rootView.findViewById(R.id.player_shuffle_btn);
+
+    progressBar = rootView.findViewById(R.id.player_song_progress);
+    progressCurrentTv = rootView.findViewById(R.id.player_progress_current);
+    progressTotalTv = rootView.findViewById(R.id.player_progress_total);
+
+    playingQueueBtn = rootView.findViewById(R.id.player_action_playing_queue);
     favoriteBtn = rootView.findViewById(R.id.player_action_favorite);
     downloadProgress = rootView.findViewById(R.id.player_download_progress);
     downloadProgress.setMax(100);
     cloudDownloadBtn = rootView.findViewById(R.id.player_action_cloud_download);
     addToPlaylistBtn = rootView.findViewById(R.id.player_action_add_to_playlist);
     shareBtn = rootView.findViewById(R.id.player_action_share);
-
-    progressBar = rootView.findViewById(R.id.player_song_progress);
-    progressCurrentTv = rootView.findViewById(R.id.player_progress_current);
-    progressTotalTv = rootView.findViewById(R.id.player_progress_total);
-
-    repeatBtn = rootView.findViewById(R.id.player_repeat_btn);
-    prevBtn = rootView.findViewById(R.id.player_prev_btn);
-    playPauseBtn = rootView.findViewById(R.id.player_play_to_pause_btn);
-    nextBtn = rootView.findViewById(R.id.player_next_btn);
-    shuffleBtn = rootView.findViewById(R.id.player_shuffle_btn);
   }
 
   @Override
@@ -148,9 +146,7 @@ public class PlayerFragment extends BasePlayerFragment {
   public class PlayerComponentListener extends BaseComponentListener implements PlayerCoverModel.PlayerCoverCallback, CloudDownloadBorderToFillImageView.OnDownloadClickListener, SeekBar.OnSeekBarChangeListener {
     @Override
     public void onClick(View view) {
-      if (arrowDownBtn == view) {
-        activity.collapsePlayer();
-      } else if (playingQueueBtn == view) {
+      if (playingQueueBtn == view) {
         new PlayingQueueFragment().show(activity.getSupportFragmentManager(), "playing_queue_fragment");
       } else if (favoriteBtn == view) {
         playerManager.addToRemoveFromFavorites();
@@ -338,7 +334,6 @@ public class PlayerFragment extends BasePlayerFragment {
 
   @Override
   public void attachViewsToComponentListener() {
-    arrowDownBtn.setOnClickListener(componentListener);
     playingQueueBtn.setOnClickListener(componentListener);
 
     controller = new PlayerCoversController(context, componentListener);
@@ -371,7 +366,12 @@ public class PlayerFragment extends BasePlayerFragment {
 
   @Override
   public void onApplyAllWindowInsets() {
-    rootView.setPadding(0, DimensionUtils.TOP_INSET, 0, DimensionUtils.BOTTOM_INSET);
+    rootView.setPadding(0, 0, 0, DimensionUtils.BOTTOM_INSET);
+  }
+
+  public void updateVisibility(float slideOffset) {
+    rootView.setAlpha((slideOffset - (1f / 16f)) / (1f - (1f / 16f)));
+//    rootView.setVisibility(opacityMultiplier == 0 ? View.GONE : View.VISIBLE);
   }
 
   public void setClickable(boolean clickable) {
@@ -388,7 +388,7 @@ public class PlayerFragment extends BasePlayerFragment {
     if (CodeUtils.isEmpty(playerManager.getPlayqueue())) {
       activity.hidePlayer();
       return;
-    } else if (activity.getPlayerState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
+    } else if (activity.getPlayerState() == BottomSheetBehavior.STATE_HIDDEN) {
       activity.collapsePlayer();
     }
     controller.reset();
@@ -414,6 +414,7 @@ public class PlayerFragment extends BasePlayerFragment {
     nextBtn.setEnabled(!loading);
     setColorEnabled(nextBtn, !loading);
     shuffleBtn.setEnabled(!loading);
+    setShuffleColorEnabled(shuffleBtn, !loading);
     if (loading) {
       progressBar.setProgress(0);
       progressBar.setSecondaryProgress(0);
@@ -428,7 +429,7 @@ public class PlayerFragment extends BasePlayerFragment {
       return;
     }
 
-    recyclerView.smoothScrollToPosition(playerManager.getCurrentSongIndex());
+    recyclerView.scrollToPosition(playerManager.getCurrentSongIndex());
 
     ImageLoader.getBitmap(context, playerManager.getCurrentSong().getId(), playerManager.getCurrentSong().getCoverArt(), new ImageLoader.FetchBitmapCallback() {
       @Override
@@ -633,9 +634,9 @@ public class PlayerFragment extends BasePlayerFragment {
   @Override
   public void onShuffleChanged() {
     if (playerManager.isShuffled()) {
-      shuffleBtn.setColorFilter(getResources().getColor(R.color.grey_67));
+      shuffleBtn.setColorFilter(getResources().getColor(R.color.colorOnBackgroundHighEmphasis));
     } else {
-      shuffleBtn.setColorFilter(getResources().getColor(R.color.grey_c0));
+      shuffleBtn.setColorFilter(getResources().getColor(R.color.colorOnBackgroundMediumEmphasis));
     }
   }
 
@@ -648,17 +649,25 @@ public class PlayerFragment extends BasePlayerFragment {
 
   private void setColorEnabled(ImageView imageView, boolean enabled) {
     if (enabled) {
-      imageView.setColorFilter(getResources().getColor(R.color.grey_67));
+      imageView.setColorFilter(getResources().getColor(R.color.colorOnBackgroundHighEmphasis));
     } else {
-      imageView.setColorFilter(getResources().getColor(R.color.grey_c0));
+      imageView.setColorFilter(getResources().getColor(R.color.colorOnBackgroundLowEmphasis));
     }
   }
 
   private void setColorEnabled(ImageButton imageButtonView, boolean enabled) {
     if (enabled) {
-      imageButtonView.setColorFilter(getResources().getColor(R.color.grey_67));
+      imageButtonView.setColorFilter(getResources().getColor(R.color.colorOnBackgroundHighEmphasis));
     } else {
-      imageButtonView.setColorFilter(getResources().getColor(R.color.grey_c0));
+      imageButtonView.setColorFilter(getResources().getColor(R.color.colorOnBackgroundLowEmphasis));
+    }
+  }
+
+  private void setShuffleColorEnabled(ImageButton imageButtonView, boolean enabled) {
+    if (enabled) {
+      imageButtonView.setColorFilter(getResources().getColor(R.color.colorOnBackgroundMediumEmphasis));
+    } else {
+      imageButtonView.setColorFilter(getResources().getColor(R.color.colorOnBackgroundLowEmphasis));
     }
   }
 }

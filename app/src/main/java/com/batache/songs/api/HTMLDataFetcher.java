@@ -29,7 +29,7 @@ public class HTMLDataFetcher extends AsyncTask<Document, Document, Document> {
   protected Document doInBackground(Document... args) {
 
     Document result = null;
-    if(NetworkUtils.isOnline(context.get())) {
+    if(NetworkUtils.isNetworkAvailable(context.get())) {
       try {
         result = Jsoup.connect(url).get();
       } catch (IOException e) {

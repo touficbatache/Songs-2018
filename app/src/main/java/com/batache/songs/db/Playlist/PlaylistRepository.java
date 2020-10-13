@@ -41,6 +41,10 @@ public class PlaylistRepository {
     return mPlaylistDao.getAllPlaylists();
   }
 
+  public List<Playlist> getAllPlaylistsDesc() {
+    return mPlaylistDao.getAllPlaylistsDesc();
+  }
+
   public LiveData<List<Playlist>> getAllPlaylistsLive() {
     return mAllPlaylists;
   }

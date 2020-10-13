@@ -32,6 +32,7 @@
     <string name="NUMBER_songs">%d songs</string>
     <string name="save">Save</string>
     <string name="ok">OK</string>
+    <string name="yes">Yes</string>
     <string name="failed_fetching_lyrics">Failed fetching lyrics</string>
     <string name="recommended">Recommended</string>
     <string name="youtube">YouTube</string>
@@ -40,6 +41,11 @@
     <string name="failed_fetching_playlist">Failed fetching playlist</string>
     <string name="download_status_downloading">Downloading… %d%%</string>
     <string name="download_status_queued">Waiting for download…</string>
+    <string name="export">Export</string>
+    <string name="export_message">Export your playlists so you can share them with friends, move them to your new device or keep them as a backup</string>
+    <string name="export_success">Playlist exported successfully</string>
+    <string name="import_status_importing">Importing… %d%%</string>
+    <string name="import_status_queued">Waiting for import…</string>
 
     <!-- General settings -->
     <string name="pref_header_general">General</string>
@@ -78,5 +84,13 @@
 
     <!-- About settings -->
     <string name="pref_header_about">About</string>
+
+    <!-- Error messages -->
+    <string name="error_occurred">An error has occurred</string>
+    <string name="error_retry_later">Please try again later</string>
+    <string name="error_section_added_to_homescreen">Widget has not been added to your home screen</string>
+    <string name="error_shortcuts_not_supported">Shortcuts are not supported</string>
+    <string name="error_fill_required_fields">Please fill all required fields</string>
+    <string name="error_no_internet_connection">No internet connection</string>
 
 </resources>

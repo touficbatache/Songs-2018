@@ -23,9 +23,6 @@ import com.batache.songs.util.CodeUtils;
 public abstract class PlaylistModel extends EpoxyModelWithHolder<PlaylistModel.PlaylistHolder> {
 
   @EpoxyAttribute
-  Context context;
-
-  @EpoxyAttribute
   @DrawableRes
   int icon = -1;
 
@@ -49,6 +46,7 @@ public abstract class PlaylistModel extends EpoxyModelWithHolder<PlaylistModel.P
 
     holder.title.setText(playlist.getTitle());
 
+    Context context = holder.songsCount.getContext();
     int songsCount = DatabaseHelper.getInstance(context).getSongsForPlaylist(playlist.getId()).size();
     holder.songsCount.setText(String.format(context.getString(R.string.NUMBER_songs), songsCount));
   }

@@ -1,25 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="@dimen/mini_player_height"
     android:orientation="vertical">
-
-    <me.zhanghai.android.materialprogressbar.MaterialProgressBar
-        android:id="@+id/mini_player_song_progress"
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        app:mpb_progressStyle="horizontal"
-        app:mpb_useIntrinsicPadding="false"
-        app:mpb_progressBackgroundTint="@color/grey_fa"
-        style="@style/Widget.MaterialProgressBar.ProgressBar.Horizontal" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/mini_player_height"
-        android:background="?android:colorBackground">
+        android:layout_height="match_parent"
+        android:background="@color/colorMiniPlayerBackground">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -32,17 +22,16 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 app:srcCompat="@drawable/ic_keyboard_arrow_up_24dp"
-                android:tint="?attr/colorOnBackground" />
+                app:tint="@color/colorOnBackgroundHighEmphasis" />
 
             <TextView
                 android:id="@+id/mini_player_song_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textColor="@color/black"
-                android:padding="16dp"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:padding="16dp"
+                android:textSize="16sp"
                 tools:text="Song name" />
 
         </LinearLayout>
@@ -52,9 +41,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="16dp"
+            android:tint="?attr/colorOnBackground"
             app:fromIconAVD="@drawable/play_to_pause"
             app:toIconAVD="@drawable/pause_to_play" />
 
     </LinearLayout>
 
-</LinearLayout>
+    <me.zhanghai.android.materialprogressbar.MaterialProgressBar
+        android:id="@+id/mini_player_song_progress"
+        style="@style/Widget.MaterialProgressBar.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_gravity="bottom"
+        app:mpb_progressBackgroundTint="@color/colorMiniPlayerProgress"
+        app:mpb_progressStyle="horizontal"
+        app:mpb_useIntrinsicPadding="false" />
+
+</FrameLayout>

@@ -31,7 +31,7 @@ public class SettingsActivity extends BaseActivity implements PreferenceFragment
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    appBar = findViewById(R.id.app_bar);
+    appBar = findViewById(R.id.appBar);
     setSupportActionBar(findViewById(R.id.toolbar));
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
   }

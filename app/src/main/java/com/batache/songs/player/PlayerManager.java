@@ -2,12 +2,10 @@ package com.batache.songs.player;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
@@ -24,7 +22,7 @@ import com.batache.songs.model.pojo.Playlist;
 import com.batache.songs.model.pojo.PlaylistSongJoin;
 import com.batache.songs.model.pojo.Song;
 import com.batache.songs.util.CodeUtils;
-import com.batache.songs.util.DeviceUtils;
+import com.batache.songs.util.events.DownloadEvent;
 import com.batache.songs.util.events.PlayerEvent;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -87,6 +85,7 @@ public class PlayerManager implements LifecycleOwner {
   private SimpleExoPlayer exoPlayer;
   private List<Song> playqueue = new ArrayList<>();
   private String playlistId;
+  private int playlistSize = -1;
   private boolean showingPlayerNotification;
 
   private boolean isStreaming = false;
@@ -99,19 +98,7 @@ public class PlayerManager implements LifecycleOwner {
       PlayerService.startUpdate(context);
     }
   };
-  private Runnable updateProgressRunnable = new Runnable() {
-    @Override
-    public void run() {
-      if (exoPlayer != null) {
-        PlayerEvent.postProgressChanged();
-        mainHandler.postDelayed(this, 500);
-
-        if (!isStreaming()) {
-          setLastPlayed(playlistId, getCurrentSongIndex(), getCurrentPosition());
-        }
-      }
-    }
-  };
+  private Runnable updateProgressRunnable = this::logTime;
 
   private PlayerManager(SongsApplication songsApplication) {
     // we should always use the application context to avoid memory leaks
@@ -129,18 +116,15 @@ public class PlayerManager implements LifecycleOwner {
       databaseHelper.insertPlaylist(new Playlist(PLAYLIST_DOWNLOADS_ID, context.getString(R.string.downloads), new Date()));
     }
 
-    AudioAttributes audioAttributes = new AudioAttributes.Builder()
-        .setUsage(C.USAGE_MEDIA)
-        .setContentType(C.CONTENT_TYPE_MUSIC)
-        .build();
-
     exoPlayer = ExoPlayerFactory.newSimpleInstance(context, new DefaultTrackSelector());
 
     LastPlayed lastPlayed = getLastPlayed();
     if (lastPlayed != null) {
       isStreaming = false;
-      this.playlistId = lastPlayed.getPlaylistId();
-      setPlayQueue(databaseHelper.getSongsForPlaylist(playlistId));
+      updatePlaylistData(lastPlayed.getPlaylistId());
+//      this.playlistId = lastPlayed.getPlaylistId();
+//      playlistSize = databaseHelper.getSongsForPlaylist(playlistId).size();
+      setPlayQueue(databaseHelper.getSongsForPlaylist(getPlaylistId()));
       seekTo(lastPlayed.getSongIndex(), lastPlayed.getPosition());
     }
 
@@ -163,6 +147,16 @@ public class PlayerManager implements LifecycleOwner {
       @SuppressLint("StaticFieldLeak")
       @Override
       public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        PlayerEvent.postPlayPauseChanged();
+
+        if (playWhenReady && playbackState == Player.STATE_READY) {
+          // media actually playing
+          startProgressTracker();
+        } else {
+          // media not playing
+          stopProgressTracker();
+        }
+
         switch (playbackState) {
           case Player.STATE_IDLE:
             if (!isStreaming() && getCurrentSong().getSongSource() == Song.SongSource.youtube && getCurrentSong().getUri() == null) {
@@ -262,21 +256,55 @@ public class PlayerManager implements LifecycleOwner {
         PlayerEvent.postSongChanged();
       }
     });
+
+    AudioAttributes audioAttributes = new AudioAttributes.Builder()
+        .setUsage(C.USAGE_MEDIA)
+        .setContentType(C.CONTENT_TYPE_MUSIC)
+        .build();
     exoPlayer.setAudioAttributes(audioAttributes, true);
 
-    startProgressTracker();
+//    startProgressTracker();
   }
 
-  private static void startService(Context context, Intent intent) {
-    if (DeviceUtils.isOreo()) {
-      context.startForegroundService(intent);
-    } else {
-      context.startService(intent);
+  private void logTime() {
+    stopProgressTracker();
+
+    if (exoPlayer == null) {
+      return;
     }
+
+    PlayerEvent.postProgressChanged();
+
+    if (!isStreaming()) {
+      setLastPlayed(getPlaylistId(), getCurrentSongIndex(), getCurrentPosition());
+    }
+
+    mainHandler.postDelayed(updateProgressRunnable, 500);
   }
+
+  private void updatePlaylistData(String id) {
+    playlistId = id;
+    playlistSize = id == null ? -1 : databaseHelper.getSongsForPlaylist(getPlaylistId()).size();
+  }
+
+  private String getPlaylistId() {
+    return playlistId;
+  }
+
+//  private static void startService(Context context, Intent intent) {
+//    if (DeviceUtils.isOreo()) {
+//      context.startForegroundService(intent);
+//    } else {
+//      context.startService(intent);
+//    }
+//  }
 
   private void startProgressTracker() {
     mainHandler.post(updateProgressRunnable);
+  }
+
+  private void stopProgressTracker() {
+    mainHandler.removeCallbacks(updateProgressRunnable);
   }
 
   private void setPlayQueue(List<Song> songs) {
@@ -314,11 +342,19 @@ public class PlayerManager implements LifecycleOwner {
     playqueue = Arrays.asList(song);
 
     if (song.getSongSource() == Song.SongSource.youtube || song.getSongSource() == Song.SongSource.dndnha) {
-      SongDownloader.getInstance().fetchSongURL(context, song, playableUrl -> {
-        streamSong.setUri(Uri.parse(playableUrl));
-        exoPlayer.prepare(generateMediaSource(streamSong, false));
-        PlayerEvent.postPlayQueueReady();
-        play(0);
+      SongDownloader.getInstance().fetchSongURL(context, song, new SongDownloader.SongURLFetcherCallback() {
+        @Override
+        public void onSuccess(String playableUrl) {
+          streamSong.setUri(Uri.parse(playableUrl));
+          exoPlayer.prepare(generateMediaSource(streamSong, false));
+          PlayerEvent.postPlayQueueReady();
+          play(0);
+        }
+
+        @Override
+        public void onError() {
+          DownloadEvent.postDownloadCancelled(song);
+        }
       });
       return;
     }
@@ -363,16 +399,6 @@ public class PlayerManager implements LifecycleOwner {
     return new DefaultHttpDataSourceFactory(Util.getUserAgent(context, "songs-app"));
   }
 
-  private com.batache.songs.player.ResolvingDataSource.Factory getYoutubeSongFactory() {
-    return new com.batache.songs.player.ResolvingDataSource.Factory(context, new DefaultHttpDataSourceFactory(Util.getUserAgent(context, "songs-app")));
-//    return new ResolvingDataSource.Factory(getStreamSongFactory(), new ResolvingDataSource.Resolver() {
-//      @Override
-//      public DataSpec resolveDataSpec(DataSpec dataSpec) throws IOException {
-//        return new DataSpec(uri);
-//      }
-//    });
-  }
-
   private MediaSource generateMediaSource(Song song, boolean isLocallyStored) {
     return new ProgressiveMediaSource
         .Factory(isLocallyStored ? getLocallyStoredSongFactory(song.getUri()) :
@@ -388,9 +414,21 @@ public class PlayerManager implements LifecycleOwner {
     return playqueue;
   }
 
+  private void resetPlayqueueAndStop() {
+    playqueue = new ArrayList<>();
+    stop();
+  }
+
   public void play(int index) {
     safeSeekTo(index, C.TIME_UNSET);
     resume();
+  }
+
+  public void safePlay(int index) {
+    if(index == getCurrentSongIndex()) {
+      return;
+    }
+    play(index);
   }
 
   public void resume() {
@@ -458,7 +496,7 @@ public class PlayerManager implements LifecycleOwner {
       return streamSong;
     }
 
-    List<Song> playlistSongs = databaseHelper.getSongsForPlaylist(playlistId);
+    List<Song> playlistSongs = databaseHelper.getSongsForPlaylist(getPlaylistId());
 
     if (CodeUtils.isEmpty(playlistSongs) || playlistSongs.size() <= getCurrentSongIndex()) {
       return null;
@@ -493,7 +531,7 @@ public class PlayerManager implements LifecycleOwner {
         if (song.getSongSource() == Song.SongSource.youtube) {
           song.setUri(null);
         }
-        databaseHelper.insertSong(song);
+        insertSong(song);
       }
 
       insertCurrentSongInPlaylist(PLAYLIST_LIKES_ID);
@@ -505,17 +543,20 @@ public class PlayerManager implements LifecycleOwner {
 
       removeCurrentSongFromPlaylist(PLAYLIST_LIKES_ID);
 
-      if(!isStreaming()) {
+      if (!isStreaming()) {
         if (getPlayqueue().size() > 1) {
           int newIndex = getCurrentSongIndex() < getPlayqueue().size() ? getCurrentSongIndex() : getCurrentSongIndex() - 1;
-          playSong(playlistId, newIndex);
+          playSong(getPlaylistId(), newIndex);
         } else {
-          playqueue = new ArrayList<>();
-          stop();
+          resetPlayqueueAndStop();
         }
       }
     }
     mainHandler.postDelayed(PlayerEvent::postFavoriteChanged, 100);
+  }
+
+  public void insertSong(Song song) {
+    databaseHelper.insertSong(song);
   }
 
   public void addToPlaylist(String playlistId) {
@@ -530,7 +571,7 @@ public class PlayerManager implements LifecycleOwner {
         if (song.getSongSource() == Song.SongSource.youtube) {
           song.setUri(null);
         }
-        databaseHelper.insertSong(song);
+        insertSong(song);
       }
 
       insertCurrentSongInPlaylist(playlistId);
@@ -567,7 +608,9 @@ public class PlayerManager implements LifecycleOwner {
   public void deleteCurrentSong() {
     if (getCurrentSong().getPath() != null && getCurrentSong().getPath().delete()) {
       databaseHelper.deleteSong(getCurrentSong());
+
       PlayerEvent.postSongDeleted();
+
       databaseHelper.getSongsListener().observe(this, songs -> {
         databaseHelper.getSongsListener().removeObservers(this);
 
@@ -575,12 +618,13 @@ public class PlayerManager implements LifecycleOwner {
           return;
         }
 
+        updatePlaylistData(getPlaylistId());
+
         if (getPlayqueue().size() > 1) {
           int newIndex = getCurrentSongIndex() < getPlayqueue().size() ? getCurrentSongIndex() : getCurrentSongIndex() - 1;
-          playSong(playlistId, newIndex);
+          playSong(getPlaylistId(), newIndex);
         } else {
-          playqueue = new ArrayList<>();
-          stop();
+          resetPlayqueueAndStop();
         }
       });
     }
@@ -611,22 +655,32 @@ public class PlayerManager implements LifecycleOwner {
     return databaseHelper.isSongInCustomPlaylist(getCurrentSong().getId());
   }
 
+  public String createPlaylist(String playlistTitle) {
+    int lastPlaylistId = Integer.parseInt(getAllPlaylists().get(getAllPlaylists().size() - 1).getId());
+    String playlistId = String.valueOf(lastPlaylistId + 1);
+    databaseHelper.insertPlaylist(new Playlist(playlistId, playlistTitle, new Date()));
+    return playlistId;
+  }
+
   public void createPlaylistAndInsertCurrentSong(String playlistTitle) {
     if (getCurrentSong() == null) {
       return;
     }
-    String playlistId = String.valueOf(Integer.valueOf(getAllPlaylists().get(getAllPlaylists().size() - 1).getId()) + 1);
-    databaseHelper.insertPlaylist(new Playlist(playlistId, playlistTitle, new Date()));
-    insertCurrentSongInPlaylist(playlistId);
+    String createdPlaylistId = createPlaylist(playlistTitle);
+    insertCurrentSongInPlaylist(createdPlaylistId);
   }
 
   public void insertCurrentSongInPlaylist(String playlistId) {
     if (getCurrentSong() == null) {
       return;
     }
-    databaseHelper.insertSongInPlaylist(new PlaylistSongJoin(playlistId, getCurrentSong().getId()));
+    insertSongInPlaylist(playlistId, getCurrentSong().getId());
 
     mainHandler.postDelayed(PlayerEvent::postAddToPlaylistChanged, 100);
+  }
+
+  public void insertSongInPlaylist(String playlistId, String songId) {
+    databaseHelper.insertSongInPlaylist(new PlaylistSongJoin(playlistId, songId));
   }
 
   public void removeCurrentSongFromPlaylist(String playlistId) {
@@ -638,16 +692,18 @@ public class PlayerManager implements LifecycleOwner {
   }
 
   public void deletePlaylistAndSongs(String playlistId) {
-    if (getCurrentSong() == null) {
-      return;
-    }
-    for (Song song : databaseHelper.getSongsForPlaylist(playlistId)) {
-      databaseHelper.removeSongFromPlaylist(playlistId, song.getId());
-      if (song.getId().equals(getCurrentSong().getId())) {
-        mainHandler.postDelayed(PlayerEvent::postAddToPlaylistChanged, 100);
+    if (getCurrentSong() != null) {
+      String currentSongId = getCurrentSong().getId();
+
+      for (Song song : databaseHelper.getSongsForPlaylist(playlistId)) {
+        databaseHelper.removeSongFromPlaylist(playlistId, song.getId());
+        if (song.getId().equals(currentSongId)) {
+          mainHandler.postDelayed(PlayerEvent::postAddToPlaylistChanged, 100);
+        }
       }
     }
     databaseHelper.deletePlaylist(playlistId);
+    resetPlayqueueAndStop();
   }
 
   public void shareCurrentSong(Activity activity) {
@@ -750,9 +806,12 @@ public class PlayerManager implements LifecycleOwner {
 
   public void playSong(String playlistId, int index) {
     isStreaming = false;
-    this.playlistId = playlistId;
-    setPlayQueue(databaseHelper.getSongsForPlaylist(playlistId));
-    PlayerEvent.postSongChanged();
+    if (!playlistId.equals(getPlaylistId()) || databaseHelper.getSongsForPlaylist(playlistId).size() == playlistSize) {
+      updatePlaylistData(playlistId);
+//      this.playlistId = playlistId;
+//      playlistSize = databaseHelper.getSongsForPlaylist(playlistId).size();
+      setPlayQueue(databaseHelper.getSongsForPlaylist(playlistId));
+    }
     play(index);
   }
 
@@ -768,7 +827,9 @@ public class PlayerManager implements LifecycleOwner {
     }
 
     isStreaming = true;
-    this.playlistId = null;
+    updatePlaylistData(null);
+//    playlistId = null;
+//    playlistSize = -1;
     setPlayQueueAndPlayWhenReady(song);
     PlayerEvent.postSongChanged();
   }

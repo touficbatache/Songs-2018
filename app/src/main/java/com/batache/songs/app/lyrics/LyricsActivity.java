@@ -170,11 +170,19 @@ public class LyricsActivity extends BaseActivity {
       });
     });
     deleteButton.setOnClickListener(view -> {
-      if (song.getLyrics() != null) {
-        song.setLyrics(null);
-        DatabaseHelper.getInstance(getContext()).updateSong(song);
-        finish();
-      }
+      new MaterialAlertDialogBuilder(LyricsActivity.this)
+          .setTitle("Delete lyrics?")
+          .setMessage("Are you sure you want to delete this song's lyrics?")
+          .setCancelable(true)
+          .setPositiveButton(R.string.ok, (dialog, which) -> {
+            if (song.getLyrics() != null) {
+              song.setLyrics(null);
+              DatabaseHelper.getInstance(getContext()).updateSong(song);
+              finish();
+            }
+          })
+          .setNegativeButton(R.string.cancel, null)
+          .show();
     });
     scrollToPositionFAB.setOnClickListener(view -> {
       userScrolled = false;
@@ -196,7 +204,7 @@ public class LyricsActivity extends BaseActivity {
         }
       });
     } else {
-      SongsAPI.getInstance().getSongLyrics(getContext(), song.getTitle(), song.getArtist(), new SongsAPI.OnLyricsFetchedListener() {
+      SongsAPI.getInstance().getSongLyrics(song.getTitle(), song.getArtist(), new SongsAPI.OnLyricsFetchedListener() {
         @Override
         public void onSuccess(List<Lyric> lyrics) {
           setLyrics(lyrics, false);

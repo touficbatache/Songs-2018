@@ -42,17 +42,17 @@ public class MorphingImageView extends AppCompatImageView {
     mFirstToSecondAVD = AnimatedVectorDrawableCompat.create(getContext(), ta.getResourceId(R.styleable.MorphingImageView_fromIconAVD, R.drawable.play_to_pause));
     mSecondToFirstAVD = AnimatedVectorDrawableCompat.create(getContext(), ta.getResourceId(R.styleable.MorphingImageView_toIconAVD, R.drawable.pause_to_play));
 
-    mFirstStateColor = ta.getColor(R.styleable.MorphingImageView_fromColor, getResources().getColor(R.color.colorOnBackground));
-    mSecondStateColor = ta.getColor(R.styleable.MorphingImageView_toColor, getResources().getColor(R.color.colorSecondary));
+    int[] androidSet = {
+        android.R.attr.tint, // index 0
+    };
+    TypedArray a = getContext().obtainStyledAttributes(attrs, androidSet);
+    mFirstStateColor = a.getColor(0, getResources().getColor(R.color.colorOnBackgroundLight));
+    mSecondStateColor = a.getColor(0, getResources().getColor(R.color.colorOnBackgroundLight));
+    a.recycle();
 
-    if (!ta.getBoolean(R.styleable.MorphingImageView_isColorChanging, false)) {
-      int[] androidSet = {
-          android.R.attr.tint, // index 0
-      };
-      TypedArray a = getContext().obtainStyledAttributes(attrs, androidSet);
-      mFirstStateColor = a.getColor(0, getResources().getColor(R.color.colorOnBackground));
-      mSecondStateColor = a.getColor(0, getResources().getColor(R.color.colorOnBackground));
-      a.recycle();
+    if (ta.getBoolean(R.styleable.MorphingImageView_isColorChanging, false)) {
+      mFirstStateColor = ta.getColor(R.styleable.MorphingImageView_fromColor, getResources().getColor(R.color.colorOnBackgroundLight));
+      mSecondStateColor = ta.getColor(R.styleable.MorphingImageView_toColor, getResources().getColor(R.color.colorSecondary));
     }
 
     applyFillColor(mFirstStateColor);
@@ -63,15 +63,19 @@ public class MorphingImageView extends AppCompatImageView {
     setImageDrawable(mFirstToSecondAVD);
   }
 
-  public void switchState() {
-    if (mIsShowingSecondState) {
-      animateToFirstState();
-    } else {
-      animateToSecondState();
-    }
-  }
+//  public void switchState() {
+//    if (isShowingSecondState()) {
+//      animateToFirstState();
+//    } else {
+//      animateToSecondState();
+//    }
+//  }
 
   public void animateToSecondState() {
+    if (isShowingSecondState()) {
+      return;
+    }
+
     setImageDrawable(mFirstToSecondAVD);
     mFirstToSecondAVD.start();
     // from -> to. It's now showing to
@@ -81,6 +85,10 @@ public class MorphingImageView extends AppCompatImageView {
   }
 
   public void animateToFirstState() {
+    if (!isShowingSecondState()) {
+      return;
+    }
+
     setImageDrawable(mSecondToFirstAVD);
     mSecondToFirstAVD.start();
     // to -> from. It's now showing from
@@ -113,10 +121,14 @@ public class MorphingImageView extends AppCompatImageView {
 
   private void applyFillColor(@ColorRes int color) {
     mCurrentFillColor = color;
-    if(isEnabled()) {
+    if (isEnabled()) {
       setColorFilter(mCurrentFillColor);
     } else {
-      setColorFilter(getResources().getColor(R.color.grey_c0));
+      setColorFilter(getResources().getColor(R.color.colorOnBackgroundLowEmphasis));
     }
+  }
+
+  public boolean isShowingSecondState() {
+    return mIsShowingSecondState;
   }
 }

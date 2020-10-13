@@ -16,6 +16,9 @@ public interface YoutubeApiInterface {
   @GET("search?part=snippet&type=video&key=" + SongUtils.API_KEY_2)
   Call<YoutubeSearchResponse> search(@Query("q") String searchQuery);
 
+  @GET("search?part=snippet&type=video&videoCategoryId=10&key=" + SongUtils.API_KEY_2)
+  Call<YoutubeSearchResponse> searchMusicOnly(@Query("q") String searchQuery);
+
   @GET("captions?part=snippet&type=video&key=" + SongUtils.API_KEY_2)
   Call<YoutubeCaptionLanguagesResponse> getAvailableCaptionLanguages(@Query("videoId") String videoId);
 

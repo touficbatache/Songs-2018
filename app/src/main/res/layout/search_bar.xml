@@ -15,7 +15,7 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:padding="2dp"
-        android:src="@drawable/ic_arrow_back_default_24dp" />
+        android:src="@drawable/ic_arrow_back_24dp" />
 
     <EditText
         android:id="@+id/et_search"
@@ -28,6 +28,8 @@
         android:hint="@string/hint_search"
         android:imeOptions="actionSearch"
         android:inputType="text"
+        android:textColor="?attr/colorOnBackground"
+        android:textColorHint="@color/colorOnBackgroundHighEmphasis"
         android:textSize="17sp" />
 
     <ImageView
@@ -38,8 +40,7 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:padding="2dp"
-        android:src="@drawable/ic_clear_black_24dp"
-        android:tint="?attr/colorOnBackground"
+        android:src="@drawable/ic_clear_24dp"
         android:visibility="gone" />
 
 </LinearLayout>

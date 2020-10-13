@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorSecondary">#FF4081</color>
-    <color name="colorOnBackground">#5e6368</color>
+    <!--    <color name="colorOnBackground">#5e6368</color>-->
 
-    <color name="white">#FFFFFF</color>
+    <color name="white">#FFF</color>
     <color name="black">#000000</color>
     <color name="hint">#808080</color>
-    <color name="grey_fa">#fafafa</color>
+    <color name="grey_fa">#FAFAFA</color>
     <color name="grey_f5">#F5F5F5</color>
-    <color name="grey_e0">#e0e0e0</color>
-    <color name="grey_c0">#c0c0c0</color>
+    <color name="grey_e0">#E0E0E0</color>
+    <color name="grey_c0">#C0C0C0</color>
     <color name="grey_80">#808080</color>
     <color name="grey_75">#757575</color>
     <color name="grey_67">#676767</color>
@@ -27,4 +26,37 @@
     <color name="textColorPrimary1">#FFDE03</color>
 
     <color name="purple">#8D00F2</color>
+
+    <color name="colorPrimaryModeLight">#3F51B5</color>
+    <color name="colorPrimaryModeDark">#50b4f4</color>
+
+    <color name="colorBackgroundLight">#FFF</color>
+    <color name="colorBackgroundDark">#202124</color>
+
+    <color name="colorOnBackgroundLight">#3C4043</color> <!-- #202124 -->
+    <color name="colorOnBackgroundDark">#E8EAED</color>
+
+    <color name="colorOnBackgroundHighEmphasisLight">#5F6368</color>
+    <color name="colorOnBackgroundHighEmphasisDark">#9AA0A6</color>
+
+    <color name="colorOnBackgroundMediumEmphasisLight">#909294</color>
+    <color name="colorOnBackgroundMediumEmphasisDark">#818487</color>
+
+    <color name="colorOnBackgroundLowEmphasisLight">#C0C0C0</color>
+    <color name="colorOnBackgroundLowEmphasisDark">#676767</color>
+
+    <color name="colorSurfaceLight">#FFF</color>
+    <color name="colorSurfaceDark">#303134</color>
+
+    <color name="colorPlayerBackgroundLight">#FFF</color> <!-- #e0e0e0 -->
+    <color name="colorPlayerBackgroundDark">#202124</color>
+
+    <color name="colorFloatingSearchBarBackgroundLight">#FFF</color>
+    <color name="colorFloatingSearchBarBackgroundDark">#3C4043</color>
+
+    <color name="colorMiniPlayerBackgroundLight">#F8F9FA</color>
+    <color name="colorMiniPlayerBackgroundDark">@color/colorSurfaceDark</color>
+
+    <color name="colorMiniPlayerProgressLight">#FAFAFA</color>
+    <color name="colorMiniPlayerProgressDark">#424242</color>
 </resources>

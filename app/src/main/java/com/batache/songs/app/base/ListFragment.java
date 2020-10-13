@@ -9,23 +9,41 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.airbnb.epoxy.EpoxyController;
 import com.airbnb.epoxy.EpoxyRecyclerView;
 import com.batache.songs.R;
-import com.batache.songs.ui.controller.SongsController;
+import com.batache.songs.app.MainActivity3;
 
-public abstract class ListFragment extends BaseFragment {
+public abstract class ListFragment<T extends EpoxyController> extends BaseFragment {
 
-  protected SongsController mController;
+  protected T mController;
+  private EpoxyRecyclerView recyclerView;
+
+  private int originalTopSpaceableViewPaddingTop;
+
+  public abstract T getController();
 
   @Nullable
   @Override
   public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
     rootView = inflater.inflate(getLayout(), null);
 
-    mController = new SongsController();
-    EpoxyRecyclerView recyclerView = rootView.findViewById(R.id.recyclerview);
+    mController = getController();
+    recyclerView = rootView.findViewById(R.id.recyclerview);
     recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
     recyclerView.setController(mController);
+
+    if (requireActivity() instanceof MainActivity3) {
+      MainActivity3 activity = (MainActivity3) requireActivity();
+
+      activity.getAppBar().addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+        @Override
+        public void onLayoutChange(View view, int i, int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+          onApplyTopAppBarSpacing(activity.getAppBarHeight());
+          activity.getAppBar().removeOnLayoutChangeListener(this);
+        }
+      });
+    }
 
     onCreateView();
 
@@ -33,7 +51,35 @@ public abstract class ListFragment extends BaseFragment {
   }
 
   @Override
-  public void onApplyAllWindowInsets() {
+  public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
 
+    originalTopSpaceableViewPaddingTop = getTopSpaceableView().getPaddingTop();
+  }
+
+  @Override
+  public void onApplyAllWindowInsets() {
+    if (requireActivity() instanceof MainActivity3) {
+      onApplyTopAppBarSpacing(((MainActivity3) requireActivity()).getAppBarHeight());
+    }
+  }
+
+  private void onApplyTopAppBarSpacing(int topSpacing) {
+    View spaceableView = getTopSpaceableView();
+
+    if (spaceableView == null) {
+      return;
+    }
+
+    spaceableView.setPadding(
+        spaceableView.getPaddingLeft(),
+        originalTopSpaceableViewPaddingTop + topSpacing,
+        spaceableView.getPaddingRight(),
+        spaceableView.getPaddingBottom()
+    );
+  }
+
+  public View getTopSpaceableView() {
+    return recyclerView;
   }
 }

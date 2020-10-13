@@ -22,6 +22,7 @@ import com.batache.songs.model.pojo.Song;
 import com.batache.songs.player.PlayerManager;
 import com.batache.songs.util.CodeUtils;
 import com.batache.songs.util.DeviceUtils;
+import com.batache.songs.util.PrefUtils;
 import com.batache.songs.util.SongUtils;
 import com.batache.songs.util.events.DownloadEvent;
 import com.tonyodev.fetch2.Download;
@@ -89,7 +90,17 @@ public class SongDownloader implements FetchListener {
 
   public void downloadSong(Song song) {
     if (song.getSongSource() == Song.SongSource.youtube || song.getSongSource() == Song.SongSource.dndnha) {
-      fetchSongURL(context, song, playableUrl -> download(song, playableUrl));
+      fetchSongURL(context, song, new SongURLFetcherCallback() {
+        @Override
+        public void onSuccess(String playableUrl) {
+          download(song, playableUrl);
+        }
+
+        @Override
+        public void onError() {
+          DownloadEvent.postDownloadCancelled(song);
+        }
+      });
     } else if (song.getSongSource() == Song.SongSource.xiami) {
       download(song, song.getUri().toString());
     }
@@ -110,6 +121,8 @@ public class SongDownloader implements FetchListener {
                 callback.onSuccess(ytFile.getUrl());
               }
             }
+          } else {
+            callback.onError();
           }
         }
       }.extract(song.getLink(), true, false);
@@ -158,13 +171,14 @@ public class SongDownloader implements FetchListener {
 
   public interface SongURLFetcherCallback {
     void onSuccess(String playableUrl);
+    void onError();
   }
 
   private void download(Song song, String url) {
     String fileName = SongUtils.getSongFileName(song.getId(), song.getSongSource());
     Request request = new Request(url, DeviceUtils.getDownloadSongsDirFilePath(context, fileName).getPath());
     request.setPriority(Priority.HIGH);
-    boolean downloadOverWifiOnly = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("download_over_wifi_only", true);
+    boolean downloadOverWifiOnly = PrefUtils.getInstance().getBoolean(PrefUtils.SETTINGS_DOWNLOAD_OVER_WIFI_ONLY_PREF, PrefUtils.SETTINGS_DOWNLOAD_OVER_WIFI_ONLY_DEFAULT_VALUE);
     request.setNetworkType(downloadOverWifiOnly ? NetworkType.WIFI_ONLY : NetworkType.ALL);
     request.setExtras(new Extras(new HashMap<String, String>() {{
       put(SONG_EXTRA, SongUtils.toString(song));
@@ -237,11 +251,11 @@ public class SongDownloader implements FetchListener {
     boolean laterAddToFavorites = PlayerManager.getInstance().isSongInFavorites(song);
 
     if (song.getPath() != null && song.getPath().exists()) {
-      DatabaseHelper databaseHelper = DatabaseHelper.getInstance(context);
-      databaseHelper.insertSong(song);
-      databaseHelper.insertSongInPlaylist(new PlaylistSongJoin(PLAYLIST_DOWNLOADS_ID, song.getId()));
+      PlayerManager playerManager = PlayerManager.getInstance();
+      playerManager.insertSong(song);
+      playerManager.insertSongInPlaylist(PLAYLIST_DOWNLOADS_ID, song.getId());
       if (laterAddToFavorites) {
-        databaseHelper.insertSongInPlaylist(new PlaylistSongJoin(PLAYLIST_LIKES_ID, song.getId()));
+        playerManager.insertSongInPlaylist(PLAYLIST_LIKES_ID, song.getId());
       }
     }
 
@@ -272,7 +286,7 @@ public class SongDownloader implements FetchListener {
     song.setPath(new File(download.getFile()));
 
     if (song.getSongSource() == Song.SongSource.youtube || song.getSongSource() == Song.SongSource.dndnha) {
-      SongsAPI.getInstance().getSongLyrics(context, song.getTitle(), song.getArtist(), new SongsAPI.OnLyricsFetchedListener() {
+      SongsAPI.getInstance().getSongLyrics(song.getTitle(), song.getArtist(), new SongsAPI.OnLyricsFetchedListener() {
         @Override
         public void onSuccess(List<Lyric> lyrics) {
           song.setLyrics(lyrics);

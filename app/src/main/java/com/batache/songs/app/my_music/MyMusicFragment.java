@@ -17,32 +17,43 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.batache.songs.R;
+import com.batache.songs.app.base.ListFragment;
 import com.batache.songs.app.settings.SettingsActivity;
 import com.batache.songs.db.DatabaseHelper;
-import com.batache.songs.model.pojo.Playlist;
-import com.batache.songs.app.base.ListFragment;
+import com.batache.songs.player.PlayerManager;
+import com.batache.songs.ui.controller.SongsController;
+import com.batache.songs.util.DeviceUtils;
+import com.batache.songs.util.PlaylistImporter;
+import com.batache.songs.util.SongUtils;
+import com.batache.songs.util.events.ImportEvent;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-import java.util.Date;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.util.List;
 
-public class MyMusicFragment extends ListFragment {
+public class MyMusicFragment extends ListFragment<SongsController> implements View.OnClickListener {
 
-  private static final String TAG = "MyMusicFragment : ";
+  private DatabaseHelper databaseHelper;
 
-  private DatabaseHelper mDatabaseHelper;
+  private SwipeRefreshLayout swipeRefreshLayout;
+  private FloatingActionButton newPlaylistBtn;
 
-  private SwipeRefreshLayout mSwipeRefreshLayout;
-  private FloatingActionButton mNewPlaylistBtn;
+  private AlertDialog newPlaylistDialog;
+
+  private ImportEvent importEvent;
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    mDatabaseHelper = DatabaseHelper.getInstance(getContext());
+//    setEnterTransition(new MaterialFadeThrough());
+
+    databaseHelper = DatabaseHelper.getInstance(getContext());
 
     setHasOptionsMenu(true);
   }
@@ -54,60 +65,29 @@ public class MyMusicFragment extends ListFragment {
 
   @Override
   public void onCreateView() {
-    mSwipeRefreshLayout = rootView.findViewById(R.id.swipe_refresh_layout);
-    mSwipeRefreshLayout.setOnRefreshListener(() -> loadMyMusicPlaylists());
+    swipeRefreshLayout = rootView.findViewById(R.id.swipe_refresh_layout);
+    swipeRefreshLayout.setOnRefreshListener(() -> loadMyMusicPlaylists());
 
-    mNewPlaylistBtn = rootView.findViewById(R.id.new_playlist_btn);
+    newPlaylistBtn = rootView.findViewById(R.id.new_playlist_btn);
   }
 
   private String dialogPlaylistName;
 
   @Override
+  public SongsController getController() {
+    return new SongsController();
+  }
+
+  @Override
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
-    mDatabaseHelper.getPlaylistsListener().observe(this, playlists -> loadMyMusicPlaylists());
-    mDatabaseHelper.getPlaylistSongInsertionListener().observe(this, playlistSongJoins -> {
+    databaseHelper.getPlaylistsListener().observe(getViewLifecycleOwner(), playlists -> loadMyMusicPlaylists());
+    databaseHelper.getPlaylistSongInsertionListener().observe(getViewLifecycleOwner(), playlistSongJoins -> {
       loadMyMusicPlaylists();
     });
 
-    mNewPlaylistBtn.setOnClickListener(view1 -> {
-
-      AlertDialog dialog = new MaterialAlertDialogBuilder(getActivity())
-          .setTitle(R.string.create_new_playlist)
-          .setView(R.layout.layout_outlined_text_field)
-          .setCancelable(false)
-          .setPositiveButton(R.string.create, (dialogInterface, which) -> {
-            List<Playlist> playlists = mDatabaseHelper.getAllPlaylists();
-            mDatabaseHelper.insertPlaylist(new Playlist(String.valueOf(Integer.valueOf(playlists.get(playlists.size() - 1).getId()) + 1), dialogPlaylistName, new Date()));
-            Toast.makeText(getContext(), R.string.playlist_created_successfully, Toast.LENGTH_SHORT).show();
-          })
-          .setNegativeButton(R.string.cancel, null)
-          .show();
-
-      TextInputLayout playlistNameHint = dialog.findViewById(R.id.input_layout);
-      playlistNameHint.setHint(getResources().getString(R.string.title));
-      TextInputEditText playlistNameEt = dialog.findViewById(R.id.edit_text);
-      playlistNameEt.addTextChangedListener(new TextWatcher() {
-        @Override
-        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-        }
-
-        @Override
-        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-          dialogPlaylistName = charSequence.toString().trim();
-          if (dialogPlaylistName.equals("")) {
-            dialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(false);
-          }
-        }
-
-        @Override
-        public void afterTextChanged(Editable editable) {
-
-        }
-      });
-    });
+    newPlaylistBtn.setOnClickListener(this);
 
     loadMyMusicPlaylists();
   }
@@ -115,9 +95,48 @@ public class MyMusicFragment extends ListFragment {
   private void loadMyMusicPlaylists() {
     mController.reset();
 
-    mController.addPlaylistsSection(getContext(), getString(R.string.playlists), mDatabaseHelper.getAllPlaylists());
+    List<SongUtils.ExportedPlaylist> importingPlaylists = PlaylistImporter.getInstance().getImportingPlaylists();
 
-    mSwipeRefreshLayout.setRefreshing(false);
+    mController.addPlaylistsSection(getString(R.string.playlists), databaseHelper.getAllPlaylistsDesc(), importingPlaylists, importEvent);
+
+    swipeRefreshLayout.setRefreshing(false);
+  }
+
+  @Override
+  public void onClick(View view) {
+    newPlaylistDialog = new MaterialAlertDialogBuilder(requireActivity())
+        .setTitle(R.string.create_new_playlist)
+        .setView(R.layout.layout_outlined_text_field)
+        .setCancelable(false)
+        .setPositiveButton(R.string.create, (dialogInterface, which) -> {
+          PlayerManager.getInstance().createPlaylist(dialogPlaylistName);
+          Toast.makeText(getContext(), R.string.playlist_created_successfully, Toast.LENGTH_SHORT).show();
+        })
+        .setNegativeButton(R.string.cancel, (dialogInterface, i) -> DeviceUtils.hideKeyboardFrom(getContext(), newPlaylistDialog.findViewById(R.id.edit_text)))
+        .show();
+
+    newPlaylistDialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(false);
+
+    TextInputLayout playlistNameHint = newPlaylistDialog.findViewById(R.id.input_layout);
+    playlistNameHint.setHint(getResources().getString(R.string.title));
+    TextInputEditText playlistNameEt = newPlaylistDialog.findViewById(R.id.edit_text);
+    playlistNameEt.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+      }
+
+      @Override
+      public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        dialogPlaylistName = charSequence.toString().trim();
+        newPlaylistDialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(!dialogPlaylistName.equals(""));
+      }
+
+      @Override
+      public void afterTextChanged(Editable editable) {
+
+      }
+    });
   }
 
   @Override
@@ -127,11 +146,17 @@ public class MyMusicFragment extends ListFragment {
 
   @Override
   public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-    if (item.getItemId() == R.id.action_settings) {
+    if (item.getItemId() == R.id.settingsBtn) {
       startActivity(new Intent(getContext(), SettingsActivity.class));
       return true;
     }
 
     return false;
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onImportEvent(ImportEvent importEvent) {
+    this.importEvent = importEvent;
+    loadMyMusicPlaylists();
   }
 }

@@ -64,6 +64,10 @@ public class SearchBar extends LinearLayoutCompat {
     searchEt.setOnEditorActionListener(onEditorActionListener);
   }
 
+  public void addTextChangedListener(TextWatcher watcher) {
+    searchEt.addTextChangedListener(watcher);
+  }
+
   public boolean requestSearchFocus() {
     return searchEt.requestFocus();
   }

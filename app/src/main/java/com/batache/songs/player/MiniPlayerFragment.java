@@ -61,9 +61,10 @@ public class MiniPlayerFragment extends BasePlayerFragment {
 
   }
 
-  public void updateVisibility(float alpha) {
-    rootView.setAlpha(alpha);
-    rootView.setVisibility(alpha == 0 ? View.GONE : View.VISIBLE);
+  public void updateVisibility(float slideOffset) {
+    float opacityMultiplier = 1 - Math.min(slideOffset * 12, 1f);
+    rootView.setAlpha(opacityMultiplier);
+    rootView.setVisibility(opacityMultiplier == 0 ? View.GONE : View.VISIBLE);
   }
 
   @Override

@@ -7,19 +7,32 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.airbnb.epoxy.EpoxyController;
 import com.batache.songs.R;
 import com.batache.songs.api.SongsAPI;
 import com.batache.songs.app.base.ListFragment;
 import com.batache.songs.model.pojo.Song;
+import com.batache.songs.ui.controller.SongsController;
 import com.batache.songs.util.CodeUtils;
+import com.batache.songs.util.SongUtils;
+import com.google.android.material.transition.MaterialFadeThrough;
+import com.google.android.material.transition.MaterialSharedAxis;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class ExplorePlaylistFragment extends ListFragment {
+public class ExplorePlaylistFragment extends ListFragment<ExploreController> {
 
   private final static String MAX_RESULTS = "50";
 
   private String playlistId;
+
+  @Override
+  public void onCreate(@Nullable Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+//    setEnterTransition(new MaterialFadeThrough());
+  }
 
   @Override
   public int getLayout() {
@@ -31,6 +44,11 @@ public class ExplorePlaylistFragment extends ListFragment {
     if (getArguments() != null) {
       playlistId = ExplorePlaylistFragmentArgs.fromBundle(getArguments()).getPlaylistId();
     }
+  }
+
+  @Override
+  public ExploreController getController() {
+    return new ExploreController();
   }
 
   @Override
@@ -46,8 +64,13 @@ public class ExplorePlaylistFragment extends ListFragment {
     SongsAPI.getInstance().getSongsFromPlaylist(playlistId, MAX_RESULTS, new SongsAPI.OnSongsFetchedListener() {
       @Override
       public void onSuccess(List<Song> fetchedSongs) {
-        mController.reset();
-        mController.addSection(fetchedSongs);
+        List<SongsSection> songsSections = new ArrayList<>();
+        songsSections.add(new SongsSection(
+            playlistId,
+            null,
+            fetchedSongs
+        ));
+        mController.setData(songsSections);
       }
 
       @Override

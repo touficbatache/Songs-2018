@@ -25,12 +25,12 @@
 
         <TextView
             android:id="@+id/playlist_title"
-            style="@style/TextAppearance.AppCompat.Subhead"
+            style="@style/TextAppearance.MaterialComponents.Subtitle1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="?android:attr/textColorPrimary"
+            android:textColor="?attr/colorOnBackground"
             tools:text="Playlist title" />
 
         <TextView
@@ -38,6 +38,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="1"
+            android:textColor="@color/colorOnBackgroundHighEmphasis"
             tools:text="5 songs" />
 
     </LinearLayout>
@@ -46,6 +47,6 @@
         android:id="@+id/more"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/ic_keyboard_arrow_right_default_24dp" />
+        app:srcCompat="@drawable/ic_keyboard_arrow_right_24dp" />
 
 </LinearLayout>
