@@ -90,10 +90,27 @@ public abstract class BaseFragment extends Fragment {
 
   }
 
+  public FABData getFAB() {
+    return null;
+  }
+
   @Override
   public void onPause() {
     super.onPause();
 
     requireActivity().unregisterReceiver(networkStateReceiver);
+  }
+
+  public class FABData {
+    public String tooltipText;
+    public int icon;
+    public View.OnClickListener onClickListener;
+
+    public FABData(String tooltipText, int icon, View.OnClickListener onClickListener) {
+      this.tooltipText = tooltipText;
+      this.icon = icon;
+      this.onClickListener = onClickListener;
+    }
+
   }
 }

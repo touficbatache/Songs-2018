@@ -35,6 +35,8 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -192,10 +194,10 @@ public class LyricsActivity extends BaseActivity {
     if (!CodeUtils.isEmpty(song.getLyrics())) {
       setLyrics(song.getLyrics(), song.getAreLyricsSynced());
     } else if (!CodeUtils.isEmpty(song.getLyricsUrl())) {
-      SongsAPI.getInstance().getXiamiSongLyrics(song.getLyricsUrl(), new SongsAPI.OnXiamiLyricsFetchedListener() {
+      SongsAPI.INSTANCE.getXiamiSongLyrics(song.getLyricsUrl(), new SongsAPI.OnXiamiLyricsFetchedListener() {
         @Override
-        public void onSuccess(String artist, List<Lyric> lyrics) {
-          setLyrics(lyrics, true);
+        public void onSuccess(@Nullable String artist, @NotNull List<? extends Lyric> lyrics) {
+          setLyrics((List<Lyric>) lyrics, true);
         }
 
         @Override
@@ -204,10 +206,10 @@ public class LyricsActivity extends BaseActivity {
         }
       });
     } else {
-      SongsAPI.getInstance().getSongLyrics(song.getTitle(), song.getArtist(), new SongsAPI.OnLyricsFetchedListener() {
+      SongsAPI.INSTANCE.getSongLyrics(song.getTitle(), song.getArtist(), new SongsAPI.OnLyricsFetchedListener() {
         @Override
-        public void onSuccess(List<Lyric> lyrics) {
-          setLyrics(lyrics, false);
+        public void onSuccess(@NotNull List<? extends Lyric> lyrics) {
+          setLyrics((List<Lyric>) lyrics, false);
         }
 
         @Override
@@ -221,7 +223,7 @@ public class LyricsActivity extends BaseActivity {
   private int selectedLanguageIndex = 0;
 
   private void fetchYoutubeCaptions() {
-    SongsAPI.getInstance().getAvailableCaptionLanguages(song.getId(), new SongsAPI.OnCaptionLanguagesFetchedListener() {
+    SongsAPI.INSTANCE.getAvailableCaptionLanguages(song.getId(), new SongsAPI.OnCaptionLanguagesFetchedListener() {
       @Override
       public void onSuccess(Map<String, String> captionLanguages) {
         new MaterialAlertDialogBuilder(LyricsActivity.this)
@@ -231,10 +233,10 @@ public class LyricsActivity extends BaseActivity {
             })
             .setCancelable(true)
             .setPositiveButton(R.string.ok, (dialog, which) -> {
-              SongsAPI.getInstance().getCaptions(song.getId(), captionLanguages.values().toArray()[selectedLanguageIndex].toString(), new SongsAPI.OnLyricsFetchedListener() {
+              SongsAPI.INSTANCE.getCaptions(song.getId(), captionLanguages.values().toArray()[selectedLanguageIndex].toString(), new SongsAPI.OnLyricsFetchedListener() {
                 @Override
-                public void onSuccess(List<Lyric> captions) {
-                  setLyrics(captions, true);
+                public void onSuccess(@NotNull List<? extends Lyric> captions) {
+                  setLyrics((List<Lyric>) captions, true);
                 }
 
                 @Override

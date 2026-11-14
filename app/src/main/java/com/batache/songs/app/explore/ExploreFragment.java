@@ -46,7 +46,15 @@ public class ExploreFragment extends ListFragment<ExploreController> {
   public void onActivityCreated(@Nullable Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     viewModel = new ViewModelProvider(this).get(ExploreViewModel.class);
-    viewModel.getExploreLiveData().observe(getViewLifecycleOwner(), exploreLiveData -> updateRecyclerViewSongs(exploreLiveData.isNewThisWeekCallCompleted(), exploreLiveData.isPopularCallCompleted(), exploreLiveData.getNewThisWeekSongs(), exploreLiveData.getPopularSongs()));
+    viewModel.getExploreLiveData().observe(
+        getViewLifecycleOwner(),
+        exploreLiveData -> updateRecyclerViewSongs(
+            exploreLiveData.isNewThisWeekCallCompleted(),
+            exploreLiveData.isPopularCallCompleted(),
+            exploreLiveData.getNewThisWeekSongs(),
+            exploreLiveData.getPopularSongs()
+        )
+    );
 
     showViews();
   }

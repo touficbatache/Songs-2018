@@ -234,7 +234,7 @@ public class MyMusicPlaylistFragment extends ListFragment<SongsController> {
       if (!songIdsToGet.isEmpty()) {
         for (String songIdToGet : songIdsToGet) {
           RestoreSongsUtils restoreSongsUtils = RestoreSongsUtils.initialize(songIdsToGet.size());
-          SongsAPI.getInstance().getSong(songIdToGet, new SongsAPI.OnSongsFetchedListener() {
+          SongsAPI.INSTANCE.getSong(songIdToGet, new SongsAPI.OnSongsFetchedListener() {
             @Override
             public void onSuccess(List<Song> fetchedSongs) {
               restoreSongsUtils.addSuccess(fetchedSongs.get(0));

@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.airbnb.epoxy.EpoxyController;
 import com.airbnb.epoxy.EpoxyRecyclerView;
 import com.batache.songs.R;
-import com.batache.songs.app.MainActivity3;
+import com.batache.songs.app.MainActivity;
 
 public abstract class ListFragment<T extends EpoxyController> extends BaseFragment {
 
@@ -33,8 +33,8 @@ public abstract class ListFragment<T extends EpoxyController> extends BaseFragme
     recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
     recyclerView.setController(mController);
 
-    if (requireActivity() instanceof MainActivity3) {
-      MainActivity3 activity = (MainActivity3) requireActivity();
+    if (requireActivity() instanceof MainActivity) {
+      MainActivity activity = (MainActivity) requireActivity();
 
       activity.getAppBar().addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
         @Override
@@ -59,8 +59,8 @@ public abstract class ListFragment<T extends EpoxyController> extends BaseFragme
 
   @Override
   public void onApplyAllWindowInsets() {
-    if (requireActivity() instanceof MainActivity3) {
-      onApplyTopAppBarSpacing(((MainActivity3) requireActivity()).getAppBarHeight());
+    if (requireActivity() instanceof MainActivity) {
+      onApplyTopAppBarSpacing(((MainActivity) requireActivity()).getAppBarHeight());
     }
   }
 

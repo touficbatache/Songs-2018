@@ -209,7 +209,7 @@ public class PlayerManager implements LifecycleOwner {
             break;
 
           default:
-            if (getCurrentSong().getUri() != null) {
+            if (getCurrentSong() != null && getCurrentSong().getUri() != null) {
               PlayerEvent.postPlayQueueReady();
             }
             break;
@@ -425,7 +425,7 @@ public class PlayerManager implements LifecycleOwner {
   }
 
   public void safePlay(int index) {
-    if(index == getCurrentSongIndex()) {
+    if (index == getCurrentSongIndex()) {
       return;
     }
     play(index);
@@ -695,15 +695,22 @@ public class PlayerManager implements LifecycleOwner {
     if (getCurrentSong() != null) {
       String currentSongId = getCurrentSong().getId();
 
-      for (Song song : databaseHelper.getSongsForPlaylist(playlistId)) {
-        databaseHelper.removeSongFromPlaylist(playlistId, song.getId());
-        if (song.getId().equals(currentSongId)) {
-          mainHandler.postDelayed(PlayerEvent::postAddToPlaylistChanged, 100);
-        }
+      if (databaseHelper.isSongInPlaylist(playlistId, currentSongId)) {
+        mainHandler.postDelayed(PlayerEvent::postAddToPlaylistChanged, 100);
       }
+//      for (Song song : databaseHelper.getSongsForPlaylist(playlistId)) {
+//        databaseHelper.removeSongFromPlaylist(playlistId, song.getId());
+//        if (song.getId().equals(currentSongId)) {
+//          mainHandler.postDelayed(PlayerEvent::postAddToPlaylistChanged, 100);
+//        }
+//      }
     }
     databaseHelper.deletePlaylist(playlistId);
-    resetPlayqueueAndStop();
+
+    if (playlistId.equals(getPlaylistId())) {
+      resetPlayqueueAndStop();
+      PlayerEvent.postPlayQueueReady();
+    }
   }
 
   public void shareCurrentSong(Activity activity) {

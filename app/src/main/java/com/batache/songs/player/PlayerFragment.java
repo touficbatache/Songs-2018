@@ -29,9 +29,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SnapHelper;
 
 import com.airbnb.epoxy.EpoxyRecyclerView;
+import com.batache.songs.MediaNotificationProcessor;
 import com.batache.songs.R;
 import com.batache.songs.api.SongDownloader;
-import com.batache.songs.app.MainActivity3;
+import com.batache.songs.app.MainActivity;
 import com.batache.songs.app.lyrics.LyricsActivity;
 import com.batache.songs.player.playqueue.PlayingQueueFragment;
 import com.batache.songs.model.adapter.PlayerCoverModel;
@@ -49,7 +50,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.tonyodev.fetch2.Download;
 
 import java.util.ArrayList;
@@ -59,7 +59,7 @@ import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 
 public class PlayerFragment extends BasePlayerFragment {
 
-  private MainActivity3 activity;
+  private MainActivity activity;
 
   private boolean isPlayerLoading = false;
 
@@ -97,7 +97,7 @@ public class PlayerFragment extends BasePlayerFragment {
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    activity = (MainActivity3) getActivity();
+    activity = (MainActivity) getActivity();
   }
 
   @Override
@@ -386,11 +386,14 @@ public class PlayerFragment extends BasePlayerFragment {
   @Override
   public void onPlayQueueReady() {
     if (CodeUtils.isEmpty(playerManager.getPlayqueue())) {
-      activity.hidePlayer();
+      activity.setPlayerState(BottomSheetBehavior.STATE_HIDDEN);
       return;
-    } else if (activity.getPlayerState() == BottomSheetBehavior.STATE_HIDDEN) {
-      activity.collapsePlayer();
     }
+
+    if (activity.getPlayerState() == BottomSheetBehavior.STATE_HIDDEN) {
+      activity.setPlayerState(BottomSheetBehavior.STATE_COLLAPSED);
+    }
+
     controller.reset();
     controller.addCoverArts(playerManager.getPlayqueue());
     setPlayerLoading(false);
@@ -434,11 +437,19 @@ public class PlayerFragment extends BasePlayerFragment {
     ImageLoader.getBitmap(context, playerManager.getCurrentSong().getId(), playerManager.getCurrentSong().getCoverArt(), new ImageLoader.FetchBitmapCallback() {
       @Override
       public void onCompletion(Bitmap bitmap) {
-        Palette palette = Palette.from(bitmap).generate();
-        int dominantColorRGB = (palette.getLightVibrantSwatch() != null ? palette.getLightVibrantSwatch() :
-            (palette.getVibrantSwatch() != null ? palette.getVibrantSwatch() : (palette.getDarkVibrantSwatch() != null ? palette.getDarkVibrantSwatch() : palette.getDominantSwatch()))).getRgb();
-        int dominantColor = dominantColorRGB != -1 ? dominantColorRGB : Color.WHITE;
-        updatePlayerBackgroundColor(dominantColor);
+        final MediaNotificationProcessor processor = new MediaNotificationProcessor(requireContext());
+        processor.getPaletteAsync(new MediaNotificationProcessor.OnPaletteLoadedListener() {
+          @Override
+          public void onPaletteLoaded(MediaNotificationProcessor mediaNotificationProcessor) {
+            updatePlayerBackgroundColor(mediaNotificationProcessor.getBackgroundColor(), mediaNotificationProcessor.isLight());
+          }
+        }, bitmap);
+
+//        Palette palette = Palette.from(bitmap).generate();
+//        int dominantColorRGB = (palette.getLightVibrantSwatch() != null ? palette.getLightVibrantSwatch() :
+//            (palette.getVibrantSwatch() != null ? palette.getVibrantSwatch() : (palette.getDarkVibrantSwatch() != null ? palette.getDarkVibrantSwatch() : palette.getDominantSwatch()))).getRgb();
+//        int dominantColor = dominantColorRGB != -1 ? dominantColorRGB : Color.WHITE;
+//        updatePlayerBackgroundColor(dominantColor);
       }
     });
 
@@ -460,7 +471,8 @@ public class PlayerFragment extends BasePlayerFragment {
     }
   }
 
-  private void updatePlayerBackgroundColor(int newColor) {
+  private void updatePlayerBackgroundColor(int newColor, boolean isLight) {
+    rootView.setBackgroundColor(newColor);
 //    int oldColor = rootView.getBackground() instanceof ColorDrawable ? ((ColorDrawable) rootView.getBackground()).getColor() : getResources().getColor(R.color.grey_e0);
 //    ValueAnimator valueAnimator = ObjectAnimator.ofInt(rootView, "backgroundColor", oldColor, newColor);
 //    valueAnimator.setDuration(200);
@@ -517,7 +529,7 @@ public class PlayerFragment extends BasePlayerFragment {
       favoriteBtn.showSecondState();
     }
     if (playerManager.isStreaming() && CodeUtils.isEmpty(playerManager.getPlayqueue())) {
-      activity.hidePlayer();
+      activity.setPlayerState(BottomSheetBehavior.STATE_HIDDEN);
     }
   }
 
@@ -613,7 +625,7 @@ public class PlayerFragment extends BasePlayerFragment {
   @Override
   public void onSongDeleted() {
     if (playerManager.isStreaming() || CodeUtils.isEmpty(playerManager.getPlayqueue())) {
-      activity.hidePlayer();
+      activity.setPlayerState(BottomSheetBehavior.STATE_HIDDEN);
     }
   }
 

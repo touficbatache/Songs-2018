@@ -159,4 +159,9 @@ public class MyMusicFragment extends ListFragment<SongsController> implements Vi
     this.importEvent = importEvent;
     loadMyMusicPlaylists();
   }
+
+  @Override
+  public FABData getFAB() {
+    return new FABData("New playlist", R.drawable.ic_playlist_add_black_24dp, this);
+  }
 }

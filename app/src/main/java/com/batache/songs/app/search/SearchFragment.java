@@ -90,7 +90,7 @@ public class SearchFragment extends ListFragment<SongsController> {
   }
 
   private void searchYoutube(String searchQuery, SearchListener searchListener) {
-    SongsAPI.getInstance().searchYoutube(searchQuery, new SongsAPI.OnSongsFetchedListener() {
+    SongsAPI.INSTANCE.searchYoutube(searchQuery, new SongsAPI.OnSongsFetchedListener() {
       @Override
       public void onSuccess(List<Song> fetchedSongs) {
         youtubeFailed = false;
@@ -107,7 +107,7 @@ public class SearchFragment extends ListFragment<SongsController> {
   }
 
   private void searchDndnha(String searchQuery, SearchListener searchListener) {
-    SongsAPI.getInstance().searchDndnha(searchQuery, new SongsAPI.OnSongsFetchedListener() {
+    SongsAPI.INSTANCE.searchDndnha(searchQuery, new SongsAPI.OnSongsFetchedListener() {
       @Override
       public void onSuccess(List<Song> fetchedSongs) {
         dndnhaFailed = false;
@@ -124,7 +124,7 @@ public class SearchFragment extends ListFragment<SongsController> {
   }
 
   private void searchXiami(String searchQuery, SearchListener searchListener) {
-    SongsAPI.getInstance().searchXiami(searchQuery, new SongsAPI.OnSongsFetchedListener() {
+    SongsAPI.INSTANCE.searchXiami(searchQuery, new SongsAPI.OnSongsFetchedListener() {
       @Override
       public void onSuccess(List<Song> fetchedSongs) {
         xiamiFailed = false;

@@ -61,7 +61,7 @@ public class ExplorePlaylistFragment extends ListFragment<ExploreController> {
   }
 
   private void getExploreSongs() {
-    SongsAPI.getInstance().getSongsFromPlaylist(playlistId, MAX_RESULTS, new SongsAPI.OnSongsFetchedListener() {
+    SongsAPI.INSTANCE.getSongsFromPlaylist(playlistId, MAX_RESULTS, new SongsAPI.OnSongsFetchedListener() {
       @Override
       public void onSuccess(List<Song> fetchedSongs) {
         List<SongsSection> songsSections = new ArrayList<>();

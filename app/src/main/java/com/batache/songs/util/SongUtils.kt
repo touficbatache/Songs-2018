@@ -94,7 +94,13 @@ object SongUtils {
     }
     musicInfo.album.cover?.let { coverUrl ->
       musicInfo.vendor?.let { musicInfoVendor ->
-        song.coverArt = getAlbumPic(coverUrl, musicInfoVendor, PIC_SIZE_NORMAL)
+        song.thumbnails = Song.Thumbnails(
+            getAlbumPic(coverUrl, musicInfoVendor, PIC_SIZE_NORMAL),
+            getAlbumPic(coverUrl, musicInfoVendor, PIC_SIZE_SMALL),
+            getAlbumPic(coverUrl, musicInfoVendor, PIC_SIZE_NORMAL),
+            getAlbumPic(coverUrl, musicInfoVendor, PIC_SIZE_BIG),
+            getAlbumPic(coverUrl, musicInfoVendor, PIC_SIZE_BIG)
+        )
       }
     }
 //    song.coverBig = getAlbumPic(musicInfo.album.cover, musicInfo.vendor, PIC_SIZE_NORMAL);
@@ -151,7 +157,7 @@ object SongUtils {
               id = song.id,
               title = song.title,
               artist = song.artist,
-              coverArt = song.coverArt,
+              coverArt = song.getCoverArt(),
               lyricsUrl = song.lyricsUrl,
               areLyricsSynced = song.areLyricsSynced,
               creationDate = song.creationDate,

@@ -133,15 +133,18 @@
         android:layout_centerInParent="true"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:background="@drawable/circle_white_ripple"
+        android:background="@drawable/bg_play_pause_btn"
         android:clickable="true"
         android:elevation="4dp"
         android:padding="12dp"
+        app:fromColor="?android:colorBackground"
         app:fromIconAVD="@drawable/play_to_pause"
+        app:isColorChanging="true"
         app:layout_constraintBottom_toBottomOf="@+id/player_next_btn"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/player_next_btn"
+        app:toColor="?android:colorBackground"
         app:toIconAVD="@drawable/pause_to_play" />
 
     <ImageButton

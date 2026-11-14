@@ -5,6 +5,7 @@ import android.net.Uri;
 import androidx.room.TypeConverter;
 
 import com.batache.songs.model.pojo.Lyric;
+import com.batache.songs.model.pojo.Song;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -14,21 +15,20 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import com.batache.songs.model.pojo.Song;
-
 public class Converters {
   private static Gson gson = new Gson();
 
   @TypeConverter
   public static Uri uriFromString(String value) {
-    if(value == null) {
+    if (value == null) {
       return null;
     }
     return Uri.parse(value);
   }
+
   @TypeConverter
   public static String fromUri(Uri uri) {
-    if(uri == null) {
+    if (uri == null) {
       return null;
     }
     return uri.toString();
@@ -45,6 +45,7 @@ public class Converters {
     }
     return date;
   }
+
   @TypeConverter
   public static String fromDate(Date date) {
     String dateTime;
@@ -65,10 +66,21 @@ public class Converters {
 
   @TypeConverter
   public static Song.SongSource songSourceFromString(String value) {
-    return value == null ? Song.SongSource.youtube : new Gson().fromJson(value, new TypeToken<Song.SongSource>(){}.getType());
+    return value == null ? Song.SongSource.youtube : new Gson().fromJson(value, new TypeToken<Song.SongSource>() {}.getType());
   }
+
   @TypeConverter
   public static String fromSongSource(Song.SongSource songSource) {
     return new Gson().toJson(songSource);
+  }
+
+  @TypeConverter
+  public static Song.Thumbnails thumbnailsFromString(String value) {
+    return new Gson().fromJson(value, new TypeToken<Song.Thumbnails>() {}.getType());
+  }
+
+  @TypeConverter
+  public static String fromThumbnails(Song.Thumbnails thumbnails) {
+    return new Gson().toJson(thumbnails);
   }
 }

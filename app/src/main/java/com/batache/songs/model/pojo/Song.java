@@ -30,8 +30,8 @@ public class Song {
   @ColumnInfo(name = "artist")
   private String artist;
 
-  @ColumnInfo(name = "coverart")
-  private String coverArt;
+  @ColumnInfo(name = "thumbnails")
+  private Thumbnails thumbnails;
 
   @ColumnInfo(name = "uri")
   private Uri uri;
@@ -55,22 +55,22 @@ public class Song {
 
   }
 
-  public Song(@NonNull String id, String title, String artist, String coverArt) {
+  public Song(@NonNull String id, String title, String artist, Thumbnails thumbnails) {
     this.id = id;
     this.link = String.format("https://www.youtube.com/watch?v=%s", id);
     this.title = title != null ? title.trim() : "Unknown song";
     this.artist = artist != null ? artist.trim() : "Unknown artist";
-    this.coverArt = coverArt;
-    creationDate = new Date();
+    this.thumbnails = thumbnails;
+    this.creationDate = new Date();
   }
 
-  public Song(@NonNull String id, String link, String title, String artist, String coverArt) {
+  public Song(@NonNull String id, String link, String title, String artist, Thumbnails thumbnails) {
     this.id = id;
     this.link = link;
     this.title = title != null ? title.trim() : "Unknown song";
     this.artist = artist != null ? artist.trim() : "Unknown artist";
-    this.coverArt = coverArt;
-    creationDate = new Date();
+    this.thumbnails = thumbnails;
+    this.creationDate = new Date();
   }
 
   public void setId(@NonNull String id) {
@@ -106,12 +106,16 @@ public class Song {
     return artist;
   }
 
-  public void setCoverArt(String coverArt) {
-    this.coverArt = coverArt;
+  public void setThumbnails(Thumbnails thumbnails) {
+    this.thumbnails = thumbnails;
+  }
+
+  public Thumbnails getThumbnails() {
+    return thumbnails;
   }
 
   public String getCoverArt() {
-    return coverArt;
+    return thumbnails.highUrl;
   }
 
   public void setCreationDate(Date creationDate) {
@@ -135,7 +139,7 @@ public class Song {
   }
 
   public File getPath() {
-    if(isLocallyStored()) {
+    if (isLocallyStored()) {
       return new File(uri.getPath());
     }
     return null;
@@ -159,7 +163,7 @@ public class Song {
   }
 
   public void setLyrics(List<Lyric> lyrics) {
-    if(lyrics == null) {
+    if (lyrics == null) {
       this.lyrics = new ArrayList<>();
       return;
     }
@@ -199,6 +203,28 @@ public class Song {
 
     public int getCode() {
       return code;
+    }
+  }
+
+  public static class Thumbnails {
+    public String defaultUrl;
+    public String standardUrl;
+    public String mediumUrl;
+    public String highUrl;
+    public String maxresUrl;
+
+    public Thumbnails(
+        String defaultUrl,
+        String standardUrl,
+        String mediumUrl,
+        String highUrl,
+        String maxresUrl
+    ) {
+      this.defaultUrl = defaultUrl;
+      this.standardUrl = standardUrl;
+      this.mediumUrl = mediumUrl;
+      this.highUrl = highUrl;
+      this.maxresUrl = maxresUrl;
     }
   }
 

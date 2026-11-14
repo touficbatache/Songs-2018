@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.util.AttributeSet;
 
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.res.ResourcesCompat;
 
 import com.batache.songs.R;
 
@@ -39,13 +40,13 @@ public class RepeatToggleView extends AppCompatImageView {
   public void showState(int state) {
     if (state == 0) {
       currentFillColor = R.color.colorOnBackgroundMediumEmphasis;
-      setImageDrawable(getResources().getDrawable(R.drawable.ic_repeat_24dp));
+      setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_repeat_24dp, getContext().getTheme()));
     } else if (state == 2) {
       currentFillColor = R.color.colorOnBackgroundHighEmphasis;
-      setImageDrawable(getResources().getDrawable(R.drawable.ic_repeat_24dp));
+      setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_repeat_24dp, getContext().getTheme()));
     } else if (state == 1) {
       currentFillColor = R.color.colorOnBackgroundHighEmphasis;
-      setImageDrawable(getResources().getDrawable(R.drawable.ic_repeat_one_24dp));
+      setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_repeat_one_24dp, getContext().getTheme()));
     }
     setColorFilter(getResources().getColor(currentFillColor));
   }

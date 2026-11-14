@@ -286,10 +286,10 @@ public class SongDownloader implements FetchListener {
     song.setPath(new File(download.getFile()));
 
     if (song.getSongSource() == Song.SongSource.youtube || song.getSongSource() == Song.SongSource.dndnha) {
-      SongsAPI.getInstance().getSongLyrics(song.getTitle(), song.getArtist(), new SongsAPI.OnLyricsFetchedListener() {
+      SongsAPI.INSTANCE.getSongLyrics(song.getTitle(), song.getArtist(), new SongsAPI.OnLyricsFetchedListener() {
         @Override
-        public void onSuccess(List<Lyric> lyrics) {
-          song.setLyrics(lyrics);
+        public void onSuccess(List<? extends Lyric> lyrics) {
+          song.setLyrics((List<Lyric>) lyrics);
           downloadCompleted(download, context, song);
         }
 
@@ -303,13 +303,13 @@ public class SongDownloader implements FetchListener {
         downloadCompleted(download, context, song);
         return;
       }
-      SongsAPI.getInstance().getXiamiSongLyrics(song.getLyricsUrl(), new SongsAPI.OnXiamiLyricsFetchedListener() {
+      SongsAPI.INSTANCE.getXiamiSongLyrics(song.getLyricsUrl(), new SongsAPI.OnXiamiLyricsFetchedListener() {
         @Override
-        public void onSuccess(String artist, List<Lyric> lyrics) {
+        public void onSuccess(String artist, List<? extends Lyric> lyrics) {
           if (!CodeUtils.isEmpty(artist)) {
             song.setArtist(artist);
           }
-          song.setLyrics(lyrics);
+          song.setLyrics((List<Lyric>) lyrics);
           song.setAreLyricsSynced(true);
           downloadCompleted(download, context, song);
         }

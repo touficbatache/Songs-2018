@@ -26,7 +26,7 @@ class ExploreViewModel : ViewModel() {
   }
 
   fun fetchPlaylists() {
-    SongsAPI.getInstance().getSongsFromPlaylist(SongUtils.NEW_THIS_WEEK_PLAYLIST_ID, _maxResults, object : SongsAPI.OnSongsFetchedListener {
+    SongsAPI.getSongsFromPlaylist(SongUtils.NEW_THIS_WEEK_PLAYLIST_ID, _maxResults, object : SongsAPI.OnSongsFetchedListener {
       override fun onSuccess(fetchedSongs: MutableList<Song>?) {
         fetchedSongs?.let { newThisWeekSongs ->
           exploreLiveData.value = exploreLiveData.value?.copy(
@@ -44,7 +44,7 @@ class ExploreViewModel : ViewModel() {
 
     })
 
-    SongsAPI.getInstance().getSongsFromPlaylist(SongUtils.POPULAR_PLAYLIST_ID, _maxResults, object : SongsAPI.OnSongsFetchedListener {
+    SongsAPI.getSongsFromPlaylist(SongUtils.POPULAR_PLAYLIST_ID, _maxResults, object : SongsAPI.OnSongsFetchedListener {
       override fun onSuccess(fetchedSongs: MutableList<Song>?) {
         fetchedSongs?.let { popularSongs ->
           exploreLiveData.value = exploreLiveData.value?.copy(

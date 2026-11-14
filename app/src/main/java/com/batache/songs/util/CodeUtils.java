@@ -1,7 +1,5 @@
 package com.batache.songs.util;
 
-import com.batache.songs.util.events.PlayerEvent;
-
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
@@ -23,7 +21,7 @@ public class CodeUtils {
   }
 
   public static boolean isEmpty(String string) {
-    if(string == null) {
+    if (string == null) {
       return true;
     }
     return string.isEmpty();
@@ -34,7 +32,7 @@ public class CodeUtils {
   }
 
   public static boolean isEmpty(List<?> arrayList) {
-    if(arrayList == null) {
+    if (arrayList == null) {
       return true;
     }
     return arrayList.isEmpty();
