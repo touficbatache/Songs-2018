@@ -1,6 +1,7 @@
 package com.batache.songs.util
 
 import android.net.Uri
+import com.batache.songs.BuildConfig
 import com.batache.songs.api.youtube.YoutubePlaylistResponse
 import com.batache.songs.db.Deserializers.UriInOut
 import com.batache.songs.model.pojo.Song
@@ -19,9 +20,9 @@ object SongUtils {
 
   const val NEW_THIS_WEEK_PLAYLIST_ID = "PLFgquLnL59alW3xmYiWRaoz0oM3H17Lth"
   const val POPULAR_PLAYLIST_ID = "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI"
-  const val API_KEY = "YOUR_YOUTUBE_API_KEY"
-  const val API_KEY_2 = "YOUR_YOUTUBE_API_KEY_2"
-  const val AS_API_KEY = "YOUR_LASTFM_API_KEY" //AudioScrobbler API Key
+  const val API_KEY = BuildConfig.YOUTUBE_API_KEY
+  const val API_KEY_2 = BuildConfig.YOUTUBE_API_KEY_2
+  const val AS_API_KEY = BuildConfig.LASTFM_API_KEY // AudioScrobbler (Last.fm) API key
 
   const val SEARCH_KEY_QQ = "QQ"
   const val SEARCH_KEY_XIAMI = "XIAMI"

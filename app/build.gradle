@@ -4,6 +4,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
+def localProps = new Properties()
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) localPropsFile.withInputStream { localProps.load(it) }
+def secret = { String name -> "\"${localProps.getProperty(name, '')}\"" }
+
 android {
     compileSdkVersion 29
     buildToolsVersion = '29.0.0'
@@ -16,6 +21,14 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled = true
+
+        // API keys come from local.properties (gitignored). See README, "API keys".
+        buildConfigField "String", "YOUTUBE_API_KEY", secret('songs.youtubeApiKey')
+        buildConfigField "String", "YOUTUBE_API_KEY_2", secret('songs.youtubeApiKey2')
+        buildConfigField "String", "LASTFM_API_KEY", secret('songs.lastfmApiKey')
+        buildConfigField "String", "CSE_API_KEY", secret('songs.cseApiKey')
+        buildConfigField "String", "CSE_DNDNHA_CX", secret('songs.cseDndnhaCx')
+        buildConfigField "String", "CSE_GENIUS_CX", secret('songs.cseGeniusCx')
     }
     buildTypes {
         release {
